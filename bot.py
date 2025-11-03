@@ -257,13 +257,43 @@ async def handle_incoming_from_user(update: Update, context: ContextTypes.DEFAUL
         )
         support_msg_id_to_origin[sent_header.message_id] = (chat.id, message.message_id)
 
-        copied = await context.bot.copy_message(
-            chat_id=SUPPORT_CHAT_ID,
-            message_thread_id=thread_id,
-            from_chat_id=chat.id,
-            message_id=message.message_id,
-        )
-        support_msg_id_to_origin[copied.message_id] = (chat.id, message.message_id)
+        # Try to copy message into the topic; fallback to forward if copy fails
+        try:
+            copied = await context.bot.copy_message(
+                chat_id=SUPPORT_CHAT_ID,
+                message_thread_id=thread_id,
+                from_chat_id=chat.id,
+                message_id=message.message_id,
+            )
+            support_msg_id_to_origin[copied.message_id] = (chat.id, message.message_id)
+            logger.info("copied msg to topic: u=%s -> thread=%s mid=%s", update.effective_user.id if update.effective_user else None, thread_id, copied.message_id)
+        except Exception as e:
+            logger.exception("copy_message failed, trying forward_message: %s", e)
+            try:
+                fwd = await context.bot.forward_message(
+                    chat_id=SUPPORT_CHAT_ID,
+                    message_thread_id=thread_id,
+                    from_chat_id=chat.id,
+                    message_id=message.message_id,
+                )
+                support_msg_id_to_origin[fwd.message_id] = (chat.id, message.message_id)
+                logger.info("forwarded msg to topic: u=%s -> thread=%s mid=%s", update.effective_user.id if update.effective_user else None, thread_id, fwd.message_id)
+            except Exception as e2:
+                logger.exception("forward_message also failed: %s", e2)
+                # As a last resort, echo text content if available
+                if message.text:
+                    note = await context.bot.send_message(
+                        chat_id=SUPPORT_CHAT_ID,
+                        message_thread_id=thread_id,
+                        text=f"[Текст клиента]\n{message.text}",
+                    )
+                    support_msg_id_to_origin[note.message_id] = (chat.id, message.message_id)
+                else:
+                    await context.bot.send_message(
+                        chat_id=SUPPORT_CHAT_ID,
+                        message_thread_id=thread_id,
+                        text="Не удалось отобразить сообщение клиента (неизвестный тип/ошибка API)",
+                    )
         return
 
     # DM owner mode
@@ -280,12 +310,38 @@ async def handle_incoming_from_user(update: Update, context: ContextTypes.DEFAUL
         disable_web_page_preview=True,
     )
     owner_msg_id_to_origin[sent_header.message_id] = (chat.id, message.message_id)
-    copied = await context.bot.copy_message(
-        chat_id=OWNER_ID,
-        from_chat_id=chat.id,
-        message_id=message.message_id,
-    )
-    owner_msg_id_to_origin[copied.message_id] = (chat.id, message.message_id)
+    # Same fallback logic in DM-owner mode
+    try:
+        copied = await context.bot.copy_message(
+            chat_id=OWNER_ID,
+            from_chat_id=chat.id,
+            message_id=message.message_id,
+        )
+        owner_msg_id_to_origin[copied.message_id] = (chat.id, message.message_id)
+        logger.info("copied msg to owner: u=%s mid=%s", update.effective_user.id if update.effective_user else None, copied.message_id)
+    except Exception as e:
+        logger.exception("copy_message to owner failed, trying forward_message: %s", e)
+        try:
+            fwd = await context.bot.forward_message(
+                chat_id=OWNER_ID,
+                from_chat_id=chat.id,
+                message_id=message.message_id,
+            )
+            owner_msg_id_to_origin[fwd.message_id] = (chat.id, message.message_id)
+            logger.info("forwarded msg to owner: u=%s mid=%s", update.effective_user.id if update.effective_user else None, fwd.message_id)
+        except Exception as e2:
+            logger.exception("forward_message to owner also failed: %s", e2)
+            if message.text:
+                note = await context.bot.send_message(
+                    chat_id=OWNER_ID,
+                    text=f"[Текст клиента]\n{message.text}",
+                )
+                owner_msg_id_to_origin[note.message_id] = (chat.id, message.message_id)
+            else:
+                await context.bot.send_message(
+                    chat_id=OWNER_ID,
+                    text="Не удалось отобразить сообщение клиента (неизвестный тип/ошибка API)",
+                )
 
 
 async def handle_owner_reply(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
