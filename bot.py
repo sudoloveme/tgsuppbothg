@@ -63,20 +63,49 @@ def _db_connect() -> sqlite3.Connection:
         except Exception:
             pass
     conn = sqlite3.connect(str(path))
+    # New normalized table keyed by (support_chat_id, user_id)
     conn.execute(
-        "CREATE TABLE IF NOT EXISTS user_topics (user_id INTEGER PRIMARY KEY, thread_id INTEGER NOT NULL, created_at TEXT DEFAULT CURRENT_TIMESTAMP)"
+        "CREATE TABLE IF NOT EXISTS user_topics_v2 (\n"
+        "  support_chat_id INTEGER NOT NULL,\n"
+        "  user_id INTEGER NOT NULL,\n"
+        "  thread_id INTEGER NOT NULL,\n"
+        "  created_at TEXT DEFAULT CURRENT_TIMESTAMP,\n"
+        "  PRIMARY KEY (support_chat_id, user_id)\n"
+        ")"
     )
-    conn.commit()
+    # Migrate from legacy table if present
+    try:
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS user_topics (user_id INTEGER PRIMARY KEY, thread_id INTEGER NOT NULL, created_at TEXT DEFAULT CURRENT_TIMESTAMP)"
+        )
+        if SUPPORT_CHAT_ID is not None:
+            conn.execute(
+                "INSERT OR IGNORE INTO user_topics_v2 (support_chat_id, user_id, thread_id)\n"
+                "SELECT ?, user_id, thread_id FROM user_topics",
+                (SUPPORT_CHAT_ID,),
+            )
+            conn.commit()
+    except Exception:
+        # Best-effort migration
+        pass
     return conn
 
 
 def db_get_thread_id(user_id: int) -> int | None:
     try:
         conn = _db_connect()
-        cur = conn.execute("SELECT thread_id FROM user_topics WHERE user_id=?", (user_id,))
+        if SUPPORT_CHAT_ID is not None:
+            cur = conn.execute(
+                "SELECT thread_id FROM user_topics_v2 WHERE support_chat_id=? AND user_id=?",
+                (SUPPORT_CHAT_ID, user_id),
+            )
+        else:
+            cur = conn.execute("SELECT thread_id FROM user_topics WHERE user_id=?", (user_id,))
         row = cur.fetchone()
         conn.close()
-        return int(row[0]) if row else None
+        tid = int(row[0]) if row else None
+        logger.info("DB get thread: support_chat_id=%s user_id=%s -> %s", str(SUPPORT_CHAT_ID), user_id, str(tid))
+        return tid
     except Exception:
         logger.exception("DB read failed (get thread): user_id=%s", user_id)
         return None
@@ -85,12 +114,20 @@ def db_get_thread_id(user_id: int) -> int | None:
 def db_set_thread_id(user_id: int, thread_id: int) -> None:
     try:
         conn = _db_connect()
-        conn.execute(
-            "INSERT INTO user_topics(user_id, thread_id) VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE SET thread_id=excluded.thread_id",
-            (user_id, thread_id),
-        )
+        if SUPPORT_CHAT_ID is not None:
+            conn.execute(
+                "INSERT INTO user_topics_v2(support_chat_id, user_id, thread_id) VALUES(?, ?, ?)\n"
+                "ON CONFLICT(support_chat_id, user_id) DO UPDATE SET thread_id=excluded.thread_id",
+                (SUPPORT_CHAT_ID, user_id, thread_id),
+            )
+        else:
+            conn.execute(
+                "INSERT INTO user_topics(user_id, thread_id) VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE SET thread_id=excluded.thread_id",
+                (user_id, thread_id),
+            )
         conn.commit()
         conn.close()
+        logger.info("DB set thread: support_chat_id=%s user_id=%s -> %s", str(SUPPORT_CHAT_ID), user_id, thread_id)
     except Exception:
         logger.exception("DB write failed (set thread): user_id=%s thread_id=%s", user_id, thread_id)
 
