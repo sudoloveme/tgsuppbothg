@@ -276,6 +276,12 @@ async def handle_incoming_from_user(update: Update, context: ContextTypes.DEFAUL
     if message is None or chat is None:
         return
 
+    # Accept only private messages from real users (avoid bot/self or group events)
+    if getattr(chat, "type", "") != "private":
+        return
+    if update.effective_user is None or getattr(update.effective_user, "is_bot", False):
+        return
+
     try:
         logger.info(
             "incoming msg: chat_id=%s user_id=%s text_present=%s media=%s",
@@ -478,7 +484,7 @@ def main() -> None:
     # Generic incoming messages from users
     application.add_handler(
         MessageHandler(
-            filters.ALL & ~filters.COMMAND,
+            filters.ChatType.PRIVATE & ~filters.COMMAND,
             handle_incoming_from_user,
         )
     )
