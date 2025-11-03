@@ -213,7 +213,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         thread_id = await _ensure_forum_topic_for_user(update, context)
         logger.info("/start from user_id=%s → thread_id=%s", user.id, str(thread_id))
         await update.effective_message.reply_text(
-            "Это чат поддержки. Ваше сообщение будет направлено в отдельную тему форума операторов."
+            "Здравствуйте! Опишите вашу проблему или вопрос. Для ускорения оказания помощи, укажите сразу ваш email, а также скриншоты проблемы если возможно. Мы ответим вам в течение 24 часов."
         )
         # Post a note to operators that user started the dialog
         if thread_id is not None:
@@ -252,23 +252,7 @@ async def cmd_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.effective_message.reply_text(str(update.effective_chat.id))
 
 
-async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if SUPPORT_CHAT_ID is not None:
-        await update.effective_message.reply_text(
-            "Сообщения пользователей публикуются в отдельные темы форума (по одному топику на пользователя).\n"
-            "Чтобы ответить — напишите реплаем в нужной теме."
-        )
-        return
-
-    if OWNER_ID is not None and update.effective_user and update.effective_user.id == OWNER_ID:
-        await update.effective_message.reply_text(
-            "Ответьте реплаем на сообщение пользователя — бот перешлёт ответ.\n"
-            "Команды: /id — ваш chat_id"
-        )
-    else:
-        await update.effective_message.reply_text(
-            "Напишите сообщение — оператор ответит здесь"
-        )
+## cmd_help removed
 
 
 async def cmd_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -686,7 +670,6 @@ def main() -> None:
     application.add_handler(CommandHandler("diag", cmd_diag))
     if SUPPORT_CHAT_ID is not None:
         application.add_handler(CommandHandler("panel", cmd_panel))
-    application.add_handler(CommandHandler("help", cmd_help))
 
     # Reply handlers: restrict to specific chats to avoid intercepting all messages
     if SUPPORT_CHAT_ID is not None:
