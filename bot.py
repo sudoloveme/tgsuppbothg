@@ -1,6 +1,8 @@
 import asyncio
 import logging
 import os
+import sqlite3
+from pathlib import Path
 from typing import Dict, Tuple
 
 from dotenv import load_dotenv
@@ -23,6 +25,8 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
 OWNER_ID_ENV = os.getenv("OWNER_ID", "").strip()
 # Optional forum mode: ID супергруппы с включёнными темами (forum)
 SUPPORT_CHAT_ID_ENV = os.getenv("SUPPORT_CHAT_ID", "").strip()
+# Optional DB for persistence
+DB_PATH = os.getenv("DB_PATH", "data.db").strip() or "data.db"
 
 if not TELEGRAM_BOT_TOKEN:
     raise RuntimeError("TELEGRAM_BOT_TOKEN is not set. Put it in your environment or a .env file.")
@@ -46,6 +50,50 @@ owner_msg_id_to_origin: Dict[int, Tuple[int, int]] = {}
 # Forum mode mappings
 user_id_to_thread_id: Dict[int, int] = {}
 support_msg_id_to_origin: Dict[int, Tuple[int, int]] = {}
+########################
+# SQLite persistence   #
+########################
+
+def _db_connect() -> sqlite3.Connection:
+    path = Path(DB_PATH)
+    # Ensure directory exists if path includes a directory
+    if path.parent and not path.parent.exists():
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
+    conn = sqlite3.connect(str(path))
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS user_topics (user_id INTEGER PRIMARY KEY, thread_id INTEGER NOT NULL, created_at TEXT DEFAULT CURRENT_TIMESTAMP)"
+    )
+    conn.commit()
+    return conn
+
+
+def db_get_thread_id(user_id: int) -> int | None:
+    try:
+        conn = _db_connect()
+        cur = conn.execute("SELECT thread_id FROM user_topics WHERE user_id=?", (user_id,))
+        row = cur.fetchone()
+        conn.close()
+        return int(row[0]) if row else None
+    except Exception:
+        logger.exception("DB read failed (get thread): user_id=%s", user_id)
+        return None
+
+
+def db_set_thread_id(user_id: int, thread_id: int) -> None:
+    try:
+        conn = _db_connect()
+        conn.execute(
+            "INSERT INTO user_topics(user_id, thread_id) VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE SET thread_id=excluded.thread_id",
+            (user_id, thread_id),
+        )
+        conn.commit()
+        conn.close()
+    except Exception:
+        logger.exception("DB write failed (set thread): user_id=%s thread_id=%s", user_id, thread_id)
+
 
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -183,11 +231,17 @@ async def _ensure_forum_topic_for_user(update: Update, context: ContextTypes.DEF
         return None
     if user.id in user_id_to_thread_id:
         return user_id_to_thread_id[user.id]
+    # Try DB
+    cached = db_get_thread_id(user.id)
+    if cached is not None:
+        user_id_to_thread_id[user.id] = cached
+        return cached
     name = _display_name(update)[:128]
     try:
         topic = await context.bot.create_forum_topic(chat_id=SUPPORT_CHAT_ID, name=name)
         thread_id = topic.message_thread_id
         user_id_to_thread_id[user.id] = thread_id
+        db_set_thread_id(user.id, thread_id)
         header = _format_user_header(update)
         sent = await context.bot.send_message(
             chat_id=SUPPORT_CHAT_ID,
