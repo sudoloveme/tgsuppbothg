@@ -55,9 +55,27 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
 
     if SUPPORT_CHAT_ID is not None:
+        # Ensure topic exists immediately when user presses /start
+        thread_id = await _ensure_forum_topic_for_user(update, context)
+        logger.info("/start from user_id=%s → thread_id=%s", user.id, str(thread_id))
         await update.effective_message.reply_text(
             "Это чат поддержки. Ваше сообщение будет направлено в отдельную тему форума операторов."
         )
+        # Post a note to operators that user started the dialog
+        if thread_id is not None:
+            try:
+                header = _format_user_header(update)
+                sent = await context.bot.send_message(
+                    chat_id=SUPPORT_CHAT_ID,
+                    message_thread_id=thread_id,
+                    text=f"Пользователь начал диалог: {header}",
+                )
+                support_msg_id_to_origin[sent.message_id] = (
+                    update.effective_chat.id if update.effective_chat else 0,
+                    update.effective_message.message_id if update.effective_message else 0,
+                )
+            except Exception:
+                logger.exception("Failed to notify operators on /start")
         return
 
     if OWNER_ID is not None and update.effective_user.id == OWNER_ID:
@@ -203,6 +221,17 @@ async def handle_incoming_from_user(update: Update, context: ContextTypes.DEFAUL
     chat = update.effective_chat
     if message is None or chat is None:
         return
+
+    try:
+        logger.info(
+            "incoming msg: chat_id=%s user_id=%s text_present=%s media=%s",
+            getattr(chat, "id", None),
+            getattr(update.effective_user, "id", None),
+            bool(getattr(message, "text", "")),
+            message.effective_attachment is not None if hasattr(message, "effective_attachment") else False,
+        )
+    except Exception:
+        pass
 
     # If not configured yet, try to detect owner from the first /start in a private chat with the owner
     if OWNER_ID is None and update.effective_user and update.effective_user.id == chat.id and chat.type == "private":
