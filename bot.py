@@ -188,6 +188,19 @@ def db_get_thread_state(thread_id: int) -> tuple[str, int] | None:
         return None
 
 
+def build_thread_keyboard(thread_id: int) -> InlineKeyboardMarkup:
+    state = db_get_thread_state(thread_id)
+    show_open = False
+    if state is not None:
+        status, archived = state
+        show_open = archived or status != "active"
+    if show_open:
+        btn = InlineKeyboardButton(text="Открыть диалог", callback_data=f"open:{thread_id}")
+    else:
+        btn = InlineKeyboardButton(text="Закрыть диалог", callback_data=f"close:{thread_id}")
+    return InlineKeyboardMarkup([[btn]])
+
+
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.effective_user is None:
@@ -256,6 +269,27 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.effective_message.reply_text(
             "Напишите сообщение — оператор ответит здесь"
         )
+
+
+async def cmd_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if SUPPORT_CHAT_ID is None:
+        return
+    if update.effective_chat is None or update.effective_chat.id != SUPPORT_CHAT_ID:
+        return
+    msg = update.effective_message
+    if msg is None or msg.message_thread_id is None:
+        await update.effective_message.reply_text("Эта команда работает внутри темы форума")
+        return
+    thread_id = msg.message_thread_id
+    try:
+        await context.bot.send_message(
+            chat_id=SUPPORT_CHAT_ID,
+            message_thread_id=thread_id,
+            text="Панель управления темой",
+            reply_markup=build_thread_keyboard(thread_id),
+        )
+    except Exception:
+        logger.exception("Failed to send panel in thread %s", thread_id)
 
 
 async def handle_callback_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -413,9 +447,7 @@ async def _ensure_forum_topic_for_user(update: Update, context: ContextTypes.DEF
         db_upsert_thread_state(thread_id, status="active", archived=0)
         header = _format_user_header(update)
         # Buttons
-        keyboard = InlineKeyboardMarkup(
-            [[InlineKeyboardButton(text="Закрыть диалог", callback_data=f"close:{thread_id}")]]
-        )
+        keyboard = build_thread_keyboard(thread_id)
         sent = await context.bot.send_message(
             chat_id=SUPPORT_CHAT_ID,
             message_thread_id=thread_id,
@@ -499,6 +531,7 @@ async def handle_incoming_from_user(update: Update, context: ContextTypes.DEFAUL
             text=f"Новое сообщение от: {header}",
             parse_mode=ParseMode.HTML,
             disable_web_page_preview=True,
+            reply_markup=build_thread_keyboard(thread_id),
         )
         support_msg_id_to_origin[sent_header.message_id] = (chat.id, message.message_id)
 
@@ -651,6 +684,8 @@ def main() -> None:
     application.add_handler(CommandHandler("id", cmd_id))
     # Diagnostics command
     application.add_handler(CommandHandler("diag", cmd_diag))
+    if SUPPORT_CHAT_ID is not None:
+        application.add_handler(CommandHandler("panel", cmd_panel))
     application.add_handler(CommandHandler("help", cmd_help))
 
     # Reply handlers: restrict to specific chats to avoid intercepting all messages
