@@ -405,8 +405,21 @@ def main() -> None:
     application.add_handler(CommandHandler("diag", cmd_diag))
     application.add_handler(CommandHandler("help", cmd_help))
 
-    # Owner replies handler must run before generic messages to avoid duplicate processing
-    application.add_handler(MessageHandler(filters.ALL, handle_owner_reply))
+    # Reply handlers: restrict to specific chats to avoid intercepting all messages
+    if SUPPORT_CHAT_ID is not None:
+        application.add_handler(
+            MessageHandler(
+                filters.Chat(SUPPORT_CHAT_ID) & filters.REPLY,
+                handle_owner_reply,
+            )
+        )
+    if OWNER_ID is not None:
+        application.add_handler(
+            MessageHandler(
+                filters.Chat(OWNER_ID) & filters.REPLY,
+                handle_owner_reply,
+            )
+        )
 
     # Generic incoming messages from users
     application.add_handler(
