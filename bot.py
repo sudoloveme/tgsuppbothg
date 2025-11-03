@@ -99,6 +99,40 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         )
 
 
+async def cmd_diag(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Diagnostics: show current mode, chat settings, and bot permissions."""
+    lines: list[str] = []
+    try:
+        me = await context.bot.get_me()
+        lines.append(f"bot: @{me.username} id:{me.id}")
+    except Exception:
+        lines.append("bot: <unknown>")
+
+    if SUPPORT_CHAT_ID is not None:
+        lines.append(f"mode: forum")
+        lines.append(f"support_chat_id: {SUPPORT_CHAT_ID}")
+        try:
+            chat = await context.bot.get_chat(SUPPORT_CHAT_ID)
+            lines.append(f"chat.title: {getattr(chat, 'title', '')}")
+            lines.append(f"chat.is_forum: {getattr(chat, 'is_forum', False)}")
+            # Check bot membership and permissions
+            try:
+                member = await context.bot.get_chat_member(SUPPORT_CHAT_ID, me.id)
+                can_topics = getattr(member, 'can_manage_topics', False) or getattr(getattr(member, 'privileges', None), 'can_manage_topics', False)
+                is_admin = str(getattr(member, 'status', '')) in {"administrator", "creator"}
+                lines.append(f"bot_is_admin: {is_admin}")
+                lines.append(f"can_manage_topics: {can_topics}")
+            except Exception:
+                lines.append("get_chat_member: failed")
+        except Exception:
+            lines.append("get_chat: failed")
+    else:
+        lines.append("mode: owner-dm")
+        lines.append(f"owner_id: {OWNER_ID}")
+
+    await update.effective_message.reply_text("\n".join(lines))
+
+
 def _format_user_header(update: Update) -> str:
     user = update.effective_user
     if not user:
@@ -147,8 +181,19 @@ async def _ensure_forum_topic_for_user(update: Update, context: ContextTypes.DEF
             update.effective_message.message_id if update.effective_message else 0,
         )
         return thread_id
-    except Exception:
-        logger.exception("Failed to create forum topic")
+    except Exception as e:
+        logger.exception("Failed to create forum topic (chat may not be forum or no permission): %s", e)
+        # Try to notify operators in support chat if possible
+        try:
+            await context.bot.send_message(
+                chat_id=SUPPORT_CHAT_ID,
+                text=(
+                    f"Не удалось создать тему для пользователя {name}.\n"
+                    f"Проверьте: чат является форумом и у бота есть право 'Управлять темами'."
+                ),
+            )
+        except Exception:
+            pass
         return None
 
 
@@ -260,11 +305,19 @@ async def handle_owner_reply(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 def main() -> None:
+    # Log startup mode
+    if SUPPORT_CHAT_ID is not None:
+        logger.info("Starting in FORUM mode. SUPPORT_CHAT_ID=%s", str(SUPPORT_CHAT_ID))
+    else:
+        logger.info("Starting in OWNER DM mode. OWNER_ID=%s", str(OWNER_ID))
+
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
     # Commands
     application.add_handler(CommandHandler("start", cmd_start))
     application.add_handler(CommandHandler("id", cmd_id))
+    # Diagnostics command
+    application.add_handler(CommandHandler("diag", cmd_diag))
     application.add_handler(CommandHandler("help", cmd_help))
 
     # Owner replies handler must run before generic messages to avoid duplicate processing
