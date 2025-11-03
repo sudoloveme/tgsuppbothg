@@ -680,9 +680,11 @@ def main() -> None:
     # Buttons handler
     application.add_handler(CallbackQueryHandler(handle_callback_buttons))
 
-    # Auto-archive job
-    if SUPPORT_CHAT_ID is not None and ARCHIVE_AFTER_HOURS > 0:
+    # Auto-archive job (only if JobQueue available)
+    if SUPPORT_CHAT_ID is not None and ARCHIVE_AFTER_HOURS > 0 and getattr(application, "job_queue", None) is not None:
         application.job_queue.run_repeating(archive_inactive_topics_job, interval=3600, first=60)
+    elif SUPPORT_CHAT_ID is not None and ARCHIVE_AFTER_HOURS > 0:
+        logger.warning("JobQueue not available. Install PTB with job-queue extras: pip install 'python-telegram-bot[job-queue]==21.5'")
 
     application.run_polling(close_loop=False)
 
