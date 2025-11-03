@@ -6,13 +6,14 @@ from pathlib import Path
 from typing import Dict, Tuple
 
 from dotenv import load_dotenv
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.constants import ParseMode
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
     ContextTypes,
     MessageHandler,
+    CallbackQueryHandler,
     filters,
 )
 
@@ -27,6 +28,7 @@ OWNER_ID_ENV = os.getenv("OWNER_ID", "").strip()
 SUPPORT_CHAT_ID_ENV = os.getenv("SUPPORT_CHAT_ID", "").strip()
 # Optional DB for persistence
 DB_PATH = os.getenv("DB_PATH", "data.db").strip() or "data.db"
+ARCHIVE_AFTER_HOURS = int(os.getenv("ARCHIVE_AFTER_HOURS", "72").strip() or 72)
 
 if not TELEGRAM_BOT_TOKEN:
     raise RuntimeError("TELEGRAM_BOT_TOKEN is not set. Put it in your environment or a .env file.")
@@ -71,6 +73,17 @@ def _db_connect() -> sqlite3.Connection:
         "  thread_id INTEGER NOT NULL,\n"
         "  created_at TEXT DEFAULT CURRENT_TIMESTAMP,\n"
         "  PRIMARY KEY (support_chat_id, user_id)\n"
+        ")"
+    )
+    # Thread state table
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS thread_states (\n"
+        "  support_chat_id INTEGER NOT NULL,\n"
+        "  thread_id INTEGER NOT NULL,\n"
+        "  status TEXT NOT NULL DEFAULT 'active',\n"
+        "  archived INTEGER NOT NULL DEFAULT 0,\n"
+        "  last_activity TEXT DEFAULT CURRENT_TIMESTAMP,\n"
+        "  PRIMARY KEY (support_chat_id, thread_id)\n"
         ")"
     )
     # Migrate from legacy table if present
@@ -130,6 +143,49 @@ def db_set_thread_id(user_id: int, thread_id: int) -> None:
         logger.info("DB set thread: support_chat_id=%s user_id=%s -> %s", str(SUPPORT_CHAT_ID), user_id, thread_id)
     except Exception:
         logger.exception("DB write failed (set thread): user_id=%s thread_id=%s", user_id, thread_id)
+
+
+# Thread state helpers
+def db_upsert_thread_state(thread_id: int, status: str = "active", archived: int = 0) -> None:
+    try:
+        conn = _db_connect()
+        conn.execute(
+            "INSERT INTO thread_states (support_chat_id, thread_id, status, archived) VALUES (?, ?, ?, ?)\n"
+            "ON CONFLICT(support_chat_id, thread_id) DO UPDATE SET status=excluded.status, archived=excluded.archived, last_activity=CURRENT_TIMESTAMP",
+            (SUPPORT_CHAT_ID, thread_id, status, archived),
+        )
+        conn.commit()
+        conn.close()
+    except Exception:
+        logger.exception("DB write failed (upsert thread state): thread_id=%s", thread_id)
+
+
+def db_touch_activity(thread_id: int) -> None:
+    try:
+        conn = _db_connect()
+        conn.execute(
+            "UPDATE thread_states SET last_activity=CURRENT_TIMESTAMP WHERE support_chat_id=? AND thread_id=?",
+            (SUPPORT_CHAT_ID, thread_id),
+        )
+        conn.commit()
+        conn.close()
+    except Exception:
+        logger.exception("DB write failed (touch activity): thread_id=%s", thread_id)
+
+
+def db_get_thread_state(thread_id: int) -> tuple[str, int] | None:
+    try:
+        conn = _db_connect()
+        cur = conn.execute(
+            "SELECT status, archived FROM thread_states WHERE support_chat_id=? AND thread_id=?",
+            (SUPPORT_CHAT_ID, thread_id),
+        )
+        row = cur.fetchone()
+        conn.close()
+        return (row[0], int(row[1])) if row else None
+    except Exception:
+        logger.exception("DB read failed (get thread state): thread_id=%s", thread_id)
+        return None
 
 
 
@@ -200,6 +256,81 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.effective_message.reply_text(
             "Напишите сообщение — оператор ответит здесь"
         )
+
+
+async def handle_callback_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if SUPPORT_CHAT_ID is None:
+        await update.callback_query.answer()
+        return
+    cq = update.callback_query
+    if cq is None:
+        return
+    data = cq.data or ""
+    if not (data.startswith("close:") or data.startswith("open:")):
+        await cq.answer()
+        return
+    try:
+        _, thread_str = data.split(":", 1)
+        thread_id = int(thread_str)
+    except Exception:
+        await cq.answer("Некорректные данные", show_alert=False)
+        return
+
+    if data.startswith("close:"):
+        try:
+            await context.bot.close_forum_topic(chat_id=SUPPORT_CHAT_ID, message_thread_id=thread_id)
+            db_upsert_thread_state(thread_id, status="closed", archived=1)
+            await cq.answer("Диалог закрыт")
+            # Update buttons to show Open
+            try:
+                await cq.message.edit_reply_markup(
+                    reply_markup=InlineKeyboardMarkup(
+                        [[InlineKeyboardButton(text="Открыть диалог", callback_data=f"open:{thread_id}")]]
+                    )
+                )
+            except Exception:
+                pass
+        except Exception:
+            await cq.answer("Не удалось закрыть", show_alert=True)
+    else:
+        try:
+            await context.bot.reopen_forum_topic(chat_id=SUPPORT_CHAT_ID, message_thread_id=thread_id)
+            db_upsert_thread_state(thread_id, status="active", archived=0)
+            await cq.answer("Диалог открыт")
+            try:
+                await cq.message.edit_reply_markup(
+                    reply_markup=InlineKeyboardMarkup(
+                        [[InlineKeyboardButton(text="Закрыть диалог", callback_data=f"close:{thread_id}")]]
+                    )
+                )
+            except Exception:
+                pass
+        except Exception:
+            await cq.answer("Не удалось открыть", show_alert=True)
+
+
+async def archive_inactive_topics_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+    if SUPPORT_CHAT_ID is None or ARCHIVE_AFTER_HOURS <= 0:
+        return
+    try:
+        conn = _db_connect()
+        cur = conn.execute(
+            "SELECT thread_id FROM thread_states WHERE support_chat_id=? AND archived=0 AND status='active' AND last_activity <= datetime('now', ?)",
+            (SUPPORT_CHAT_ID, f"-{ARCHIVE_AFTER_HOURS} hours"),
+        )
+        rows = cur.fetchall()
+        conn.close()
+    except Exception:
+        logger.exception("DB read failed (archive scan)")
+        return
+
+    for (thread_id,) in rows:
+        try:
+            await context.bot.close_forum_topic(chat_id=SUPPORT_CHAT_ID, message_thread_id=thread_id)
+            db_upsert_thread_state(thread_id, status="closed", archived=1)
+            logger.info("Auto-archived thread %s due to inactivity", thread_id)
+        except Exception:
+            logger.exception("Failed to auto-archive thread %s", thread_id)
 
 
 async def cmd_diag(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -279,11 +410,17 @@ async def _ensure_forum_topic_for_user(update: Update, context: ContextTypes.DEF
         thread_id = topic.message_thread_id
         user_id_to_thread_id[user.id] = thread_id
         db_set_thread_id(user.id, thread_id)
+        db_upsert_thread_state(thread_id, status="active", archived=0)
         header = _format_user_header(update)
+        # Buttons
+        keyboard = InlineKeyboardMarkup(
+            [[InlineKeyboardButton(text="Закрыть диалог", callback_data=f"close:{thread_id}")]]
+        )
         sent = await context.bot.send_message(
             chat_id=SUPPORT_CHAT_ID,
             message_thread_id=thread_id,
             text=f"Открыт диалог: {header}\nОтветьте реплаем в этой теме.",
+            reply_markup=keyboard,
         )
         support_msg_id_to_origin[sent.message_id] = (
             update.effective_chat.id if update.effective_chat else 0,
@@ -344,6 +481,17 @@ async def handle_incoming_from_user(update: Update, context: ContextTypes.DEFAUL
         thread_id = await _ensure_forum_topic_for_user(update, context)
         if thread_id is None:
             return
+        # Reopen if was archived/closed
+        state = db_get_thread_state(thread_id)
+        if state is not None:
+            status, archived = state
+            if archived or status != "active":
+                try:
+                    await context.bot.reopen_forum_topic(chat_id=SUPPORT_CHAT_ID, message_thread_id=thread_id)
+                except Exception:
+                    logger.exception("Failed to reopen topic %s", thread_id)
+                db_upsert_thread_state(thread_id, status="active", archived=0)
+        db_touch_activity(thread_id)
         header = _format_user_header(update)
         sent_header = await context.bot.send_message(
             chat_id=SUPPORT_CHAT_ID,
@@ -456,6 +604,9 @@ async def handle_owner_reply(update: Update, context: ContextTypes.DEFAULT_TYPE)
         if not origin:
             return
         original_chat_id, original_message_id = origin
+        # Touch activity
+        if message.message_thread_id is not None:
+            db_touch_activity(message.message_thread_id)
         await context.bot.copy_message(
             chat_id=original_chat_id,
             from_chat_id=chat.id,
@@ -525,6 +676,13 @@ def main() -> None:
             handle_incoming_from_user,
         )
     )
+
+    # Buttons handler
+    application.add_handler(CallbackQueryHandler(handle_callback_buttons))
+
+    # Auto-archive job
+    if SUPPORT_CHAT_ID is not None and ARCHIVE_AFTER_HOURS > 0:
+        application.job_queue.run_repeating(archive_inactive_topics_job, interval=3600, first=60)
 
     application.run_polling(close_loop=False)
 
