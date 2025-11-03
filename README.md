@@ -46,10 +46,84 @@ python bot.py
 - `/start` — приветствие для пользователя; подсказка для владельца.
 - `/id` — показать текущий chat_id (используйте, чтобы узнать OWNER_ID).
 
-### 6) Примечания
+### 6) Деплой на Ubuntu сервер
+
+#### Быстрый деплой (автоматический)
+
+1. Подключитесь к серверу:
+```bash
+ssh ubuntu@IP_СЕРВЕРА
+```
+
+2. Скачайте и запустите скрипт деплоя:
+```bash
+curl -O https://raw.githubusercontent.com/sudoloveme/tgsuppbothg/main/deploy.sh
+chmod +x deploy.sh
+sudo ./deploy.sh
+```
+
+3. Создайте файл `.env` в `/opt/tg-support-bot/`:
+```bash
+sudo nano /opt/tg-support-bot/.env
+```
+Добавьте:
+```
+TELEGRAM_BOT_TOKEN=ваш_токен
+OWNER_ID=ваш_chat_id
+# или для форума:
+# SUPPORT_CHAT_ID=-1001234567890
+```
+
+4. Перезапустите сервис:
+```bash
+sudo systemctl restart tg-support-bot
+```
+
+#### Ручной деплой
+
+```bash
+# На сервере
+sudo mkdir -p /opt/tg-support-bot
+cd /opt/tg-support-bot
+sudo git clone https://github.com/sudoloveme/tgsuppbothg.git .
+
+# Создать venv и установить зависимости
+sudo python3 -m venv .venv
+sudo .venv/bin/pip install -r requirements.txt
+
+# Создать .env файл
+sudo nano .env
+
+# Создать systemd service (см. пример в deploy.sh)
+
+# Запустить
+sudo systemctl enable tg-support-bot
+sudo systemctl start tg-support-bot
+```
+
+#### Полезные команды для управления
+
+```bash
+# Просмотр логов
+sudo journalctl -u tg-support-bot -f
+
+# Статус сервиса
+sudo systemctl status tg-support-bot
+
+# Перезапуск после обновления кода
+cd /opt/tg-support-bot
+sudo git pull
+sudo systemctl restart tg-support-bot
+
+# Остановка/запуск
+sudo systemctl stop tg-support-bot
+sudo systemctl start tg-support-bot
+```
+
+### 7) Примечания
 
 - Соответствия сообщений хранятся в памяти и теряются при перезапуске.
 - Для продакшна можно добавить БД или Webhook, но для начала достаточно polling.
- - Чтобы включить форум в группе: Превратите группу в супергруппу и включите "Темы" в настройках. Затем добавьте бота с правом создавать темы.
+- Чтобы включить форум в группе: Превратите группу в супергруппу и включите "Темы" в настройках. Затем добавьте бота с правом создавать темы.
 
 
