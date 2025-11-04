@@ -573,6 +573,9 @@
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 секунд таймаут
                 
+                console.log('Sending fetch request...');
+                const startTime = Date.now();
+                
                 const response = await fetch(apiUrl, {
                     signal: controller.signal,
                     headers: {
@@ -581,7 +584,11 @@
                 });
                 
                 clearTimeout(timeoutId);
+                const elapsed = Date.now() - startTime;
+                console.log(`Response received in ${elapsed}ms`);
                 console.log('Response status:', response.status, response.statusText);
+                console.log('Response URL:', response.url);
+                console.log('Response headers:', Object.fromEntries([...response.headers.entries()]));
                 
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({}));
