@@ -124,6 +124,27 @@ def db_get_thread_id(user_id: int) -> int | None:
         return None
 
 
+def db_get_user_id(thread_id: int) -> int | None:
+    """Get user_id from thread_id."""
+    try:
+        conn = _db_connect()
+        if SUPPORT_CHAT_ID is not None:
+            cur = conn.execute(
+                "SELECT user_id FROM user_topics_v2 WHERE support_chat_id=? AND thread_id=?",
+                (SUPPORT_CHAT_ID, thread_id),
+            )
+        else:
+            cur = conn.execute("SELECT user_id FROM user_topics WHERE thread_id=?", (thread_id,))
+        row = cur.fetchone()
+        conn.close()
+        uid = int(row[0]) if row else None
+        logger.info("DB get user: support_chat_id=%s thread_id=%s -> %s", str(SUPPORT_CHAT_ID), thread_id, str(uid))
+        return uid
+    except Exception:
+        logger.exception("DB read failed (get user): thread_id=%s", thread_id)
+        return None
+
+
 def db_set_thread_id(user_id: int, thread_id: int) -> None:
     try:
         conn = _db_connect()
@@ -199,6 +220,31 @@ def build_thread_keyboard(thread_id: int) -> InlineKeyboardMarkup:
     else:
         btn = InlineKeyboardButton(text="Закрыть диалог", callback_data=f"close:{thread_id}")
     return InlineKeyboardMarkup([[btn]])
+
+
+def build_rating_keyboard() -> InlineKeyboardMarkup:
+    """Build keyboard with rating buttons 1-5."""
+    buttons = [
+        InlineKeyboardButton(text="1", callback_data="rating:1"),
+        InlineKeyboardButton(text="2", callback_data="rating:2"),
+        InlineKeyboardButton(text="3", callback_data="rating:3"),
+        InlineKeyboardButton(text="4", callback_data="rating:4"),
+        InlineKeyboardButton(text="5", callback_data="rating:5"),
+    ]
+    return InlineKeyboardMarkup([buttons])
+
+
+async def send_rating_message(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> None:
+    """Send rating message to user."""
+    try:
+        await context.bot.send_message(
+            chat_id=user_id,
+            text="Оцените работу поддержки",
+            reply_markup=build_rating_keyboard(),
+        )
+        logger.info("Sent rating message to user_id=%s", user_id)
+    except Exception:
+        logger.exception("Failed to send rating message to user_id=%s", user_id)
 
 
 
@@ -277,13 +323,34 @@ async def cmd_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def handle_callback_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if SUPPORT_CHAT_ID is None:
-        await update.callback_query.answer()
-        return
     cq = update.callback_query
     if cq is None:
         return
     data = cq.data or ""
+    
+    # Handle rating callbacks
+    if data.startswith("rating:"):
+        try:
+            _, rating_str = data.split(":", 1)
+            rating = int(rating_str)
+            if 1 <= rating <= 5:
+                await cq.answer(f"Спасибо за оценку: {rating} ⭐")
+                # Optionally edit the message to show rating was received
+                try:
+                    await cq.message.edit_text("Спасибо за вашу оценку!")
+                except Exception:
+                    pass
+                logger.info("User %s gave rating %s", cq.from_user.id if cq.from_user else "unknown", rating)
+            else:
+                await cq.answer("Некорректная оценка", show_alert=True)
+        except Exception:
+            await cq.answer("Ошибка обработки оценки", show_alert=True)
+        return
+    
+    # Handle close/open callbacks (forum mode only)
+    if SUPPORT_CHAT_ID is None:
+        await cq.answer()
+        return
     if not (data.startswith("close:") or data.startswith("open:")):
         await cq.answer()
         return
@@ -308,6 +375,10 @@ async def handle_callback_buttons(update: Update, context: ContextTypes.DEFAULT_
                 )
             except Exception:
                 pass
+            # Send rating message to user
+            user_id = db_get_user_id(thread_id)
+            if user_id is not None:
+                await send_rating_message(context, user_id)
         except Exception:
             await cq.answer("Не удалось закрыть", show_alert=True)
     else:
@@ -347,6 +418,10 @@ async def archive_inactive_topics_job(context: ContextTypes.DEFAULT_TYPE) -> Non
             await context.bot.close_forum_topic(chat_id=SUPPORT_CHAT_ID, message_thread_id=thread_id)
             db_upsert_thread_state(thread_id, status="closed", archived=1)
             logger.info("Auto-archived thread %s due to inactivity", thread_id)
+            # Send rating message to user
+            user_id = db_get_user_id(thread_id)
+            if user_id is not None:
+                await send_rating_message(context, user_id)
         except Exception:
             logger.exception("Failed to auto-archive thread %s", thread_id)
 
