@@ -461,20 +461,28 @@
         // Получаем Telegram ID пользователя из Telegram WebApp API
         function getTelegramId() {
             try {
+                console.log('Telegram WebApp object:', tg);
+                console.log('initDataUnsafe:', tg.initDataUnsafe);
+                
                 // Telegram WebApp API предоставляет данные пользователя
                 if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                    console.log('Got Telegram ID from initDataUnsafe:', tg.initDataUnsafe.user.id);
                     return tg.initDataUnsafe.user.id;
                 }
                 
                 // Альтернативный способ - парсинг initData
                 if (tg.initData) {
+                    console.log('Parsing initData:', tg.initData);
                     const params = new URLSearchParams(tg.initData);
                     const user = params.get('user');
                     if (user) {
                         const userObj = JSON.parse(decodeURIComponent(user));
+                        console.log('Got Telegram ID from initData:', userObj.id);
                         return userObj.id || null;
                     }
                 }
+                
+                console.warn('Telegram ID not found in initDataUnsafe or initData');
             } catch (e) {
                 console.error('Error getting Telegram ID:', e);
             }
@@ -486,7 +494,10 @@
         async function loadSubscriptionData() {
             const telegramId = getTelegramId();
             
+            console.log('Attempting to load subscription data, Telegram ID:', telegramId);
+            
             if (!telegramId) {
+                console.error('Telegram ID is null or undefined');
                 showError('Не удалось определить пользователя. Пожалуйста, откройте приложение через Telegram бота.');
                 return;
             }
@@ -494,10 +505,26 @@
             try {
                 // Get base URL from current location
                 const baseUrl = window.location.origin;
-                const response = await fetch(`${baseUrl}/api/subscription/telegram/${telegramId}`);
+                const apiUrl = `${baseUrl}/api/subscription/telegram/${telegramId}`;
+                console.log('Fetching from:', apiUrl);
+                
+                // Добавляем таймаут для запроса
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 секунд таймаут
+                
+                const response = await fetch(apiUrl, {
+                    signal: controller.signal,
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+                
+                clearTimeout(timeoutId);
+                console.log('Response status:', response.status, response.statusText);
                 
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({}));
+                    console.error('API error:', errorData);
                     if (response.status === 404) {
                         showError(errorData.error || 'Ваш аккаунт не привязан к системе. Обратитесь в поддержку и попросите администратора привязать ваш email через команду /linkmail.');
                     } else {
@@ -507,10 +534,15 @@
                 }
 
                 const data = await response.json();
+                console.log('Received data:', data);
                 displaySubscriptionData(data);
             } catch (error) {
                 console.error('Error loading subscription:', error);
-                showError('Ошибка загрузки данных. Попробуйте позже.');
+                if (error.name === 'AbortError') {
+                    showError('Превышено время ожидания. Проверьте подключение к интернету и попробуйте снова.');
+                } else {
+                    showError('Ошибка загрузки данных: ' + (error.message || 'Неизвестная ошибка') + '. Попробуйте позже.');
+                }
             }
         }
 

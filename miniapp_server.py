@@ -24,49 +24,92 @@ async def get_subscription_by_telegram_id(request: Request) -> Response:
     GET /api/subscription/telegram/{telegram_id}
     """
     telegram_id_str = request.match_info.get('telegram_id')
+    logger.info(f"Received request for Telegram ID: {telegram_id_str}")
+    
     if not telegram_id_str:
+        logger.warning("Telegram ID not provided in request")
         return web.json_response(
             {"error": "Telegram ID is required"},
-            status=400
+            status=400,
+            headers={
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type',
+            }
         )
 
     try:
         telegram_id = int(telegram_id_str)
+        logger.info(f"Processing request for Telegram ID: {telegram_id}")
         
         # Get UUID from database by Telegram ID
         from database import db_get_user_backend_data
         backend_data = db_get_user_backend_data(telegram_id)
+        logger.info(f"Backend data for user {telegram_id}: {backend_data}")
         
         if not backend_data or not backend_data[0]:
+            logger.warning(f"User {telegram_id} not found in database or not linked")
             return web.json_response(
                 {"error": "User not found or not linked. Please contact support to link your account."},
-                status=404
+                status=404,
+                headers={
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type',
+                }
             )
         
         uuid = backend_data[0]
+        logger.info(f"Found UUID for user {telegram_id}: {uuid}")
         
         # Get user data from backend API
         user_data = await get_user_by_uuid(uuid)
+        logger.info(f"Backend API response for UUID {uuid}: {user_data is not None}")
         
         if not user_data:
+            logger.warning(f"Subscription data not found for UUID: {uuid}")
             return web.json_response(
                 {"error": "Subscription data not found"},
-                status=404
+                status=404,
+                headers={
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type',
+                }
             )
 
         # Return subscription data
-        return web.json_response(user_data)
+        logger.info(f"Successfully returning subscription data for user {telegram_id}")
+        return web.json_response(
+            user_data,
+            headers={
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type',
+            }
+        )
         
-    except ValueError:
+    except ValueError as e:
+        logger.error(f"Invalid Telegram ID format: {telegram_id_str}, error: {e}")
         return web.json_response(
             {"error": "Invalid Telegram ID"},
-            status=400
+            status=400,
+            headers={
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type',
+            }
         )
     except Exception as e:
         logger.exception(f"Error getting subscription data for Telegram ID {telegram_id_str}: {e}")
         return web.json_response(
             {"error": "Internal server error"},
-            status=500
+            status=500,
+            headers={
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type',
+            }
         )
 
 
@@ -111,11 +154,15 @@ async def serve_static(request: Request) -> Response:
     if '..' in path or path.startswith('/'):
         return web.Response(status=403, text="Forbidden")
     
+    # Don't serve API routes as static files
+    if path.startswith('api/'):
+        return web.Response(status=404, text="Not Found")
+    
     file_path = MINIAPP_DIR / path
     
-    # Default to index.html if path is a directory
-    if file_path.is_dir():
-        file_path = file_path / 'index.html'
+    # Default to index.html if path is a directory or empty
+    if file_path.is_dir() or not path or path == '':
+        file_path = MINIAPP_DIR / 'index.html'
     
     if not file_path.exists():
         return web.Response(status=404, text="Not Found")
@@ -131,7 +178,12 @@ async def serve_static(request: Request) -> Response:
     
     return web.Response(
         body=file_path.read_bytes(),
-        content_type=content_type
+        content_type=content_type,
+        headers={
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+        }
     )
 
 
@@ -139,7 +191,34 @@ def create_app() -> web.Application:
     """Create aiohttp application."""
     app = web.Application()
     
-    # API routes
+    # CORS middleware for all routes
+    @web.middleware
+    async def cors_middleware(request, handler):
+        # Handle preflight requests
+        if request.method == 'OPTIONS':
+            return web.Response(
+                headers={
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type',
+                }
+            )
+        try:
+            response = await handler(request)
+        except Exception as e:
+            logger.exception(f"Error in handler: {e}")
+            response = web.json_response(
+                {"error": "Internal server error"},
+                status=500
+            )
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return response
+    
+    app.middlewares.append(cors_middleware)
+    
+    # API routes (must be registered BEFORE catch-all route)
     app.router.add_get('/api/subscription/telegram/{telegram_id}', get_subscription_by_telegram_id)
     app.router.add_get('/api/subscription/{uuid}', get_subscription_data)
     
