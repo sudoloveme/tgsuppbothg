@@ -86,6 +86,16 @@ def _db_connect() -> sqlite3.Connection:
         "  PRIMARY KEY (support_chat_id, thread_id)\n"
         ")"
     )
+    # Ratings table
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS ratings (\n"
+        "  id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
+        "  user_id INTEGER NOT NULL,\n"
+        "  thread_id INTEGER,\n"
+        "  rating INTEGER NOT NULL CHECK(rating >= 1 AND rating <= 5),\n"
+        "  created_at TEXT DEFAULT CURRENT_TIMESTAMP\n"
+        ")"
+    )
     # Migrate from legacy table if present
     try:
         conn.execute(
@@ -207,6 +217,69 @@ def db_get_thread_state(thread_id: int) -> tuple[str, int] | None:
     except Exception:
         logger.exception("DB read failed (get thread state): thread_id=%s", thread_id)
         return None
+
+
+# Ratings functions
+def db_save_rating(user_id: int, rating: int, thread_id: int | None = None) -> None:
+    """Save rating to database."""
+    try:
+        conn = _db_connect()
+        conn.execute(
+            "INSERT INTO ratings (user_id, thread_id, rating) VALUES (?, ?, ?)",
+            (user_id, thread_id, rating),
+        )
+        conn.commit()
+        conn.close()
+        logger.info("Saved rating: user_id=%s thread_id=%s rating=%s", user_id, thread_id, rating)
+    except Exception:
+        logger.exception("DB write failed (save rating): user_id=%s rating=%s", user_id, rating)
+
+
+def db_get_ratings_stats() -> dict:
+    """Get statistics about ratings."""
+    try:
+        conn = _db_connect()
+        # Total count
+        cur = conn.execute("SELECT COUNT(*) FROM ratings")
+        total = cur.fetchone()[0]
+        
+        # Average rating
+        cur = conn.execute("SELECT AVG(rating) FROM ratings")
+        avg_rating = cur.fetchone()[0]
+        avg_rating = round(avg_rating, 2) if avg_rating else 0
+        
+        # Ratings distribution
+        cur = conn.execute(
+            "SELECT rating, COUNT(*) FROM ratings GROUP BY rating ORDER BY rating"
+        )
+        distribution = {row[0]: row[1] for row in cur.fetchall()}
+        
+        conn.close()
+        
+        return {
+            "total": total,
+            "average": avg_rating,
+            "distribution": distribution,
+        }
+    except Exception:
+        logger.exception("DB read failed (get ratings stats)")
+        return {"total": 0, "average": 0, "distribution": {}}
+
+
+def db_get_user_ratings(user_id: int) -> list[tuple]:
+    """Get all ratings from a specific user."""
+    try:
+        conn = _db_connect()
+        cur = conn.execute(
+            "SELECT rating, thread_id, created_at FROM ratings WHERE user_id=? ORDER BY created_at DESC",
+            (user_id,),
+        )
+        rows = cur.fetchall()
+        conn.close()
+        return rows
+    except Exception:
+        logger.exception("DB read failed (get user ratings): user_id=%s", user_id)
+        return []
 
 
 def build_thread_keyboard(thread_id: int) -> InlineKeyboardMarkup:
@@ -334,13 +407,20 @@ async def handle_callback_buttons(update: Update, context: ContextTypes.DEFAULT_
             _, rating_str = data.split(":", 1)
             rating = int(rating_str)
             if 1 <= rating <= 5:
+                user_id = cq.from_user.id if cq.from_user else None
+                if user_id:
+                    # Get thread_id for this user to link rating with thread
+                    thread_id = db_get_thread_id(user_id)
+                    # Save rating to database
+                    db_save_rating(user_id, rating, thread_id)
+                
                 await cq.answer(f"Спасибо за оценку: {rating} ⭐")
                 # Optionally edit the message to show rating was received
                 try:
                     await cq.message.edit_text("Спасибо за вашу оценку!")
                 except Exception:
                     pass
-                logger.info("User %s gave rating %s", cq.from_user.id if cq.from_user else "unknown", rating)
+                logger.info("User %s gave rating %s", user_id, rating)
             else:
                 await cq.answer("Некорректная оценка", show_alert=True)
         except Exception:
@@ -437,6 +517,46 @@ async def archive_inactive_topics_job(context: ContextTypes.DEFAULT_TYPE) -> Non
                 await send_rating_message(context, user_id)
         except Exception:
             logger.exception("Failed to auto-archive thread %s", thread_id)
+
+
+async def cmd_stats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Show ratings statistics. Only available for owner or support chat admins."""
+    if update.effective_user is None:
+        return
+    
+    # Check if user is owner
+    if OWNER_ID is not None and update.effective_user.id == OWNER_ID:
+        pass  # Owner can always see stats
+    # Check if user is in support chat and has admin rights
+    elif SUPPORT_CHAT_ID is not None and update.effective_chat and update.effective_chat.id == SUPPORT_CHAT_ID:
+        try:
+            member = await context.bot.get_chat_member(SUPPORT_CHAT_ID, update.effective_user.id)
+            if member.status not in ("administrator", "creator"):
+                await update.effective_message.reply_text("Доступ запрещен. Только администраторы могут просматривать статистику.")
+                return
+        except Exception:
+            await update.effective_message.reply_text("Ошибка проверки прав доступа.")
+            return
+    else:
+        await update.effective_message.reply_text("Доступ запрещен.")
+        return
+    
+    stats = db_get_ratings_stats()
+    
+    lines = ["📊 Статистика оценок поддержки\n"]
+    lines.append(f"Всего оценок: {stats['total']}")
+    lines.append(f"Средняя оценка: {stats['average']:.2f} ⭐")
+    
+    if stats['distribution']:
+        lines.append("\nРаспределение оценок:")
+        for rating in sorted(stats['distribution'].keys(), reverse=True):
+            count = stats['distribution'][rating]
+            bar = "█" * count if count <= 20 else "█" * 20
+            lines.append(f"{rating} ⭐: {count} {bar}")
+    else:
+        lines.append("\nОценок пока нет.")
+    
+    await update.effective_message.reply_text("\n".join(lines))
 
 
 async def cmd_diag(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -756,6 +876,8 @@ def main() -> None:
     application.add_handler(CommandHandler("id", cmd_id))
     # Diagnostics command
     application.add_handler(CommandHandler("diag", cmd_diag))
+    # Statistics command
+    application.add_handler(CommandHandler("stats", cmd_stats))
     if SUPPORT_CHAT_ID is not None:
         application.add_handler(CommandHandler("panel", cmd_panel))
 
