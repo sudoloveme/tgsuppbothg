@@ -150,12 +150,16 @@ async def serve_static(request: Request) -> Response:
     """Serve static files from miniapp directory."""
     path = request.match_info.get('path', 'index.html')
     
+    logger.debug(f"Serving static file: {path}")
+    
     # Security: prevent directory traversal
     if '..' in path or path.startswith('/'):
+        logger.warning(f"Blocked directory traversal attempt: {path}")
         return web.Response(status=403, text="Forbidden")
     
     # Don't serve API routes as static files
     if path.startswith('api/'):
+        logger.warning(f"Attempted to serve API route as static: {path}")
         return web.Response(status=404, text="Not Found")
     
     file_path = MINIAPP_DIR / path
@@ -165,6 +169,7 @@ async def serve_static(request: Request) -> Response:
         file_path = MINIAPP_DIR / 'index.html'
     
     if not file_path.exists():
+        logger.warning(f"Static file not found: {file_path}")
         return web.Response(status=404, text="Not Found")
     
     # Determine content type
@@ -176,6 +181,7 @@ async def serve_static(request: Request) -> Response:
     elif path.endswith('.json'):
         content_type = 'application/json'
     
+    logger.debug(f"Serving file: {file_path}, content-type: {content_type}")
     return web.Response(
         body=file_path.read_bytes(),
         content_type=content_type,
@@ -194,8 +200,11 @@ def create_app() -> web.Application:
     # CORS middleware for all routes
     @web.middleware
     async def cors_middleware(request, handler):
+        logger.info(f"Incoming request: {request.method} {request.path_qs}")
+        
         # Handle preflight requests
         if request.method == 'OPTIONS':
+            logger.info(f"Handling OPTIONS preflight for {request.path_qs}")
             return web.Response(
                 headers={
                     'Access-Control-Allow-Origin': '*',
@@ -214,17 +223,21 @@ def create_app() -> web.Application:
         response.headers['Access-Control-Allow-Origin'] = '*'
         response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
         response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        logger.info(f"Response status: {response.status} for {request.path_qs}")
         return response
     
     app.middlewares.append(cors_middleware)
     
     # API routes (must be registered BEFORE catch-all route)
+    logger.info("Registering API routes...")
     app.router.add_get('/api/subscription/telegram/{telegram_id}', get_subscription_by_telegram_id)
     app.router.add_get('/api/subscription/{uuid}', get_subscription_data)
     
     # Static files (catch-all, must be last)
+    logger.info("Registering static files route...")
     app.router.add_get('/{path:.*}', serve_static)
     
+    logger.info("Application routes registered")
     return app
 
 
