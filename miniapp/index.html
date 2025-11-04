@@ -559,7 +559,15 @@
                 // Get base URL from current location
                 const baseUrl = window.location.origin;
                 const apiUrl = `${baseUrl}/api/subscription/telegram/${telegramId}`;
-                console.log('Fetching from:', apiUrl);
+                
+                console.log('=== FETCH REQUEST DETAILS ===');
+                console.log('Current URL:', window.location.href);
+                console.log('Origin:', window.location.origin);
+                console.log('Protocol:', window.location.protocol);
+                console.log('Host:', window.location.host);
+                console.log('API URL:', apiUrl);
+                console.log('Telegram ID:', telegramId);
+                console.log('==============================');
                 
                 // Добавляем таймаут для запроса
                 const controller = new AbortController();
