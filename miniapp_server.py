@@ -228,16 +228,30 @@ def create_app() -> web.Application:
     
     app.middlewares.append(cors_middleware)
     
-    # API routes (must be registered BEFORE catch-all route)
+    # API routes (MUST be registered BEFORE catch-all route to avoid conflicts)
     logger.info("Registering API routes...")
+    
+    # Register with explicit path matching to ensure they're not caught by catch-all
     app.router.add_get('/api/subscription/telegram/{telegram_id}', get_subscription_by_telegram_id)
     app.router.add_get('/api/subscription/{uuid}', get_subscription_data)
     
+    # Health check endpoint
+    async def health_check(request):
+        return web.json_response({"status": "ok", "service": "mini-app"})
+    
+    app.router.add_get('/api/health', health_check)
+    
     # Static files (catch-all, must be last)
+    # This will match everything that doesn't match API routes above
     logger.info("Registering static files route...")
     app.router.add_get('/{path:.*}', serve_static)
     
     logger.info("Application routes registered")
+    logger.info("API endpoints available:")
+    logger.info("  GET /api/subscription/telegram/{telegram_id}")
+    logger.info("  GET /api/subscription/{uuid}")
+    logger.info("  GET /api/health")
+    
     return app
 
 
