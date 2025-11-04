@@ -364,8 +364,15 @@ async def handle_callback_buttons(update: Update, context: ContextTypes.DEFAULT_
     if data.startswith("close:"):
         try:
             await context.bot.close_forum_topic(chat_id=SUPPORT_CHAT_ID, message_thread_id=thread_id)
-            db_upsert_thread_state(thread_id, status="closed", archived=1)
             await cq.answer("Диалог закрыт")
+        except Exception as e:
+            # Тема может быть уже закрыта или другая ошибка, но все равно обновим состояние
+            logger.warning("Failed to close forum topic %s: %s", thread_id, str(e))
+            await cq.answer("Диалог помечен как закрыт", show_alert=False)
+        
+        # Обновляем состояние в БД и отправляем оценку независимо от результата закрытия
+        try:
+            db_upsert_thread_state(thread_id, status="closed", archived=1)
             # Update buttons to show Open
             try:
                 await cq.message.edit_reply_markup(
@@ -379,8 +386,8 @@ async def handle_callback_buttons(update: Update, context: ContextTypes.DEFAULT_
             user_id = db_get_user_id(thread_id)
             if user_id is not None:
                 await send_rating_message(context, user_id)
-        except Exception:
-            await cq.answer("Не удалось закрыть", show_alert=True)
+        except Exception as e:
+            logger.exception("Failed to update state or send rating for thread %s", thread_id)
     else:
         try:
             await context.bot.reopen_forum_topic(chat_id=SUPPORT_CHAT_ID, message_thread_id=thread_id)
@@ -415,9 +422,15 @@ async def archive_inactive_topics_job(context: ContextTypes.DEFAULT_TYPE) -> Non
 
     for (thread_id,) in rows:
         try:
-            await context.bot.close_forum_topic(chat_id=SUPPORT_CHAT_ID, message_thread_id=thread_id)
+            try:
+                await context.bot.close_forum_topic(chat_id=SUPPORT_CHAT_ID, message_thread_id=thread_id)
+                logger.info("Auto-archived thread %s due to inactivity", thread_id)
+            except Exception as e:
+                # Тема может быть уже закрыта, но все равно обновим состояние
+                logger.warning("Failed to close forum topic %s during auto-archive: %s", thread_id, str(e))
+            
+            # Обновляем состояние в БД и отправляем оценку независимо от результата закрытия
             db_upsert_thread_state(thread_id, status="closed", archived=1)
-            logger.info("Auto-archived thread %s due to inactivity", thread_id)
             # Send rating message to user
             user_id = db_get_user_id(thread_id)
             if user_id is not None:
