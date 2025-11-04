@@ -629,6 +629,12 @@ async def cmd_diag(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if SUPPORT_CHAT_ID is not None:
         lines.append(f"mode: forum")
         lines.append(f"support_chat_id: {SUPPORT_CHAT_ID}")
+        lines.append(f"ratings_notifications_thread_id: {RATINGS_NOTIFICATIONS_THREAD_ID}")
+        
+        # Show current thread_id if command is called from a forum topic
+        if update.effective_message and update.effective_message.message_thread_id:
+            lines.append(f"current_thread_id: {update.effective_message.message_thread_id}")
+        
         try:
             chat = await context.bot.get_chat(SUPPORT_CHAT_ID)
             lines.append(f"chat.title: {getattr(chat, 'title', '')}")
