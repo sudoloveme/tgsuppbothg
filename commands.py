@@ -39,8 +39,21 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         thread_id = await ensure_forum_topic_for_user(update, context)
         logger.info("/start from user_id=%s → thread_id=%s", user.id, str(thread_id))
         
+        # Create keyboard with mini-app button if mini-app is configured
+        from config import MINIAPP_URL
+        
+        keyboard = None
+        if MINIAPP_URL:
+            keyboard = InlineKeyboardMarkup([[
+                InlineKeyboardButton(
+                    text="📊 Личный кабинет",
+                    web_app={"url": MINIAPP_URL}
+                )
+            ]])
+        
         await update.effective_message.reply_text(
             "Здравствуйте! Опишите вашу проблему или вопрос. Для ускорения оказания помощи, укажите сразу ваш email, а также скриншоты проблемы если возможно. Мы ответим вам в течение 24 часов.",
+            reply_markup=keyboard
         )
         # Post a note to operators that user started the dialog
         if thread_id is not None:
