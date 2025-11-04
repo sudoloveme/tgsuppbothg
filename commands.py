@@ -42,13 +42,20 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         # Create keyboard with mini-app button if mini-app is configured
         from config import MINIAPP_URL
         from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+        from database import db_get_user_backend_data
         
         keyboard = None
         if MINIAPP_URL:
+            # Пытаемся получить UUID для оптимизации
+            backend_data = db_get_user_backend_data(user.id)
+            mini_app_url = MINIAPP_URL
+            if backend_data and backend_data[0]:
+                mini_app_url = f"{MINIAPP_URL}?uuid={backend_data[0]}"
+            
             keyboard = InlineKeyboardMarkup([[
                 InlineKeyboardButton(
                     text="📊 Моя подписка",
-                    web_app={"url": MINIAPP_URL}
+                    web_app={"url": mini_app_url}
                 )
             ]])
         
