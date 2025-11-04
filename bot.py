@@ -868,6 +868,26 @@ async def cmd_stats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def cmd_diag(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Diagnostics: show current mode, chat settings, and bot permissions."""
+    if update.effective_user is None:
+        return
+    
+    # Check if user is owner
+    if OWNER_ID is not None and update.effective_user.id == OWNER_ID:
+        pass  # Owner can always see diagnostics
+    # Check if user is in support chat and has admin rights
+    elif SUPPORT_CHAT_ID is not None and update.effective_chat and update.effective_chat.id == SUPPORT_CHAT_ID:
+        try:
+            member = await context.bot.get_chat_member(SUPPORT_CHAT_ID, update.effective_user.id)
+            if member.status not in ("administrator", "creator"):
+                await update.effective_message.reply_text("Доступ запрещен. Только администраторы могут просматривать диагностическую информацию.")
+                return
+        except Exception:
+            await update.effective_message.reply_text("Ошибка проверки прав доступа.")
+            return
+    else:
+        await update.effective_message.reply_text("Доступ запрещен.")
+        return
+    
     lines: list[str] = []
     try:
         me = await context.bot.get_me()
