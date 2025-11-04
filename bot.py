@@ -17,7 +17,7 @@ from telegram.ext import (
     filters,
 )
 
-from api_client import get_user_by_email, update_user_telegram_id, format_user_info
+from api_client import get_user_by_email, get_user_by_uuid, update_user_telegram_id, format_user_info
 
 
 # Load environment variables from .env if present
@@ -98,6 +98,17 @@ def _db_connect() -> sqlite3.Connection:
         "  thread_id INTEGER,\n"
         "  rating INTEGER NOT NULL CHECK(rating >= 1 AND rating <= 5),\n"
         "  created_at TEXT DEFAULT CURRENT_TIMESTAMP\n"
+        ")"
+    )
+    # User backend data table (UUID, email from API)
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS user_backend_data (\n"
+        "  user_id INTEGER NOT NULL,\n"
+        "  support_chat_id INTEGER,\n"
+        "  uuid TEXT,\n"
+        "  email TEXT,\n"
+        "  updated_at TEXT DEFAULT CURRENT_TIMESTAMP,\n"
+        "  PRIMARY KEY (user_id, support_chat_id)\n"
         ")"
     )
     # Migrate from legacy table if present
@@ -284,6 +295,52 @@ def db_get_user_ratings(user_id: int) -> list[tuple]:
     except Exception:
         logger.exception("DB read failed (get user ratings): user_id=%s", user_id)
         return []
+
+
+# User backend data functions
+def db_save_user_backend_data(user_id: int, uuid: str, email: str) -> None:
+    """Save user backend data (UUID, email) to database."""
+    try:
+        conn = _db_connect()
+        if SUPPORT_CHAT_ID is not None:
+            conn.execute(
+                "INSERT INTO user_backend_data (user_id, support_chat_id, uuid, email) VALUES (?, ?, ?, ?)\n"
+                "ON CONFLICT(user_id, support_chat_id) DO UPDATE SET uuid=excluded.uuid, email=excluded.email, updated_at=CURRENT_TIMESTAMP",
+                (user_id, SUPPORT_CHAT_ID, uuid, email),
+            )
+        else:
+            conn.execute(
+                "INSERT INTO user_backend_data (user_id, support_chat_id, uuid, email) VALUES (?, ?, ?, ?)\n"
+                "ON CONFLICT(user_id, support_chat_id) DO UPDATE SET uuid=excluded.uuid, email=excluded.email, updated_at=CURRENT_TIMESTAMP",
+                (user_id, None, uuid, email),
+            )
+        conn.commit()
+        conn.close()
+        logger.info("Saved backend data: user_id=%s uuid=%s email=%s", user_id, uuid, email)
+    except Exception:
+        logger.exception("DB write failed (save user backend data): user_id=%s uuid=%s", user_id, uuid)
+
+
+def db_get_user_backend_data(user_id: int) -> tuple[str, str] | None:
+    """Get user backend data (UUID, email) from database."""
+    try:
+        conn = _db_connect()
+        if SUPPORT_CHAT_ID is not None:
+            cur = conn.execute(
+                "SELECT uuid, email FROM user_backend_data WHERE user_id=? AND support_chat_id=?",
+                (user_id, SUPPORT_CHAT_ID),
+            )
+        else:
+            cur = conn.execute(
+                "SELECT uuid, email FROM user_backend_data WHERE user_id=? AND support_chat_id IS NULL",
+                (user_id,),
+            )
+        row = cur.fetchone()
+        conn.close()
+        return (row[0], row[1]) if row else None
+    except Exception:
+        logger.exception("DB read failed (get user backend data): user_id=%s", user_id)
+        return None
 
 
 def build_thread_keyboard(thread_id: int) -> InlineKeyboardMarkup:
@@ -538,7 +595,11 @@ async def cmd_linkmail(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             )
             return
         
-        # Step 3: Format and send user information
+        # Step 3: Save UUID and email to local database
+        if "uuid" in updated_user and "email" in updated_user:
+            db_save_user_backend_data(user_id, updated_user["uuid"], updated_user["email"])
+        
+        # Step 4: Format and send user information
         user_info = format_user_info(updated_user)
         
         await processing_msg.edit_text(
@@ -552,6 +613,88 @@ async def cmd_linkmail(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         logger.exception(f"Error in linkmail command: {e}")
         await processing_msg.edit_text(
             f"❌ Произошла ошибка при обработке запроса:\n<code>{str(e)}</code>",
+            parse_mode=ParseMode.HTML
+        )
+
+
+async def cmd_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Get user information by UUID from backend API."""
+    if SUPPORT_CHAT_ID is None:
+        await update.effective_message.reply_text("Эта команда работает только в режиме форума")
+        return
+    
+    if update.effective_chat is None or update.effective_chat.id != SUPPORT_CHAT_ID:
+        await update.effective_message.reply_text("Эта команда работает только в группе поддержки")
+        return
+    
+    # Check if user is admin
+    if update.effective_user is None:
+        return
+    
+    try:
+        member = await context.bot.get_chat_member(SUPPORT_CHAT_ID, update.effective_user.id)
+        if member.status not in ("administrator", "creator"):
+            await update.effective_message.reply_text("Доступ запрещен. Только администраторы могут использовать эту команду.")
+            return
+    except Exception:
+        await update.effective_message.reply_text("Ошибка проверки прав доступа.")
+        return
+    
+    # Check if command is called from a forum topic
+    msg = update.effective_message
+    if msg is None or msg.message_thread_id is None:
+        await update.effective_message.reply_text("Эта команда работает внутри темы форума")
+        return
+    
+    thread_id = msg.message_thread_id
+    
+    # Get UUID from command arguments or from database
+    uuid = None
+    if context.args and len(context.args) > 0:
+        uuid = context.args[0].strip()
+    else:
+        # Try to get UUID from database for current user in this thread
+        user_id = db_get_user_id(thread_id)
+        if user_id:
+            backend_data = db_get_user_backend_data(user_id)
+            if backend_data:
+                uuid = backend_data[0]  # UUID is first element of tuple
+    
+    if not uuid:
+        await update.effective_message.reply_text(
+            "Использование: /info [uuid]\n\n"
+            "Укажите UUID пользователя или используйте команду в теме, где пользователь уже был привязан через /linkmail."
+        )
+        return
+    
+    # Send processing message
+    processing_msg = await update.effective_message.reply_text("⏳ Получение информации о пользователе...")
+    
+    try:
+        # Get user by UUID
+        user_data = await get_user_by_uuid(uuid)
+        
+        if user_data is None:
+            await processing_msg.edit_text(
+                f"❌ Пользователь с UUID <code>{uuid}</code> не найден в системе.",
+                parse_mode=ParseMode.HTML
+            )
+            return
+        
+        # Format and send user information
+        user_info = format_user_info(user_data)
+        
+        await processing_msg.edit_text(
+            user_info,
+            parse_mode=ParseMode.HTML
+        )
+        
+        logger.info(f"Retrieved user info for UUID {uuid}")
+        
+    except Exception as e:
+        logger.exception(f"Error in info command: {e}")
+        await processing_msg.edit_text(
+            f"❌ Произошла ошибка при получении информации:\n<code>{str(e)}</code>",
             parse_mode=ParseMode.HTML
         )
 
@@ -1051,6 +1194,7 @@ def main() -> None:
     if SUPPORT_CHAT_ID is not None:
         application.add_handler(CommandHandler("panel", cmd_panel))
         application.add_handler(CommandHandler("linkmail", cmd_linkmail))
+        application.add_handler(CommandHandler("info", cmd_info))
 
     # Reply handlers: restrict to specific chats to avoid intercepting all messages
     if SUPPORT_CHAT_ID is not None:

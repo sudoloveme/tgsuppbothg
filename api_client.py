@@ -37,6 +37,43 @@ def _get_headers() -> dict:
     return headers
 
 
+async def get_user_by_uuid(uuid: str) -> Optional[Dict[str, Any]]:
+    """
+    Get user information by UUID.
+    
+    Args:
+        uuid: User UUID
+        
+    Returns:
+        User data dict or None if not found/error
+    """
+    if not BACKEND_API_URL:
+        logger.error("BACKEND_API_URL is not configured")
+        return None
+    
+    url = f"{BACKEND_API_URL.rstrip('/')}/api/users/uuid/{uuid}"
+    
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(url, headers=_get_headers())
+            response.raise_for_status()
+            data = response.json()
+            
+            # Extract user from response
+            if "response" in data:
+                return data["response"]
+            return None
+    except httpx.HTTPStatusError as e:
+        logger.error(f"HTTP error getting user by UUID {uuid}: {e.response.status_code}")
+        return None
+    except httpx.RequestError as e:
+        logger.error(f"Request error getting user by UUID {uuid}: {e}")
+        return None
+    except Exception as e:
+        logger.exception(f"Unexpected error getting user by UUID {uuid}: {e}")
+        return None
+
+
 async def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
     """
     Get user information by email.
@@ -202,6 +239,45 @@ def format_user_info(user_data: Dict[str, Any]) -> str:
     # Subscription URL
     if "subscriptionUrl" in user_data and user_data["subscriptionUrl"]:
         lines.append(f"\n🔗 Subscription URL: <code>{user_data['subscriptionUrl']}</code>")
+    
+    # Passwords and UUIDs
+    if "trojanPassword" in user_data and user_data["trojanPassword"]:
+        lines.append(f"\n🔑 Trojan Password: <code>{user_data['trojanPassword']}</code>")
+    if "vlessUuid" in user_data and user_data["vlessUuid"]:
+        lines.append(f"VLESS UUID: <code>{user_data['vlessUuid']}</code>")
+    if "ssPassword" in user_data and user_data["ssPassword"]:
+        lines.append(f"SS Password: <code>{user_data['ssPassword']}</code>")
+    
+    # Subscription info
+    if "subLastUserAgent" in user_data and user_data["subLastUserAgent"]:
+        lines.append(f"\n📱 Last User Agent: <code>{user_data['subLastUserAgent']}</code>")
+    if "subLastOpenedAt" in user_data and user_data["subLastOpenedAt"]:
+        lines.append(f"Подписка открыта: <code>{user_data['subLastOpenedAt']}</code>")
+    if "subRevokedAt" in user_data and user_data["subRevokedAt"]:
+        lines.append(f"Подписка отозвана: <code>{user_data['subRevokedAt']}</code>")
+    if "lastTrafficResetAt" in user_data and user_data["lastTrafficResetAt"]:
+        lines.append(f"Последний сброс трафика: <code>{user_data['lastTrafficResetAt']}</code>")
+    
+    # Active User Inbounds
+    if "activeUserInbounds" in user_data and user_data["activeUserInbounds"]:
+        inbounds = user_data["activeUserInbounds"]
+        if isinstance(inbounds, list) and len(inbounds) > 0:
+            lines.append(f"\n🔌 Активные инбаунды ({len(inbounds)}):")
+            for i, inbound in enumerate(inbounds, 1):
+                if isinstance(inbound, dict):
+                    inbound_lines = []
+                    if "uuid" in inbound:
+                        inbound_lines.append(f"UUID: <code>{inbound['uuid']}</code>")
+                    if "tag" in inbound:
+                        inbound_lines.append(f"Tag: <code>{inbound['tag']}</code>")
+                    if "type" in inbound:
+                        inbound_lines.append(f"Type: <code>{inbound['type']}</code>")
+                    if "network" in inbound:
+                        inbound_lines.append(f"Network: <code>{inbound['network']}</code>")
+                    if "security" in inbound:
+                        inbound_lines.append(f"Security: <code>{inbound['security']}</code>")
+                    if inbound_lines:
+                        lines.append(f"  {i}. {' | '.join(inbound_lines)}")
     
     # Description
     if "description" in user_data and user_data["description"]:
