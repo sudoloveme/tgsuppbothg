@@ -2,7 +2,6 @@
 Main bot file - initialization and handler registration.
 """
 import logging
-import threading
 from typing import Dict, Tuple
 
 from telegram.ext import (
@@ -28,7 +27,6 @@ from commands import (
     cmd_info,
     cmd_stats,
     cmd_diag,
-    cmd_subscription,
 )
 from handlers import (
     handle_callback_buttons,
@@ -37,7 +35,6 @@ from handlers import (
     archive_inactive_topics_job,
 )
 from utils import init_mappings
-from config import MINIAPP_URL, MINIAPP_PORT
 
 logging.basicConfig(
     level=logging.INFO,
@@ -74,8 +71,6 @@ def main() -> None:
     # Commands
     application.add_handler(CommandHandler("start", cmd_start))
     application.add_handler(CommandHandler("id", cmd_id))
-    # Subscription mini-app command
-    application.add_handler(CommandHandler("subscription", cmd_subscription))
     # Diagnostics command
     application.add_handler(CommandHandler("diag", cmd_diag))
     # Statistics command
@@ -117,31 +112,6 @@ def main() -> None:
         application.job_queue.run_repeating(archive_inactive_topics_job, interval=3600, first=60)
     elif SUPPORT_CHAT_ID is not None and ARCHIVE_AFTER_HOURS > 0:
         logger.warning("JobQueue not available. Install PTB with job-queue extras: pip install 'python-telegram-bot[job-queue]==21.5'")
-
-    # Start mini-app server if URL is configured
-    if MINIAPP_URL:
-        def run_miniapp_server():
-            import asyncio
-            try:
-                from miniapp_server import run_server
-                logger.info(f"Starting mini-app server in thread on port {MINIAPP_PORT}...")
-                # Create new event loop for this thread
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                try:
-                    loop.run_until_complete(run_server(host="0.0.0.0", port=MINIAPP_PORT))
-                except Exception as e:
-                    logger.exception(f"Error in mini-app server: {e}")
-                finally:
-                    loop.close()
-            except Exception as e:
-                logger.exception(f"Failed to start mini-app server: {e}")
-        
-        miniapp_thread = threading.Thread(target=run_miniapp_server, daemon=True, name="MiniAppServer")
-        miniapp_thread.start()
-        logger.info(f"Mini-app server thread started (thread name: {miniapp_thread.name})")
-    else:
-        logger.warning("MINIAPP_URL not configured. Mini-app functionality disabled.")
 
     application.run_polling(close_loop=False)
 

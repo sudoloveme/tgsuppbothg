@@ -39,29 +39,8 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         thread_id = await ensure_forum_topic_for_user(update, context)
         logger.info("/start from user_id=%s → thread_id=%s", user.id, str(thread_id))
         
-        # Create keyboard with mini-app button if mini-app is configured
-        from config import MINIAPP_URL
-        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-        from database import db_get_user_backend_data
-        
-        keyboard = None
-        if MINIAPP_URL:
-            # Пытаемся получить UUID для оптимизации
-            backend_data = db_get_user_backend_data(user.id)
-            mini_app_url = MINIAPP_URL
-            if backend_data and backend_data[0]:
-                mini_app_url = f"{MINIAPP_URL}?uuid={backend_data[0]}"
-            
-            keyboard = InlineKeyboardMarkup([[
-                InlineKeyboardButton(
-                    text="📊 Моя подписка",
-                    web_app={"url": mini_app_url}
-                )
-            ]])
-        
         await update.effective_message.reply_text(
             "Здравствуйте! Опишите вашу проблему или вопрос. Для ускорения оказания помощи, укажите сразу ваш email, а также скриншоты проблемы если возможно. Мы ответим вам в течение 24 часов.",
-            reply_markup=keyboard
         )
         # Post a note to operators that user started the dialog
         if thread_id is not None:
@@ -99,48 +78,6 @@ async def cmd_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.effective_chat is None:
         return
     await update.effective_message.reply_text(str(update.effective_chat.id))
-
-
-async def cmd_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle /subscription command - open mini-app with subscription info."""
-    if update.effective_user is None:
-        return
-    
-    from database import db_get_user_backend_data
-    from config import MINIAPP_URL
-    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-    
-    user_id = update.effective_user.id
-    backend_data = db_get_user_backend_data(user_id)
-    
-    if not backend_data or not backend_data[0]:
-        await update.effective_message.reply_text(
-            "❌ Ваш аккаунт не привязан к системе.\n\n"
-            "Обратитесь в поддержку и попросите администратора привязать ваш email через команду /linkmail."
-        )
-        return
-    
-    # Передаем UUID в URL для упрощения - минимизируем запросы к API
-    uuid = backend_data[0]
-    mini_app_url = f"{MINIAPP_URL}?uuid={uuid}" if MINIAPP_URL else None
-    
-    if not mini_app_url:
-        await update.effective_message.reply_text(
-            "❌ Mini-app не настроен. Обратитесь к администратору."
-        )
-        return
-    
-    keyboard = InlineKeyboardMarkup([[
-        InlineKeyboardButton(
-            text="📊 Открыть мою подписку",
-            web_app={"url": mini_app_url}
-        )
-    ]])
-    
-    await update.effective_message.reply_text(
-        "📊 Нажмите кнопку ниже, чтобы посмотреть информацию о вашей подписке:",
-        reply_markup=keyboard
-    )
 
 
 async def cmd_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
