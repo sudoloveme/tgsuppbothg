@@ -858,7 +858,7 @@ async def cmd_stats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         lines.append("\nРаспределение оценок:")
         for rating in sorted(stats['distribution'].keys(), reverse=True):
             count = stats['distribution'][rating]
-            bar = "█" * count if count <= 20 else "█" * 20
+            bar = "🔥" * count if count <= 20 else "⚠️" * 20
             lines.append(f"{rating} ⭐: {count} {bar}")
     else:
         lines.append("\nОценок пока нет.")
