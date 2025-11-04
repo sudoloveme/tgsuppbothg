@@ -17,6 +17,8 @@ from telegram.ext import (
     filters,
 )
 
+from api_client import get_user_by_email, update_user_telegram_id, format_user_info
+
 
 # Load environment variables from .env if present
 load_dotenv()
@@ -448,6 +450,110 @@ async def cmd_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         )
     except Exception:
         logger.exception("Failed to send panel in thread %s", thread_id)
+
+
+async def cmd_linkmail(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Link user email to Telegram ID via backend API."""
+    if SUPPORT_CHAT_ID is None:
+        await update.effective_message.reply_text("Эта команда работает только в режиме форума")
+        return
+    
+    if update.effective_chat is None or update.effective_chat.id != SUPPORT_CHAT_ID:
+        await update.effective_message.reply_text("Эта команда работает только в группе поддержки")
+        return
+    
+    # Check if user is admin
+    if update.effective_user is None:
+        return
+    
+    try:
+        member = await context.bot.get_chat_member(SUPPORT_CHAT_ID, update.effective_user.id)
+        if member.status not in ("administrator", "creator"):
+            await update.effective_message.reply_text("Доступ запрещен. Только администраторы могут использовать эту команду.")
+            return
+    except Exception:
+        await update.effective_message.reply_text("Ошибка проверки прав доступа.")
+        return
+    
+    # Check if command is called from a forum topic
+    msg = update.effective_message
+    if msg is None or msg.message_thread_id is None:
+        await update.effective_message.reply_text("Эта команда работает внутри темы форума")
+        return
+    
+    thread_id = msg.message_thread_id
+    
+    # Get email from command arguments
+    if not context.args or len(context.args) == 0:
+        await update.effective_message.reply_text(
+            "Использование: /linkmail example@gmail.com\n\n"
+            "Укажите email пользователя для привязки к Telegram ID."
+        )
+        return
+    
+    email = context.args[0].strip()
+    
+    # Basic email validation
+    if "@" not in email or "." not in email.split("@")[1]:
+        await update.effective_message.reply_text("❌ Некорректный формат email адреса.")
+        return
+    
+    # Get user_id from thread_id
+    user_id = db_get_user_id(thread_id)
+    if user_id is None:
+        await update.effective_message.reply_text(
+            "❌ Не удалось найти пользователя для этой темы.\n"
+            "Убедитесь, что пользователь уже писал в эту тему."
+        )
+        return
+    
+    # Send processing message
+    processing_msg = await update.effective_message.reply_text("⏳ Обработка запроса...")
+    
+    try:
+        # Step 1: Get user by email
+        user_data = await get_user_by_email(email)
+        
+        if user_data is None:
+            await processing_msg.edit_text(
+                f"❌ Пользователь с email <code>{email}</code> не найден в системе.",
+                parse_mode=ParseMode.HTML
+            )
+            return
+        
+        # Step 2: Update user's Telegram ID
+        uuid = user_data.get("uuid")
+        if not uuid:
+            await processing_msg.edit_text("❌ Не удалось получить UUID пользователя.")
+            return
+        
+        updated_user = await update_user_telegram_id(uuid, user_id)
+        
+        if updated_user is None:
+            await processing_msg.edit_text(
+                f"❌ Не удалось обновить Telegram ID для пользователя.\n"
+                f"Email: <code>{email}</code>\n"
+                f"UUID: <code>{uuid}</code>",
+                parse_mode=ParseMode.HTML
+            )
+            return
+        
+        # Step 3: Format and send user information
+        user_info = format_user_info(updated_user)
+        
+        await processing_msg.edit_text(
+            user_info,
+            parse_mode=ParseMode.HTML
+        )
+        
+        logger.info(f"Linked email {email} to Telegram ID {user_id} for UUID {uuid}")
+        
+    except Exception as e:
+        logger.exception(f"Error in linkmail command: {e}")
+        await processing_msg.edit_text(
+            f"❌ Произошла ошибка при обработке запроса:\n<code>{str(e)}</code>",
+            parse_mode=ParseMode.HTML
+        )
 
 
 async def handle_callback_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -944,6 +1050,7 @@ def main() -> None:
     application.add_handler(CommandHandler("stats", cmd_stats))
     if SUPPORT_CHAT_ID is not None:
         application.add_handler(CommandHandler("panel", cmd_panel))
+        application.add_handler(CommandHandler("linkmail", cmd_linkmail))
 
     # Reply handlers: restrict to specific chats to avoid intercepting all messages
     if SUPPORT_CHAT_ID is not None:
