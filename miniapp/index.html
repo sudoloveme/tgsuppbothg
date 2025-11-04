@@ -16,29 +16,29 @@
             --tg-bg: var(--tg-theme-bg-color, #ffffff);
             --tg-text: var(--tg-theme-text-color, #000000);
             --tg-hint: var(--tg-theme-hint-color, #999999);
-            --tg-link: var(--tg-theme-link-color, #007AFF);
-            --tg-button: var(--tg-theme-button-color, #007AFF);
-            --tg-button-text: var(--tg-theme-button-text-color, #ffffff);
-            --tg-secondary: var(--tg-theme-secondary-bg-color, #f2f2f7);
             
-            /* Apple Design System Colors */
-            --system-blue: #007AFF;
-            --system-green: #34C759;
-            --system-red: #FF3B30;
-            --system-orange: #FF9500;
-            --system-gray: #8E8E93;
-            --system-gray-light: #F2F2F7;
-            --system-gray-dark: #636366;
-            --separator: rgba(60, 60, 67, 0.29);
+            /* Banking App Color Palette */
+            --brand-yellow: #FFD700;
+            --brand-yellow-dark: #FFC700;
+            --dark-overlay: rgba(0, 0, 0, 0.75);
+            --card-bg: #ffffff;
+            --text-primary: #000000;
+            --text-secondary: #8E8E93;
+            --text-light: rgba(255, 255, 255, 0.9);
+            --border-light: rgba(0, 0, 0, 0.1);
+            --success-green: #34C759;
+            --warning-orange: #FF9500;
+            --danger-red: #FF3B30;
+            --info-blue: #007AFF;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
-            background: var(--tg-bg);
-            color: var(--tg-text);
+            background: #F5F5F5;
+            color: var(--text-primary);
             padding: 0;
             min-height: 100vh;
-            line-height: 1.47059;
+            line-height: 1.5;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
@@ -47,224 +47,257 @@
             max-width: 600px;
             margin: 0 auto;
             padding: 0;
+            background: #F5F5F5;
         }
 
-        /* Large Title - Apple Style */
+        /* Header with dark overlay - Banking Style */
         .header {
-            padding: 44px 20px 20px;
-            background: var(--tg-bg);
-            border-bottom: 0.5px solid var(--separator);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            backdrop-filter: blur(20px);
-            background: rgba(var(--tg-bg-rgb, 255, 255, 255), 0.8);
+            background: linear-gradient(135deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.75) 100%);
+            padding: 60px 20px 24px;
+            color: white;
+            position: relative;
         }
 
-        .header h1 {
-            font-size: 34px;
-            font-weight: 700;
-            letter-spacing: 0.37px;
-            color: var(--tg-text);
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200"><defs><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:rgba(255,215,0,0.1);stop-opacity:1" /><stop offset="100%" style="stop-color:rgba(255,215,0,0);stop-opacity:1" /></linearGradient></defs><rect width="400" height="200" fill="url(%23grad)"/></svg>');
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-label {
+            font-size: 15px;
+            font-weight: 400;
+            color: var(--text-light);
             margin-bottom: 8px;
+            opacity: 0.9;
+        }
+
+        .header-email {
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 16px;
+            word-break: break-all;
         }
 
         .status-badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 4px 12px;
-            border-radius: 12px;
+            padding: 6px 14px;
+            border-radius: 20px;
             font-size: 13px;
             font-weight: 600;
-            letter-spacing: -0.08px;
-            margin-top: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
         }
 
         .status-active {
-            background: rgba(52, 199, 89, 0.15);
-            color: var(--system-green);
+            background: rgba(52, 199, 89, 0.25);
+            color: #34C759;
         }
 
         .status-expired {
-            background: rgba(255, 59, 48, 0.15);
-            color: var(--system-red);
+            background: rgba(255, 59, 48, 0.25);
+            color: #FF3B30;
         }
 
         .status-inactive {
-            background: rgba(255, 149, 0, 0.15);
-            color: var(--system-orange);
+            background: rgba(255, 149, 0, 0.25);
+            color: #FF9500;
         }
 
         /* Content Section */
         .content-section {
             padding: 20px;
+            margin-top: -20px;
+            background: #F5F5F5;
         }
 
-        .section-title {
-            font-size: 13px;
-            font-weight: 400;
-            color: var(--system-gray);
-            text-transform: uppercase;
-            letter-spacing: -0.08px;
-            margin-bottom: 8px;
-            padding: 0 4px;
-        }
-
-        /* Card - Apple Style */
+        /* White Card - Banking Style */
         .card {
-            background: var(--tg-secondary);
-            border-radius: 10px;
-            margin-bottom: 8px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            margin-bottom: 16px;
             overflow: hidden;
-            border: 0.5px solid var(--separator);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border-light);
+        }
+
+        .card-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .card-subtitle {
+            font-size: 14px;
+            font-weight: 400;
+            color: var(--text-secondary);
+        }
+
+        .card-content {
+            padding: 20px;
         }
 
         .card-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 16px;
-            min-height: 44px;
-            border-bottom: 0.5px solid var(--separator);
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border-light);
         }
 
         .card-row:last-child {
             border-bottom: none;
+            padding-bottom: 0;
         }
 
         .card-label {
             font-size: 17px;
             font-weight: 400;
-            color: var(--tg-text);
-            letter-spacing: -0.41px;
+            color: var(--text-primary);
         }
 
         .card-value {
             font-size: 17px;
-            font-weight: 400;
-            color: var(--system-gray-dark);
+            font-weight: 600;
+            color: var(--text-primary);
             text-align: right;
-            font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
-            letter-spacing: -0.41px;
         }
 
         .card-value-large {
-            font-size: 28px;
-            font-weight: 600;
-            color: var(--tg-text);
-            letter-spacing: 0.36px;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
         }
 
         .card-value-primary {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 600;
-            color: var(--tg-text);
-            letter-spacing: 0.38px;
+            color: var(--text-primary);
         }
 
-        /* Traffic Progress */
-        .traffic-progress {
-            margin-top: 8px;
+        /* Traffic Graph - Banking Style */
+        .traffic-graph {
+            margin-top: 20px;
+        }
+
+        .traffic-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .traffic-used {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .traffic-limit-text {
+            font-size: 15px;
+            color: var(--text-secondary);
+            text-align: right;
+        }
+
+        .progress-container {
+            position: relative;
+            margin-top: 16px;
         }
 
         .progress-bar {
             width: 100%;
-            height: 4px;
-            background: var(--system-gray-light);
-            border-radius: 2px;
+            height: 12px;
+            background: #F0F0F0;
+            border-radius: 6px;
             overflow: hidden;
+            position: relative;
         }
 
         .progress-fill {
             height: 100%;
-            background: var(--system-green);
-            border-radius: 2px;
-            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(90deg, var(--info-blue) 0%, var(--success-green) 100%);
+            border-radius: 6px;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
         }
 
         .progress-fill.warning {
-            background: var(--system-orange);
+            background: linear-gradient(90deg, var(--warning-orange) 0%, #FFA500 100%);
         }
 
         .progress-fill.danger {
-            background: var(--system-red);
+            background: linear-gradient(90deg, var(--danger-red) 0%, #FF6B6B 100%);
         }
 
-        .traffic-limit {
-            font-size: 15px;
-            color: var(--system-gray);
-            margin-top: 4px;
-            letter-spacing: -0.24px;
-        }
-
-        /* Email Section - Highlighted */
-        .email-section {
-            background: var(--tg-bg);
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 0.5px solid var(--separator);
-        }
-
-        .email-label {
+        .progress-text {
             font-size: 13px;
-            font-weight: 400;
-            color: var(--system-gray);
-            margin-bottom: 8px;
-            letter-spacing: -0.08px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            text-align: center;
         }
 
-        .email-value {
-            font-size: 17px;
-            font-weight: 400;
-            color: var(--tg-text);
-            letter-spacing: -0.41px;
-        }
-
-        /* Subscription URL */
+        /* Subscription URL Card */
         .subscription-url-section {
-            background: var(--tg-bg);
-            border-radius: 10px;
-            padding: 16px;
-            margin-bottom: 20px;
-            border: 0.5px solid var(--separator);
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border-light);
         }
 
         .subscription-url-label {
             font-size: 13px;
             font-weight: 400;
-            color: var(--system-gray);
+            color: var(--text-secondary);
             margin-bottom: 8px;
-            letter-spacing: -0.08px;
         }
 
         .subscription-url-value {
             font-size: 15px;
             font-weight: 400;
-            color: var(--system-blue);
+            color: var(--info-blue);
             word-break: break-all;
             font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
-            letter-spacing: -0.24px;
-            line-height: 1.4;
+            line-height: 1.5;
         }
 
         /* Loading State */
         .loading {
             text-align: center;
-            padding: 80px 20px;
-            color: var(--system-gray);
+            padding: 100px 20px;
+            color: var(--text-secondary);
         }
 
         .loading-spinner {
             display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--system-gray-light);
-            border-top-color: var(--system-blue);
+            width: 40px;
+            height: 40px;
+            border: 4px solid #F0F0F0;
+            border-top-color: var(--brand-yellow);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
 
         @keyframes spin {
@@ -273,56 +306,71 @@
 
         .loading-text {
             font-size: 17px;
-            color: var(--system-gray);
-            letter-spacing: -0.41px;
+            color: var(--text-secondary);
+            font-weight: 400;
         }
 
         /* Error State */
         .error {
             text-align: center;
-            padding: 80px 20px;
+            padding: 100px 20px;
         }
 
         .error-icon {
             font-size: 64px;
-            margin-bottom: 16px;
-            opacity: 0.6;
+            margin-bottom: 20px;
+            opacity: 0.7;
         }
 
         .error-title {
-            font-size: 22px;
-            font-weight: 600;
-            color: var(--tg-text);
-            margin-bottom: 8px;
-            letter-spacing: 0.35px;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 12px;
         }
 
         .error-message {
             font-size: 17px;
-            color: var(--system-gray);
-            line-height: 1.47059;
-            margin-bottom: 24px;
-            letter-spacing: -0.41px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 32px;
         }
 
-        /* Button - Apple Style */
+        /* Button - Banking Style */
         .refresh-btn {
-            background: var(--system-blue);
-            color: white;
+            background: var(--brand-yellow);
+            color: var(--text-primary);
             border: none;
-            border-radius: 10px;
-            padding: 14px 20px;
+            border-radius: 12px;
+            padding: 16px 24px;
             font-size: 17px;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
             width: 100%;
             margin-top: 20px;
-            transition: opacity 0.2s ease;
-            letter-spacing: -0.41px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
         }
 
         .refresh-btn:active {
-            opacity: 0.6;
+            transform: scale(0.98);
+            background: var(--brand-yellow-dark);
+            box-shadow: 0 1px 4px rgba(255, 215, 0, 0.2);
+        }
+
+        /* Info Icon */
+        .info-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--danger-red);
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+            margin-left: 8px;
         }
 
         /* Date formatting */
@@ -355,22 +403,34 @@
         /* Responsive */
         @media (max-width: 480px) {
             .header {
-                padding: 20px 16px 16px;
+                padding: 50px 16px 20px;
             }
 
-            .header h1 {
-                font-size: 28px;
+            .header-email {
+                font-size: 24px;
             }
 
             .content-section {
                 padding: 16px;
+            }
+
+            .card-header {
+                padding: 16px;
+            }
+
+            .card-content {
+                padding: 16px;
+            }
+
+            .traffic-used {
+                font-size: 28px;
             }
         }
 
         /* Safe area for notched devices */
         @supports (padding: max(0px)) {
             .header {
-                padding-top: max(44px, env(safe-area-inset-top));
+                padding-top: max(60px, calc(env(safe-area-inset-top) + 20px));
             }
         }
     </style>
@@ -378,8 +438,11 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Моя подписка</h1>
-            <div id="statusBadge" class="status-badge">Загрузка...</div>
+            <div class="header-content">
+                <div class="header-label">Мой аккаунт</div>
+                <div class="header-email" id="headerEmail">Загрузка...</div>
+                <div id="statusBadge" class="status-badge">Загрузка...</div>
+            </div>
         </div>
 
         <div id="content">
@@ -474,6 +537,12 @@
 
             statusBadge.textContent = statusText;
             statusBadge.className = `status-badge ${statusClass}`;
+            
+            // Устанавливаем email в header если еще не загружен
+            const headerEmail = document.getElementById('headerEmail');
+            if (headerEmail && headerEmail.textContent === 'Загрузка...' && data.email) {
+                headerEmail.textContent = data.email;
+            }
 
             // Форматирование даты
             function formatDate(dateStr) {
@@ -514,49 +583,66 @@
             const limitTraffic = formatBytes(data.trafficLimitBytes);
             const trafficPercent = getTrafficPercent(data.usedTrafficBytes || 0, data.trafficLimitBytes || 0);
 
+            // Обновляем email в header
+            const headerEmail = document.getElementById('headerEmail');
+            if (headerEmail && data.email) {
+                headerEmail.textContent = data.email;
+            }
+
             // Определяем класс для progress bar в зависимости от процента
             let progressClass = '';
+            let progressText = '';
             if (trafficPercent >= 90) {
                 progressClass = 'danger';
+                progressText = 'Критический уровень использования';
             } else if (trafficPercent >= 70) {
                 progressClass = 'warning';
+                progressText = 'Высокий уровень использования';
+            } else {
+                progressText = 'Нормальный уровень использования';
             }
 
             const html = `
                 <div class="content-section">
-                    <div class="email-section">
-                        <div class="email-label">Email</div>
-                        <div class="email-value">${data.email || 'Не указан'}</div>
-                    </div>
-
-                    <div class="section-title">Подписка</div>
                     <div class="card">
-                        <div class="card-row">
-                            <div class="card-label">Дата окончания</div>
-                            <div class="card-value-primary">${expireAt}</div>
+                        <div class="card-header">
+                            <div class="card-title">Подписка</div>
+                            <div class="card-subtitle">Информация о вашей подписке</div>
                         </div>
-                    </div>
-
-                    <div class="section-title">Трафик</div>
-                    <div class="card">
-                        <div class="card-row">
-                            <div class="card-label">Использовано</div>
-                            <div class="card-value-large">${usedTraffic}</div>
-                        </div>
-                        ${data.trafficLimitBytes ? `
-                            <div class="card-row" style="flex-direction: column; align-items: flex-start; padding-top: 0;">
-                                <div class="traffic-limit" style="width: 100%; margin-bottom: 8px;">из ${limitTraffic}</div>
-                                <div class="traffic-progress" style="width: 100%;">
-                                    <div class="progress-bar">
-                                        <div class="progress-fill ${progressClass}" style="width: ${trafficPercent}%"></div>
-                                    </div>
-                                </div>
+                        <div class="card-content">
+                            <div class="card-row">
+                                <div class="card-label">Дата окончания</div>
+                                <div class="card-value-primary">${expireAt}</div>
                             </div>
-                        ` : ''}
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Трафик</div>
+                            <div class="card-subtitle">Использование интернет-трафика</div>
+                        </div>
+                        <div class="card-content">
+                            <div class="traffic-graph">
+                                <div class="traffic-info">
+                                    <div class="traffic-used">${usedTraffic}</div>
+                                    ${data.trafficLimitBytes ? `
+                                        <div class="traffic-limit-text">из ${limitTraffic}</div>
+                                    ` : ''}
+                                </div>
+                                ${data.trafficLimitBytes ? `
+                                    <div class="progress-container">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill ${progressClass}" style="width: ${trafficPercent}%"></div>
+                                        </div>
+                                        <div class="progress-text">${progressText} • ${trafficPercent.toFixed(1)}%</div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
                     </div>
 
                     ${data.subscriptionUrl ? `
-                        <div class="section-title">Подключение</div>
                         <div class="subscription-url-section">
                             <div class="subscription-url-label">Subscription URL</div>
                             <div class="subscription-url-value">${data.subscriptionUrl}</div>
@@ -564,7 +650,7 @@
                     ` : ''}
 
                     <button class="refresh-btn" onclick="loadSubscriptionData()">
-                        Обновить
+                        Обновить данные
                     </button>
                 </div>
             `;
