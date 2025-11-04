@@ -14,6 +14,10 @@ DB_PATH = os.getenv("DB_PATH", "data.db").strip() or "data.db"
 ARCHIVE_AFTER_HOURS = int(os.getenv("ARCHIVE_AFTER_HOURS", "72").strip() or 72)
 RATINGS_NOTIFICATIONS_THREAD_ID = int(os.getenv("RATINGS_NOTIFICATIONS_THREAD_ID", "1").strip() or "1")
 
+# Mini-app configuration
+MINIAPP_URL = os.getenv("MINIAPP_URL", "").strip() or None  # URL to mini-app (e.g., https://your-domain.com/miniapp)
+MINIAPP_PORT = int(os.getenv("MINIAPP_PORT", "8080").strip() or 8080)
+
 if not TELEGRAM_BOT_TOKEN:
     raise RuntimeError("TELEGRAM_BOT_TOKEN is not set. Put it in your environment or a .env file.")
 

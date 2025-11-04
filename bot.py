@@ -2,6 +2,7 @@
 Main bot file - initialization and handler registration.
 """
 import logging
+import threading
 from typing import Dict, Tuple
 
 from telegram.ext import (
@@ -27,6 +28,7 @@ from commands import (
     cmd_info,
     cmd_stats,
     cmd_diag,
+    cmd_subscription,
 )
 from handlers import (
     handle_callback_buttons,
@@ -35,6 +37,7 @@ from handlers import (
     archive_inactive_topics_job,
 )
 from utils import init_mappings
+from config import MINIAPP_URL, MINIAPP_PORT
 
 logging.basicConfig(
     level=logging.INFO,
@@ -71,6 +74,8 @@ def main() -> None:
     # Commands
     application.add_handler(CommandHandler("start", cmd_start))
     application.add_handler(CommandHandler("id", cmd_id))
+    # Subscription mini-app command
+    application.add_handler(CommandHandler("subscription", cmd_subscription))
     # Diagnostics command
     application.add_handler(CommandHandler("diag", cmd_diag))
     # Statistics command
@@ -112,6 +117,19 @@ def main() -> None:
         application.job_queue.run_repeating(archive_inactive_topics_job, interval=3600, first=60)
     elif SUPPORT_CHAT_ID is not None and ARCHIVE_AFTER_HOURS > 0:
         logger.warning("JobQueue not available. Install PTB with job-queue extras: pip install 'python-telegram-bot[job-queue]==21.5'")
+
+    # Start mini-app server if URL is configured
+    if MINIAPP_URL:
+        def run_miniapp_server():
+            import asyncio
+            from miniapp_server import run_server
+            asyncio.run(run_server(host="0.0.0.0", port=MINIAPP_PORT))
+        
+        miniapp_thread = threading.Thread(target=run_miniapp_server, daemon=True)
+        miniapp_thread.start()
+        logger.info(f"Mini-app server started on port {MINIAPP_PORT}")
+    else:
+        logger.warning("MINIAPP_URL not configured. Mini-app functionality disabled.")
 
     application.run_polling(close_loop=False)
 

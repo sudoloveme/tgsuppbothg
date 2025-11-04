@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Моя подписка</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            padding: 16px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-top: 8px;
+        }
+
+        .status-active {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .status-expired {
+            background: #f44336;
+            color: white;
+        }
+
+        .status-inactive {
+            background: #ff9800;
+            color: white;
+        }
+
+        .card {
+            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--tg-theme-hint-color, #999999);
+            margin-bottom: 8px;
+        }
+
+        .card-value {
+            font-size: 18px;
+            font-weight: 600;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--tg-theme-secondary-bg-color, #e0e0e0);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+            transition: width 0.3s ease;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--tg-theme-hint-color, #999999);
+        }
+
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #f44336;
+        }
+
+        .error-message {
+            margin-top: 16px;
+            font-size: 14px;
+        }
+
+        .refresh-btn {
+            background: var(--tg-theme-button-color, #3390ec);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 16px;
+        }
+
+        .refresh-btn:active {
+            opacity: 0.8;
+        }
+
+        .date {
+            font-size: 16px;
+        }
+
+        .traffic {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .traffic-limit {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #999999);
+            margin-top: 4px;
+        }
+
+        @media (max-width: 480px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Моя подписка</h1>
+            <div id="statusBadge" class="status-badge">Загрузка...</div>
+        </div>
+
+        <div id="content">
+            <div class="loading">Загрузка данных...</div>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+
+        // Получаем UUID из initData или URL параметров
+        function getUUID() {
+            // Попытка получить из initData
+            try {
+                const initData = tg.initData;
+                if (initData) {
+                    const params = new URLSearchParams(initData);
+                    const user = params.get('user');
+                    if (user) {
+                        const userObj = JSON.parse(decodeURIComponent(user));
+                        // UUID может быть в user или в других полях
+                        return userObj.uuid || null;
+                    }
+                }
+            } catch (e) {
+                console.error('Error parsing initData:', e);
+            }
+
+            // Попытка получить из URL параметров
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('uuid') || null;
+        }
+
+        // Загрузка данных подписки
+        async function loadSubscriptionData() {
+            const uuid = getUUID();
+            if (!uuid) {
+                showError('UUID не найден. Пожалуйста, откройте приложение через бота.');
+                return;
+            }
+
+            try {
+                // Get base URL from current location
+                const baseUrl = window.location.origin;
+                const response = await fetch(`${baseUrl}/api/subscription/${uuid}`);
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        showError('Подписка не найдена. Убедитесь, что вы привязали свой аккаунт через /linkmail.');
+                    } else {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return;
+                }
+
+                const data = await response.json();
+                displaySubscriptionData(data);
+            } catch (error) {
+                console.error('Error loading subscription:', error);
+                showError('Ошибка загрузки данных. Попробуйте позже.');
+            }
+        }
+
+        // Отображение данных подписки
+        function displaySubscriptionData(data) {
+            const content = document.getElementById('content');
+            const statusBadge = document.getElementById('statusBadge');
+
+            // Статус подписки
+            const status = data.status || 'UNKNOWN';
+            let statusText = 'Неизвестно';
+            let statusClass = 'status-inactive';
+
+            if (status === 'ACTIVE') {
+                statusText = 'Активна';
+                statusClass = 'status-active';
+            } else if (status === 'EXPIRED') {
+                statusText = 'Истекла';
+                statusClass = 'status-expired';
+            } else {
+                statusText = 'Неактивна';
+                statusClass = 'status-inactive';
+            }
+
+            statusBadge.textContent = statusText;
+            statusBadge.className = `status-badge ${statusClass}`;
+
+            // Форматирование даты
+            function formatDate(dateStr) {
+                if (!dateStr) return 'Не указано';
+                try {
+                    const date = new Date(dateStr);
+                    return date.toLocaleDateString('ru-RU', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                } catch (e) {
+                    return dateStr;
+                }
+            }
+
+            // Форматирование трафика
+            function formatBytes(bytes) {
+                if (!bytes && bytes !== 0) return 'Не указано';
+                const gb = bytes / (1024 * 1024 * 1024);
+                if (gb >= 1) {
+                    return `${gb.toFixed(2)} GB`;
+                }
+                const mb = bytes / (1024 * 1024);
+                return `${mb.toFixed(2)} MB`;
+            }
+
+            // Вычисление процента использования трафика
+            function getTrafficPercent(used, limit) {
+                if (!limit || limit === 0) return 0;
+                return Math.min((used / limit) * 100, 100);
+            }
+
+            const expireAt = formatDate(data.expireAt);
+            const usedTraffic = formatBytes(data.usedTrafficBytes);
+            const limitTraffic = formatBytes(data.trafficLimitBytes);
+            const trafficPercent = getTrafficPercent(data.usedTrafficBytes || 0, data.trafficLimitBytes || 0);
+
+            const html = `
+                <div class="card">
+                    <div class="card-title">Email</div>
+                    <div class="card-value">${data.email || 'Не указан'}</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Имя пользователя</div>
+                    <div class="card-value">${data.username || 'Не указано'}</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Дата окончания</div>
+                    <div class="card-value date">${expireAt}</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Использовано трафика</div>
+                    <div class="card-value traffic">${usedTraffic}</div>
+                    ${data.trafficLimitBytes ? `
+                        <div class="traffic-limit">из ${limitTraffic}</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${trafficPercent}%"></div>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <div class="info-grid">
+                    <div class="card">
+                        <div class="card-title">UUID</div>
+                        <div class="card-value" style="font-size: 12px;">${data.uuid || 'Не указан'}</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Short UUID</div>
+                        <div class="card-value" style="font-size: 12px;">${data.shortUuid || 'Не указан'}</div>
+                    </div>
+                </div>
+
+                ${data.subscriptionUrl ? `
+                    <div class="card">
+                        <div class="card-title">Subscription URL</div>
+                        <div class="card-value" style="font-size: 12px; word-break: break-all;">${data.subscriptionUrl}</div>
+                    </div>
+                ` : ''}
+
+                <button class="refresh-btn" onclick="loadSubscriptionData()">🔄 Обновить</button>
+            `;
+
+            content.innerHTML = html;
+        }
+
+        // Отображение ошибки
+        function showError(message) {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div class="error">
+                    <div>❌ Ошибка</div>
+                    <div class="error-message">${message}</div>
+                    <button class="refresh-btn" onclick="loadSubscriptionData()">🔄 Попробовать снова</button>
+                </div>
+            `;
+        }
+
+        // Загрузка данных при открытии
+        loadSubscriptionData();
+    </script>
+</body>
+</html>
+
