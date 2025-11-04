@@ -175,46 +175,50 @@
         tg.ready();
         tg.expand();
 
-        // Получаем UUID из initData или URL параметров
-        function getUUID() {
-            // Попытка получить из initData
+        // Получаем Telegram ID пользователя из Telegram WebApp API
+        function getTelegramId() {
             try {
-                const initData = tg.initData;
-                if (initData) {
-                    const params = new URLSearchParams(initData);
+                // Telegram WebApp API предоставляет данные пользователя
+                if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                    return tg.initDataUnsafe.user.id;
+                }
+                
+                // Альтернативный способ - парсинг initData
+                if (tg.initData) {
+                    const params = new URLSearchParams(tg.initData);
                     const user = params.get('user');
                     if (user) {
                         const userObj = JSON.parse(decodeURIComponent(user));
-                        // UUID может быть в user или в других полях
-                        return userObj.uuid || null;
+                        return userObj.id || null;
                     }
                 }
             } catch (e) {
-                console.error('Error parsing initData:', e);
+                console.error('Error getting Telegram ID:', e);
             }
-
-            // Попытка получить из URL параметров
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('uuid') || null;
+            
+            return null;
         }
 
         // Загрузка данных подписки
         async function loadSubscriptionData() {
-            const uuid = getUUID();
-            if (!uuid) {
-                showError('UUID не найден. Пожалуйста, откройте приложение через бота.');
+            const telegramId = getTelegramId();
+            
+            if (!telegramId) {
+                showError('Не удалось определить пользователя. Пожалуйста, откройте приложение через Telegram бота.');
                 return;
             }
 
             try {
                 // Get base URL from current location
                 const baseUrl = window.location.origin;
-                const response = await fetch(`${baseUrl}/api/subscription/${uuid}`);
+                const response = await fetch(`${baseUrl}/api/subscription/telegram/${telegramId}`);
+                
                 if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
                     if (response.status === 404) {
-                        showError('Подписка не найдена. Убедитесь, что вы привязали свой аккаунт через /linkmail.');
+                        showError(errorData.error || 'Ваш аккаунт не привязан к системе. Обратитесь в поддержку и попросите администратора привязать ваш email через команду /linkmail.');
                     } else {
-                        throw new Error(`HTTP ${response.status}`);
+                        throw new Error(`HTTP ${response.status}: ${errorData.error || 'Unknown error'}`);
                     }
                     return;
                 }

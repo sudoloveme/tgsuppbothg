@@ -39,23 +39,18 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         thread_id = await ensure_forum_topic_for_user(update, context)
         logger.info("/start from user_id=%s → thread_id=%s", user.id, str(thread_id))
         
-        # Create keyboard with mini-app button if user has UUID
-        from database import db_get_user_backend_data
+        # Create keyboard with mini-app button if mini-app is configured
         from config import MINIAPP_URL
         from telegram import InlineKeyboardButton, InlineKeyboardMarkup
         
-        backend_data = db_get_user_backend_data(user.id)
         keyboard = None
-        if backend_data and backend_data[0]:  # UUID exists
-            uuid = backend_data[0]
-            mini_app_url = f"{MINIAPP_URL}?uuid={uuid}" if MINIAPP_URL else None
-            if mini_app_url:
-                keyboard = InlineKeyboardMarkup([[
-                    InlineKeyboardButton(
-                        text="📊 Моя подписка",
-                        web_app={"url": mini_app_url}
-                    )
-                ]])
+        if MINIAPP_URL:
+            keyboard = InlineKeyboardMarkup([[
+                InlineKeyboardButton(
+                    text="📊 Моя подписка",
+                    web_app={"url": MINIAPP_URL}
+                )
+            ]])
         
         await update.effective_message.reply_text(
             "Здравствуйте! Опишите вашу проблему или вопрос. Для ускорения оказания помощи, укажите сразу ваш email, а также скриншоты проблемы если возможно. Мы ответим вам в течение 24 часов.",
@@ -118,8 +113,8 @@ async def cmd_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         )
         return
     
-    uuid = backend_data[0]
-    mini_app_url = f"{MINIAPP_URL}?uuid={uuid}" if MINIAPP_URL else None
+    # URL mini-app без параметров - Telegram ID будет получен из WebApp API
+    mini_app_url = MINIAPP_URL if MINIAPP_URL else None
     
     if not mini_app_url:
         await update.effective_message.reply_text(
