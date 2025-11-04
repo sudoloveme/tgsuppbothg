@@ -29,6 +29,8 @@ SUPPORT_CHAT_ID_ENV = os.getenv("SUPPORT_CHAT_ID", "").strip()
 # Optional DB for persistence
 DB_PATH = os.getenv("DB_PATH", "data.db").strip() or "data.db"
 ARCHIVE_AFTER_HOURS = int(os.getenv("ARCHIVE_AFTER_HOURS", "72").strip() or 72)
+# Thread ID для темы с уведомлениями об оценках (по умолчанию 1 = General тема)
+RATINGS_NOTIFICATIONS_THREAD_ID = int(os.getenv("RATINGS_NOTIFICATIONS_THREAD_ID", "1").strip() or "1")
 
 if not TELEGRAM_BOT_TOKEN:
     raise RuntimeError("TELEGRAM_BOT_TOKEN is not set. Put it in your environment or a .env file.")
@@ -320,6 +322,59 @@ async def send_rating_message(context: ContextTypes.DEFAULT_TYPE, user_id: int) 
         logger.exception("Failed to send rating message to user_id=%s", user_id)
 
 
+async def notify_admin_about_rating(context: ContextTypes.DEFAULT_TYPE, user_id: int, rating: int, thread_id: int | None = None, user_obj=None) -> None:
+    """Send notification to admins about user rating."""
+    if SUPPORT_CHAT_ID is None:
+        return
+    
+    try:
+        # Get user information
+        user = user_obj
+        if user is None:
+            # Try to get user info from chat
+            try:
+                chat_member = await context.bot.get_chat_member(SUPPORT_CHAT_ID, user_id)
+                user = chat_member.user if hasattr(chat_member, 'user') else None
+            except Exception:
+                # If user is not in support chat, try to get info from private chat
+                try:
+                    user = await context.bot.get_chat(user_id)
+                except Exception:
+                    user = None
+        
+        # Format user info
+        user_parts = []
+        if user:
+            if hasattr(user, 'full_name') and user.full_name:
+                user_parts.append(user.full_name)
+            elif hasattr(user, 'first_name') and user.first_name:
+                user_parts.append(user.first_name)
+            if hasattr(user, 'username') and user.username:
+                user_parts.append(f"@{user.username}")
+        user_parts.append(f"id:{user_id}")
+        user_info = " | ".join(user_parts)
+        
+        # Create rating message
+        rating_emoji = "⭐" * rating
+        message_parts = [f"📊 Новая оценка: {rating} {rating_emoji}"]
+        message_parts.append(f"Пользователь: {user_info}")
+        if thread_id:
+            message_parts.append(f"Тема диалога: {thread_id}")
+        
+        message_text = "\n".join(message_parts)
+        
+        # Send to notifications thread
+        await context.bot.send_message(
+            chat_id=SUPPORT_CHAT_ID,
+            message_thread_id=RATINGS_NOTIFICATIONS_THREAD_ID,
+            text=message_text,
+            parse_mode=ParseMode.HTML,
+        )
+        logger.info("Sent rating notification for user_id=%s rating=%s", user_id, rating)
+    except Exception:
+        logger.exception("Failed to send rating notification for user_id=%s rating=%s", user_id, rating)
+
+
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.effective_user is None:
@@ -408,11 +463,14 @@ async def handle_callback_buttons(update: Update, context: ContextTypes.DEFAULT_
             rating = int(rating_str)
             if 1 <= rating <= 5:
                 user_id = cq.from_user.id if cq.from_user else None
+                thread_id = None
                 if user_id:
                     # Get thread_id for this user to link rating with thread
                     thread_id = db_get_thread_id(user_id)
                     # Save rating to database
                     db_save_rating(user_id, rating, thread_id)
+                    # Notify admins about the rating (pass user object from callback)
+                    await notify_admin_about_rating(context, user_id, rating, thread_id, user_obj=cq.from_user)
                 
                 await cq.answer(f"Спасибо за оценку: {rating} ⭐")
                 # Optionally edit the message to show rating was received
