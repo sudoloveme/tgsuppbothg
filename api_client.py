@@ -5,13 +5,23 @@ import logging
 import os
 from typing import Dict, Any, Optional
 
+from dotenv import load_dotenv
 import httpx
+
+# Load environment variables from .env if present
+load_dotenv()
 
 logger = logging.getLogger("support-bot")
 
 # Backend API URL and API Key from environment
 BACKEND_API_URL = os.getenv("BACKEND_API_URL", "").strip()
 BACKEND_API_KEY = os.getenv("BACKEND_API_KEY", "").strip()
+
+# Log configuration status (without exposing the key)
+if BACKEND_API_URL:
+    logger.info(f"Backend API configured: URL={BACKEND_API_URL}, API_KEY={'***' if BACKEND_API_KEY else 'NOT SET'}")
+else:
+    logger.warning("BACKEND_API_URL is not configured. API integration will not work.")
 
 
 def _get_headers() -> dict:
