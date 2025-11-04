@@ -535,30 +535,44 @@
 
         // Загрузка данных подписки
         async function loadSubscriptionData() {
-            // Используем кэшированное значение или пытаемся получить снова
-            let telegramId = telegramUserId || getTelegramId();
-            
-            console.log('Attempting to load subscription data, Telegram ID:', telegramId);
+            console.log('Attempting to load subscription data');
             console.log('Current URL:', window.location.href);
             
-            if (!telegramId) {
-                console.error('Telegram ID is null or undefined');
-                console.error('Full WebApp object:', JSON.stringify({
-                    initData: tg.initData ? tg.initData.substring(0, 200) : null,
-                    initDataUnsafe: tg.initDataUnsafe,
-                    version: tg.version,
-                    platform: tg.platform,
-                }, null, 2));
+            // Проверяем, есть ли UUID в URL параметрах (оптимизация)
+            const urlParams = new URLSearchParams(window.location.search);
+            const uuidFromUrl = urlParams.get('uuid');
+            
+            let apiUrl;
+            
+            if (uuidFromUrl) {
+                // Если UUID передан в URL - используем его напрямую (быстрее)
+                console.log('Using UUID from URL parameter:', uuidFromUrl);
+                const baseUrl = window.location.origin;
+                apiUrl = `${baseUrl}/api/subscription/${uuidFromUrl}`;
+            } else {
+                // Fallback: получаем Telegram ID и делаем запрос через промежуточный API
+                let telegramId = telegramUserId || getTelegramId();
                 
-                // Попробуем подождать еще
-                waitForWebApp(loadSubscriptionData, 5);
-                return;
+                if (!telegramId) {
+                    console.error('Telegram ID is null or undefined');
+                    console.error('Full WebApp object:', JSON.stringify({
+                        initData: tg.initData ? tg.initData.substring(0, 200) : null,
+                        initDataUnsafe: tg.initDataUnsafe,
+                        version: tg.version,
+                        platform: tg.platform,
+                    }, null, 2));
+                    
+                    // Попробуем подождать еще
+                    waitForWebApp(loadSubscriptionData, 5);
+                    return;
+                }
+                
+                console.log('Using Telegram ID (fallback):', telegramId);
+                const baseUrl = window.location.origin;
+                apiUrl = `${baseUrl}/api/subscription/telegram/${telegramId}`;
             }
 
             try {
-                // Get base URL from current location
-                const baseUrl = window.location.origin;
-                const apiUrl = `${baseUrl}/api/subscription/telegram/${telegramId}`;
                 
                 console.log('=== FETCH REQUEST DETAILS ===');
                 console.log('Current URL:', window.location.href);

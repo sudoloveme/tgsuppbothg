@@ -113,8 +113,9 @@ async def cmd_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         )
         return
     
-    # URL mini-app без параметров - Telegram ID будет получен из WebApp API
-    mini_app_url = MINIAPP_URL if MINIAPP_URL else None
+    # Передаем UUID в URL для упрощения - минимизируем запросы к API
+    uuid = backend_data[0]
+    mini_app_url = f"{MINIAPP_URL}?uuid={uuid}" if MINIAPP_URL else None
     
     if not mini_app_url:
         await update.effective_message.reply_text(
