@@ -512,17 +512,25 @@
             return null;
         }
         
-        // Попытка получить ID сразу и через небольшую задержку
-        telegramUserId = getTelegramId();
-        if (!telegramUserId) {
-            console.log('Telegram ID not available immediately, retrying in 500ms...');
-            setTimeout(() => {
-                telegramUserId = getTelegramId();
-                if (telegramUserId) {
-                    console.log('Telegram ID obtained after delay:', telegramUserId);
-                    loadSubscriptionData();
+        // Функция для ожидания готовности WebApp
+        function waitForWebApp(callback, maxAttempts = 10) {
+            let attempts = 0;
+            const checkInterval = setInterval(() => {
+                attempts++;
+                console.log(`Attempt ${attempts} to get Telegram ID...`);
+                
+                const id = getTelegramId();
+                if (id) {
+                    clearInterval(checkInterval);
+                    console.log('Telegram ID obtained:', id);
+                    telegramUserId = id;
+                    callback();
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(checkInterval);
+                    console.error('Failed to get Telegram ID after', maxAttempts, 'attempts');
+                    showError('Не удалось определить пользователя. Пожалуйста, откройте приложение через Telegram бота. Убедитесь, что вы используете последнюю версию Telegram.');
                 }
-            }, 500);
+            }, 300);
         }
 
         // Загрузка данных подписки
@@ -531,6 +539,7 @@
             let telegramId = telegramUserId || getTelegramId();
             
             console.log('Attempting to load subscription data, Telegram ID:', telegramId);
+            console.log('Current URL:', window.location.href);
             
             if (!telegramId) {
                 console.error('Telegram ID is null or undefined');
@@ -541,7 +550,8 @@
                     platform: tg.platform,
                 }, null, 2));
                 
-                showError('Не удалось определить пользователя. Пожалуйста, откройте приложение через Telegram бота. Убедитесь, что вы используете последнюю версию Telegram.');
+                // Попробуем подождать еще
+                waitForWebApp(loadSubscriptionData, 5);
                 return;
             }
 
@@ -748,8 +758,22 @@
             `;
         }
 
-        // Загрузка данных при открытии
-        loadSubscriptionData();
+        // Загрузка данных при открытии - ждем готовности WebApp
+        console.log('Initializing mini-app...');
+        console.log('WebApp ready:', tg.isReady);
+        console.log('WebApp version:', tg.version);
+        
+        // Ждем полной инициализации WebApp перед загрузкой данных
+        if (tg.isReady) {
+            waitForWebApp(loadSubscriptionData, 10);
+        } else {
+            tg.ready();
+            tg.onEvent('viewportChanged', () => {
+                console.log('Viewport changed, retrying...');
+                waitForWebApp(loadSubscriptionData, 5);
+            });
+            waitForWebApp(loadSubscriptionData, 10);
+        }
     </script>
 </body>
 </html>
