@@ -122,12 +122,24 @@ def main() -> None:
     if MINIAPP_URL:
         def run_miniapp_server():
             import asyncio
-            from miniapp_server import run_server
-            asyncio.run(run_server(host="0.0.0.0", port=MINIAPP_PORT))
+            try:
+                from miniapp_server import run_server
+                logger.info(f"Starting mini-app server in thread on port {MINIAPP_PORT}...")
+                # Create new event loop for this thread
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    loop.run_until_complete(run_server(host="0.0.0.0", port=MINIAPP_PORT))
+                except Exception as e:
+                    logger.exception(f"Error in mini-app server: {e}")
+                finally:
+                    loop.close()
+            except Exception as e:
+                logger.exception(f"Failed to start mini-app server: {e}")
         
-        miniapp_thread = threading.Thread(target=run_miniapp_server, daemon=True)
+        miniapp_thread = threading.Thread(target=run_miniapp_server, daemon=True, name="MiniAppServer")
         miniapp_thread.start()
-        logger.info(f"Mini-app server started on port {MINIAPP_PORT}")
+        logger.info(f"Mini-app server thread started (thread name: {miniapp_thread.name})")
     else:
         logger.warning("MINIAPP_URL not configured. Mini-app functionality disabled.")
 

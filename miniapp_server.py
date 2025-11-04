@@ -259,23 +259,35 @@ async def run_server(host: str = "0.0.0.0", port: int = 8080):
     """Run the mini-app server."""
     from config import MINIAPP_PORT
     
-    app = create_app()
-    runner = web.AppRunner(app)
-    await runner.setup()
-    
-    actual_port = port or MINIAPP_PORT
-    site = web.TCPSite(runner, host, actual_port)
-    await site.start()
-    
-    logger.info(f"Mini-app server started on http://{host}:{actual_port}")
-    
-    # Keep running
     try:
-        await asyncio.Future()  # Run forever
-    except KeyboardInterrupt:
-        logger.info("Shutting down mini-app server...")
-    finally:
-        await runner.cleanup()
+        logger.info(f"Creating mini-app application...")
+        app = create_app()
+        logger.info(f"Creating AppRunner...")
+        runner = web.AppRunner(app)
+        logger.info(f"Setting up AppRunner...")
+        await runner.setup()
+        
+        actual_port = port or MINIAPP_PORT
+        logger.info(f"Creating TCPSite on {host}:{actual_port}...")
+        site = web.TCPSite(runner, host, actual_port)
+        logger.info(f"Starting TCPSite...")
+        await site.start()
+        
+        logger.info(f"✅ Mini-app server successfully started on http://{host}:{actual_port}")
+        logger.info(f"Server is ready to accept connections")
+        
+        # Keep running
+        try:
+            await asyncio.Future()  # Run forever
+        except KeyboardInterrupt:
+            logger.info("Shutting down mini-app server...")
+        finally:
+            logger.info("Cleaning up AppRunner...")
+            await runner.cleanup()
+            logger.info("Mini-app server stopped")
+    except Exception as e:
+        logger.exception(f"❌ Failed to start mini-app server: {e}")
+        raise
 
 
 if __name__ == "__main__":
