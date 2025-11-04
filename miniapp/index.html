@@ -774,21 +774,32 @@
         }
 
         // Загрузка данных при открытии - ждем готовности WebApp
-        console.log('Initializing mini-app...');
+        console.log('=== MINI-APP INITIALIZATION ===');
         console.log('WebApp ready:', tg.isReady);
         console.log('WebApp version:', tg.version);
+        console.log('WebApp platform:', tg.platform);
+        console.log('initData available:', !!tg.initData);
+        console.log('initDataUnsafe available:', !!tg.initDataUnsafe);
+        
+        // Вызываем ready() для инициализации WebApp
+        tg.ready();
         
         // Ждем полной инициализации WebApp перед загрузкой данных
-        if (tg.isReady) {
-            waitForWebApp(loadSubscriptionData, 10);
-        } else {
-            tg.ready();
-            tg.onEvent('viewportChanged', () => {
-                console.log('Viewport changed, retrying...');
-                waitForWebApp(loadSubscriptionData, 5);
-            });
-            waitForWebApp(loadSubscriptionData, 10);
-        }
+        // Используем небольшую задержку, чтобы WebApp успел инициализироваться
+        setTimeout(() => {
+            console.log('After delay - WebApp ready:', tg.isReady);
+            console.log('After delay - initDataUnsafe:', tg.initDataUnsafe);
+            waitForWebApp(loadSubscriptionData, 15); // Увеличили до 15 попыток
+        }, 500);
+        
+        // Также слушаем события WebApp
+        tg.onEvent('viewportChanged', () => {
+            console.log('Viewport changed event received');
+        });
+        
+        tg.onEvent('themeChanged', () => {
+            console.log('Theme changed event received');
+        });
     </script>
 </body>
 </html>
