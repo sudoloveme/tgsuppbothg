@@ -16,353 +16,377 @@
             --tg-bg: var(--tg-theme-bg-color, #ffffff);
             --tg-text: var(--tg-theme-text-color, #000000);
             --tg-hint: var(--tg-theme-hint-color, #999999);
-            --tg-link: var(--tg-theme-link-color, #3390ec);
-            --tg-button: var(--tg-theme-button-color, #3390ec);
+            --tg-link: var(--tg-theme-link-color, #007AFF);
+            --tg-button: var(--tg-theme-button-color, #007AFF);
             --tg-button-text: var(--tg-theme-button-text-color, #ffffff);
-            --tg-secondary: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            --tg-secondary: var(--tg-theme-secondary-bg-color, #f2f2f7);
+            
+            /* Apple Design System Colors */
+            --system-blue: #007AFF;
+            --system-green: #34C759;
+            --system-red: #FF3B30;
+            --system-orange: #FF9500;
+            --system-gray: #8E8E93;
+            --system-gray-light: #F2F2F7;
+            --system-gray-dark: #636366;
+            --separator: rgba(60, 60, 67, 0.29);
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, var(--tg-bg) 0%, var(--tg-secondary) 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+            background: var(--tg-bg);
             color: var(--tg-text);
             padding: 0;
             min-height: 100vh;
-            line-height: 1.6;
+            line-height: 1.47059;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         .container {
             max-width: 600px;
             margin: 0 auto;
-            padding: 20px 16px;
+            padding: 0;
         }
 
+        /* Large Title - Apple Style */
         .header {
-            text-align: center;
-            margin-bottom: 32px;
-            padding: 24px 16px;
-            background: linear-gradient(135deg, var(--tg-button) 0%, #2b7cd6 100%);
-            border-radius: 20px 20px 40px 40px;
-            box-shadow: 0 8px 24px rgba(51, 144, 236, 0.3);
-            color: white;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: pulse 3s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.1); opacity: 0.8; }
+            padding: 44px 20px 20px;
+            background: var(--tg-bg);
+            border-bottom: 0.5px solid var(--separator);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+            background: rgba(var(--tg-bg-rgb, 255, 255, 255), 0.8);
         }
 
         .header h1 {
-            font-size: 28px;
+            font-size: 34px;
             font-weight: 700;
-            margin-bottom: 12px;
-            position: relative;
-            z-index: 1;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            letter-spacing: 0.37px;
+            color: var(--tg-text);
+            margin-bottom: 8px;
         }
 
         .status-badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 13px;
             font-weight: 600;
-            margin-top: 8px;
-            position: relative;
-            z-index: 1;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            letter-spacing: -0.08px;
+            margin-top: 4px;
         }
 
         .status-active {
-            background: rgba(76, 175, 80, 0.9);
-            color: white;
+            background: rgba(52, 199, 89, 0.15);
+            color: var(--system-green);
         }
 
         .status-expired {
-            background: rgba(244, 67, 54, 0.9);
-            color: white;
+            background: rgba(255, 59, 48, 0.15);
+            color: var(--system-red);
         }
 
         .status-inactive {
-            background: rgba(255, 152, 0, 0.9);
-            color: white;
+            background: rgba(255, 149, 0, 0.15);
+            color: var(--system-orange);
         }
 
+        /* Content Section */
+        .content-section {
+            padding: 20px;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 400;
+            color: var(--system-gray);
+            text-transform: uppercase;
+            letter-spacing: -0.08px;
+            margin-bottom: 8px;
+            padding: 0 4px;
+        }
+
+        /* Card - Apple Style */
         .card {
             background: var(--tg-secondary);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 16px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            border: 1px solid rgba(0,0,0,0.05);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            overflow: hidden;
+            border: 0.5px solid var(--separator);
         }
 
-        .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
-        }
-
-        .card-title {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--tg-hint);
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        .card-row {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 6px;
+            padding: 16px;
+            min-height: 44px;
+            border-bottom: 0.5px solid var(--separator);
         }
 
-        .card-title::before {
-            content: '';
-            width: 4px;
-            height: 4px;
-            border-radius: 50%;
-            background: var(--tg-button);
+        .card-row:last-child {
+            border-bottom: none;
+        }
+
+        .card-label {
+            font-size: 17px;
+            font-weight: 400;
+            color: var(--tg-text);
+            letter-spacing: -0.41px;
         }
 
         .card-value {
-            font-size: 18px;
-            font-weight: 600;
-            word-break: break-all;
+            font-size: 17px;
+            font-weight: 400;
+            color: var(--system-gray-dark);
+            text-align: right;
             font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+            letter-spacing: -0.41px;
+        }
+
+        .card-value-large {
+            font-size: 28px;
+            font-weight: 600;
             color: var(--tg-text);
+            letter-spacing: 0.36px;
         }
 
-        .card-icon {
-            font-size: 24px;
-            margin-right: 8px;
-            vertical-align: middle;
+        .card-value-primary {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--tg-text);
+            letter-spacing: 0.38px;
         }
 
-        .progress-container {
-            margin-top: 12px;
+        /* Traffic Progress */
+        .traffic-progress {
+            margin-top: 8px;
         }
 
         .progress-bar {
             width: 100%;
-            height: 10px;
-            background: rgba(0,0,0,0.1);
-            border-radius: 10px;
+            height: 4px;
+            background: var(--system-gray-light);
+            border-radius: 2px;
             overflow: hidden;
-            position: relative;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #4CAF50 0%, #66BB6A 50%, #81C784 100%);
-            border-radius: 10px;
+            background: var(--system-green);
+            border-radius: 2px;
             transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
         }
 
-        .progress-fill::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            right: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            animation: shimmer 2s infinite;
+        .progress-fill.warning {
+            background: var(--system-orange);
         }
 
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
+        .progress-fill.danger {
+            background: var(--system-red);
         }
 
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
+        .traffic-limit {
+            font-size: 15px;
+            color: var(--system-gray);
+            margin-top: 4px;
+            letter-spacing: -0.24px;
         }
 
+        /* Email Section - Highlighted */
+        .email-section {
+            background: var(--tg-bg);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 0.5px solid var(--separator);
+        }
+
+        .email-label {
+            font-size: 13px;
+            font-weight: 400;
+            color: var(--system-gray);
+            margin-bottom: 8px;
+            letter-spacing: -0.08px;
+        }
+
+        .email-value {
+            font-size: 17px;
+            font-weight: 400;
+            color: var(--tg-text);
+            letter-spacing: -0.41px;
+        }
+
+        /* Subscription URL */
+        .subscription-url-section {
+            background: var(--tg-bg);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border: 0.5px solid var(--separator);
+        }
+
+        .subscription-url-label {
+            font-size: 13px;
+            font-weight: 400;
+            color: var(--system-gray);
+            margin-bottom: 8px;
+            letter-spacing: -0.08px;
+        }
+
+        .subscription-url-value {
+            font-size: 15px;
+            font-weight: 400;
+            color: var(--system-blue);
+            word-break: break-all;
+            font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+            letter-spacing: -0.24px;
+            line-height: 1.4;
+        }
+
+        /* Loading State */
         .loading {
             text-align: center;
-            padding: 60px 20px;
-            color: var(--tg-hint);
+            padding: 80px 20px;
+            color: var(--system-gray);
         }
 
-        .loading::after {
-            content: '...';
-            animation: dots 1.5s steps(4, end) infinite;
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--system-gray-light);
+            border-top-color: var(--system-blue);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 16px;
         }
 
-        @keyframes dots {
-            0%, 20% { content: '.'; }
-            40% { content: '..'; }
-            60%, 100% { content: '...'; }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
+        .loading-text {
+            font-size: 17px;
+            color: var(--system-gray);
+            letter-spacing: -0.41px;
+        }
+
+        /* Error State */
         .error {
             text-align: center;
-            padding: 60px 20px;
-            color: #f44336;
+            padding: 80px 20px;
         }
 
         .error-icon {
             font-size: 64px;
             margin-bottom: 16px;
-            opacity: 0.7;
+            opacity: 0.6;
+        }
+
+        .error-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--tg-text);
+            margin-bottom: 8px;
+            letter-spacing: 0.35px;
         }
 
         .error-message {
-            margin-top: 16px;
-            font-size: 15px;
-            line-height: 1.6;
-            color: var(--tg-text);
+            font-size: 17px;
+            color: var(--system-gray);
+            line-height: 1.47059;
+            margin-bottom: 24px;
+            letter-spacing: -0.41px;
         }
 
+        /* Button - Apple Style */
         .refresh-btn {
-            background: linear-gradient(135deg, var(--tg-button) 0%, #2b7cd6 100%);
-            color: var(--tg-button-text);
+            background: var(--system-blue);
+            color: white;
             border: none;
-            border-radius: 12px;
-            padding: 16px 24px;
-            font-size: 16px;
+            border-radius: 10px;
+            padding: 14px 20px;
+            font-size: 17px;
             font-weight: 600;
             cursor: pointer;
             width: 100%;
             margin-top: 20px;
-            box-shadow: 0 4px 16px rgba(51, 144, 236, 0.4);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .refresh-btn::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.3);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
+            transition: opacity 0.2s ease;
+            letter-spacing: -0.41px;
         }
 
         .refresh-btn:active {
-            transform: scale(0.98);
-            box-shadow: 0 2px 8px rgba(51, 144, 236, 0.3);
+            opacity: 0.6;
         }
 
-        .refresh-btn:active::before {
-            width: 300px;
-            height: 300px;
-        }
-
-        .date {
+        /* Date formatting */
+        .date-value {
             font-size: 17px;
-            font-weight: 600;
+            font-weight: 400;
+            color: var(--system-gray-dark);
+            letter-spacing: -0.41px;
         }
 
-        .traffic {
-            font-size: 24px;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--tg-button) 0%, #2b7cd6 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .traffic-limit {
-            font-size: 13px;
-            color: var(--tg-hint);
-            margin-top: 6px;
-            font-weight: 500;
-        }
-
-        .highlight-card {
-            background: linear-gradient(135deg, rgba(51, 144, 236, 0.1) 0%, rgba(43, 124, 214, 0.05) 100%);
-            border: 2px solid rgba(51, 144, 236, 0.2);
-        }
-
-        .copy-btn {
-            display: inline-block;
-            margin-left: 8px;
-            padding: 4px 8px;
-            background: rgba(51, 144, 236, 0.1);
-            border: none;
-            border-radius: 6px;
-            font-size: 12px;
-            cursor: pointer;
-            color: var(--tg-button);
-            transition: all 0.2s;
-        }
-
-        .copy-btn:hover {
-            background: rgba(51, 144, 236, 0.2);
-        }
-
-        @media (max-width: 480px) {
-            .info-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .header h1 {
-                font-size: 24px;
-            }
-            
-            .container {
-                padding: 12px;
-            }
-        }
-
-        /* Анимация появления карточек */
-        @keyframes fadeInUp {
+        /* Animations */
+        @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateY(20px);
             }
             to {
                 opacity: 1;
-                transform: translateY(0);
             }
         }
 
         .card {
-            animation: fadeInUp 0.5s ease-out;
+            animation: fadeIn 0.3s ease-out;
         }
 
-        .card:nth-child(1) { animation-delay: 0.1s; }
-        .card:nth-child(2) { animation-delay: 0.2s; }
-        .card:nth-child(3) { animation-delay: 0.3s; }
-        .card:nth-child(4) { animation-delay: 0.4s; }
-        .card:nth-child(5) { animation-delay: 0.5s; }
+        .card:nth-child(1) { animation-delay: 0.05s; }
+        .card:nth-child(2) { animation-delay: 0.1s; }
+        .card:nth-child(3) { animation-delay: 0.15s; }
+        .card:nth-child(4) { animation-delay: 0.2s; }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .header {
+                padding: 20px 16px 16px;
+            }
+
+            .header h1 {
+                font-size: 28px;
+            }
+
+            .content-section {
+                padding: 16px;
+            }
+        }
+
+        /* Safe area for notched devices */
+        @supports (padding: max(0px)) {
+            .header {
+                padding-top: max(44px, env(safe-area-inset-top));
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>📊 Моя подписка</h1>
+            <h1>Моя подписка</h1>
             <div id="statusBadge" class="status-badge">Загрузка...</div>
         </div>
 
         <div id="content">
-            <div class="loading">Загрузка данных...</div>
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Загрузка данных</div>
+            </div>
         </div>
     </div>
 
@@ -490,56 +514,59 @@
             const limitTraffic = formatBytes(data.trafficLimitBytes);
             const trafficPercent = getTrafficPercent(data.usedTrafficBytes || 0, data.trafficLimitBytes || 0);
 
+            // Определяем класс для progress bar в зависимости от процента
+            let progressClass = '';
+            if (trafficPercent >= 90) {
+                progressClass = 'danger';
+            } else if (trafficPercent >= 70) {
+                progressClass = 'warning';
+            }
+
             const html = `
-                <div class="card highlight-card">
-                    <div class="card-title">📧 Email</div>
-                    <div class="card-value">${data.email || 'Не указан'}</div>
-                </div>
+                <div class="content-section">
+                    <div class="email-section">
+                        <div class="email-label">Email</div>
+                        <div class="email-value">${data.email || 'Не указан'}</div>
+                    </div>
 
-                <div class="card">
-                    <div class="card-title">👤 Имя пользователя</div>
-                    <div class="card-value">${data.username || 'Не указано'}</div>
-                </div>
+                    <div class="section-title">Подписка</div>
+                    <div class="card">
+                        <div class="card-row">
+                            <div class="card-label">Дата окончания</div>
+                            <div class="card-value-primary">${expireAt}</div>
+                        </div>
+                    </div>
 
-                <div class="card highlight-card">
-                    <div class="card-title">📅 Дата окончания</div>
-                    <div class="card-value date">${expireAt}</div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">📊 Использовано трафика</div>
-                    <div class="card-value traffic">${usedTraffic}</div>
-                    ${data.trafficLimitBytes ? `
-                        <div class="traffic-limit">из ${limitTraffic}</div>
-                        <div class="progress-container">
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: ${trafficPercent}%"></div>
+                    <div class="section-title">Трафик</div>
+                    <div class="card">
+                        <div class="card-row">
+                            <div class="card-label">Использовано</div>
+                            <div class="card-value-large">${usedTraffic}</div>
+                        </div>
+                        ${data.trafficLimitBytes ? `
+                            <div class="card-row" style="flex-direction: column; align-items: flex-start; padding-top: 0;">
+                                <div class="traffic-limit" style="width: 100%; margin-bottom: 8px;">из ${limitTraffic}</div>
+                                <div class="traffic-progress" style="width: 100%;">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill ${progressClass}" style="width: ${trafficPercent}%"></div>
+                                    </div>
+                                </div>
                             </div>
+                        ` : ''}
+                    </div>
+
+                    ${data.subscriptionUrl ? `
+                        <div class="section-title">Подключение</div>
+                        <div class="subscription-url-section">
+                            <div class="subscription-url-label">Subscription URL</div>
+                            <div class="subscription-url-value">${data.subscriptionUrl}</div>
                         </div>
                     ` : ''}
+
+                    <button class="refresh-btn" onclick="loadSubscriptionData()">
+                        Обновить
+                    </button>
                 </div>
-
-                <div class="info-grid">
-                    <div class="card">
-                        <div class="card-title">🔑 UUID</div>
-                        <div class="card-value" style="font-size: 13px;">${data.uuid || 'Не указан'}</div>
-                    </div>
-                    <div class="card">
-                        <div class="card-title">🔗 Short UUID</div>
-                        <div class="card-value" style="font-size: 13px;">${data.shortUuid || 'Не указан'}</div>
-                    </div>
-                </div>
-
-                ${data.subscriptionUrl ? `
-                    <div class="card">
-                        <div class="card-title">🔗 Subscription URL</div>
-                        <div class="card-value" style="font-size: 13px; word-break: break-all;">${data.subscriptionUrl}</div>
-                    </div>
-                ` : ''}
-
-                <button class="refresh-btn" onclick="loadSubscriptionData()">
-                    🔄 Обновить данные
-                </button>
             `;
 
             content.innerHTML = html;
@@ -551,10 +578,10 @@
             content.innerHTML = `
                 <div class="error">
                     <div class="error-icon">⚠️</div>
-                    <div style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">Ошибка</div>
+                    <div class="error-title">Ошибка</div>
                     <div class="error-message">${message}</div>
                     <button class="refresh-btn" onclick="loadSubscriptionData()">
-                        🔄 Попробовать снова
+                        Попробовать снова
                     </button>
                 </div>
             `;
