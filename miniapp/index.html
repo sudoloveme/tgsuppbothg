@@ -39,8 +39,8 @@
         @media (max-width: 768px) {
             .top-header {
                 /* Увеличиваем отступ чтобы email был ниже зеленых кнопок Telegram */
-                padding-top: 180px;
-                padding-top: calc(180px + env(safe-area-inset-top, 0px));
+                padding-top: 200px;
+                padding-top: calc(200px + env(safe-area-inset-top, 0px));
             }
         }
 
@@ -350,6 +350,23 @@
         
         // Отключаем подтверждение закрытия
         tg.disableClosingConfirmation();
+        
+        // Динамически устанавливаем отступ для email на мобильных устройствах
+        // чтобы он был ниже кнопок Telegram
+        if (isMobile) {
+            // Ждем немного для рендеринга, затем устанавливаем отступ
+            setTimeout(() => {
+                const header = document.querySelector('.top-header');
+                if (header) {
+                    // Учитываем высоту статус-бара и кнопок Telegram
+                    const safeAreaTop = parseInt(getComputedStyle(document.documentElement)
+                        .getPropertyValue('env(safe-area-inset-top)') || '0');
+                    const paddingTop = 200 + safeAreaTop;
+                    header.style.paddingTop = `${paddingTop}px`;
+                    console.log('Set header padding-top:', paddingTop, 'px');
+                }
+            }, 100);
+        }
         
         // Проверяем User-Agent для Telegram
         const userAgent = navigator.userAgent || navigator.vendor || window.opera;
