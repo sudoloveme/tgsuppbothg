@@ -27,12 +27,79 @@
             color: #ffffff;
             padding: 16px 20px;
             padding-top: 80px;
+            padding-bottom: 8px;
         }
 
         .header-email {
             font-size: 18px;
             font-weight: 600;
             color: #ffffff;
+        }
+
+        /* Stories Section */
+        .stories-container {
+            padding: 16px 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+
+        .stories-container::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+
+        .stories-scroll {
+            display: flex;
+            gap: 12px;
+            padding: 0 20px;
+        }
+
+        .story-card {
+            flex-shrink: 0;
+            width: 100px;
+            height: 140px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .story-card:active {
+            transform: scale(0.95);
+        }
+
+        .story-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .story-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+            padding: 8px;
+            color: #ffffff;
+        }
+
+        .story-title {
+            font-size: 11px;
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: 2px;
+        }
+
+        .story-subtitle {
+            font-size: 9px;
+            opacity: 0.9;
+            line-height: 1.2;
         }
 
         /* Main Content */
@@ -293,7 +360,7 @@
 
         @media (max-width: 480px) {
             .top-header {
-                padding-top: 70px;
+                padding-top: 90px;
             }
 
             .header-email {
@@ -310,6 +377,13 @@
     <!-- Top Header -->
     <div class="top-header">
         <div class="header-email" id="headerEmail">Загрузка...</div>
+        
+        <!-- Stories Section -->
+        <div class="stories-container" id="storiesContainer" style="display: none;">
+            <div class="stories-scroll" id="storiesScroll">
+                <!-- Stories will be loaded here -->
+            </div>
+        </div>
     </div>
 
     <!-- Main Content -->
@@ -378,6 +452,59 @@
             }
             
             return null;
+        }
+
+        // Загрузка сторисов
+        async function loadStories() {
+            try {
+                const baseUrl = window.location.origin;
+                const apiUrl = `${baseUrl}/api/stories`;
+                
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+                
+                if (response.ok) {
+                    const stories = await response.json();
+                    console.log('Loaded stories:', stories);
+                    displayStories(stories);
+                } else {
+                    console.warn('Failed to load stories:', response.status);
+                }
+            } catch (error) {
+                console.error('Error loading stories:', error);
+            }
+        }
+
+        // Отображение сторисов
+        function displayStories(stories) {
+            const storiesContainer = document.getElementById('storiesContainer');
+            const storiesScroll = document.getElementById('storiesScroll');
+            
+            if (!stories || stories.length === 0) {
+                storiesContainer.style.display = 'none';
+                return;
+            }
+            
+            storiesContainer.style.display = 'block';
+            storiesScroll.innerHTML = stories.map(story => {
+                const imageStyle = story.image_url 
+                    ? `background-image: url('${story.image_url}'); background-size: cover; background-position: center;`
+                    : '';
+                
+                return `
+                    <div class="story-card" ${story.link_url ? `onclick="window.open('${story.link_url}', '_blank')"` : ''}>
+                        <div class="story-image" style="${imageStyle}"></div>
+                        <div class="story-overlay">
+                            <div class="story-title">${story.title || ''}</div>
+                            ${story.subtitle ? `<div class="story-subtitle">${story.subtitle}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         // Загрузка данных подписки
@@ -558,7 +685,8 @@
         // Загрузка данных при открытии
         // Ждем небольшой задержки для полной инициализации WebApp
         setTimeout(() => {
-            loadSubscriptionData();
+            loadStories(); // Загружаем сторисы
+            loadSubscriptionData(); // Загружаем данные подписки
         }, 300);
     </script>
 </body>

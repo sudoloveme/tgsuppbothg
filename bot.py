@@ -28,6 +28,10 @@ from commands import (
     cmd_info,
     cmd_stats,
     cmd_diag,
+    cmd_addstory,
+    cmd_delstory,
+    cmd_liststories,
+    cmd_togglestory,
 )
 from handlers import (
     handle_callback_buttons,
@@ -81,6 +85,11 @@ def main() -> None:
         application.add_handler(CommandHandler("panel", cmd_panel))
         application.add_handler(CommandHandler("linkmail", cmd_linkmail))
         application.add_handler(CommandHandler("info", cmd_info))
+        # Story management commands (admin only)
+        application.add_handler(CommandHandler("addstory", cmd_addstory))
+        application.add_handler(CommandHandler("delstory", cmd_delstory))
+        application.add_handler(CommandHandler("liststories", cmd_liststories))
+        application.add_handler(CommandHandler("togglestory", cmd_togglestory))
 
     # Reply handlers: restrict to specific chats to avoid intercepting all messages
     if SUPPORT_CHAT_ID is not None:

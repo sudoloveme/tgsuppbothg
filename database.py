@@ -65,6 +65,19 @@ def _db_connect() -> sqlite3.Connection:
         "  PRIMARY KEY (user_id, support_chat_id)\n"
         ")"
     )
+    # Stories table for mini-app
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS stories (\n"
+        "  id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
+        "  title TEXT NOT NULL,\n"
+        "  subtitle TEXT,\n"
+        "  image_url TEXT,\n"
+        "  link_url TEXT,\n"
+        "  order_index INTEGER DEFAULT 0,\n"
+        "  active INTEGER DEFAULT 1,\n"
+        "  created_at TEXT DEFAULT CURRENT_TIMESTAMP\n"
+        ")"
+    )
     # Migrate from legacy table if present
     try:
         conn.execute(
@@ -297,4 +310,103 @@ def db_get_user_backend_data(user_id: int) -> Optional[tuple[str, str]]:
     except Exception:
         logger.exception("DB read failed (get user backend data): user_id=%s", user_id)
         return None
+
+
+def db_get_active_stories() -> list[dict]:
+    """Get all active stories ordered by order_index."""
+    try:
+        conn = _db_connect()
+        cur = conn.execute(
+            "SELECT id, title, subtitle, image_url, link_url, order_index FROM stories WHERE active=1 ORDER BY order_index ASC, id ASC"
+        )
+        rows = cur.fetchall()
+        conn.close()
+        return [
+            {
+                "id": row["id"],
+                "title": row["title"],
+                "subtitle": row["subtitle"],
+                "image_url": row["image_url"],
+                "link_url": row["link_url"],
+                "order_index": row["order_index"],
+            }
+            for row in rows
+        ]
+    except Exception:
+        logger.exception("DB read failed (get active stories)")
+        return []
+
+
+def db_add_story(title: str, subtitle: str = None, image_url: str = None, link_url: str = None, order_index: int = 0) -> int:
+    """Add a new story. Returns story ID."""
+    try:
+        conn = _db_connect()
+        cur = conn.execute(
+            "INSERT INTO stories (title, subtitle, image_url, link_url, order_index) VALUES (?, ?, ?, ?, ?)",
+            (title, subtitle, image_url, link_url, order_index)
+        )
+        story_id = cur.lastrowid
+        conn.commit()
+        conn.close()
+        logger.info("Added story: id=%s title=%s", story_id, title)
+        return story_id
+    except Exception:
+        logger.exception("DB write failed (add story): title=%s", title)
+        return 0
+
+
+def db_delete_story(story_id: int) -> bool:
+    """Delete a story by ID. Returns True if successful."""
+    try:
+        conn = _db_connect()
+        conn.execute("DELETE FROM stories WHERE id=?", (story_id,))
+        conn.commit()
+        conn.close()
+        logger.info("Deleted story: id=%s", story_id)
+        return True
+    except Exception:
+        logger.exception("DB write failed (delete story): id=%s", story_id)
+        return False
+
+
+def db_update_story(story_id: int, title: str = None, subtitle: str = None, image_url: str = None, link_url: str = None, order_index: int = None, active: int = None) -> bool:
+    """Update a story. Returns True if successful."""
+    try:
+        conn = _db_connect()
+        updates = []
+        params = []
+        
+        if title is not None:
+            updates.append("title=?")
+            params.append(title)
+        if subtitle is not None:
+            updates.append("subtitle=?")
+            params.append(subtitle)
+        if image_url is not None:
+            updates.append("image_url=?")
+            params.append(image_url)
+        if link_url is not None:
+            updates.append("link_url=?")
+            params.append(link_url)
+        if order_index is not None:
+            updates.append("order_index=?")
+            params.append(order_index)
+        if active is not None:
+            updates.append("active=?")
+            params.append(active)
+        
+        if not updates:
+            conn.close()
+            return False
+        
+        params.append(story_id)
+        query = f"UPDATE stories SET {', '.join(updates)} WHERE id=?"
+        conn.execute(query, params)
+        conn.commit()
+        conn.close()
+        logger.info("Updated story: id=%s", story_id)
+        return True
+    except Exception:
+        logger.exception("DB write failed (update story): id=%s", story_id)
+        return False
 

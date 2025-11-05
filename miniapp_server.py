@@ -18,6 +18,36 @@ logger = logging.getLogger("support-bot")
 MINIAPP_DIR = Path(__file__).parent / "miniapp"
 
 
+async def get_stories(request: Request) -> Response:
+    """
+    API endpoint to get active stories.
+    GET /api/stories
+    """
+    try:
+        from database import db_get_active_stories
+        stories = db_get_active_stories()
+        logger.info(f"Returning {len(stories)} active stories")
+        return web.json_response(
+            stories,
+            headers={
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type',
+            }
+        )
+    except Exception as e:
+        logger.exception(f"Error getting stories: {e}")
+        return web.json_response(
+            {"error": "Internal server error"},
+            status=500,
+            headers={
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type',
+            }
+        )
+
+
 async def get_subscription_by_telegram_id(request: Request) -> Response:
     """
     API endpoint to get subscription data by Telegram ID.
@@ -203,6 +233,7 @@ def create_app() -> web.Application:
     
     # API routes (MUST be registered BEFORE catch-all route)
     logger.info("Registering API routes...")
+    app.router.add_get('/api/stories', get_stories)
     app.router.add_get('/api/subscription/telegram/{telegram_id}', get_subscription_by_telegram_id)
     
     # Health check endpoint
@@ -217,6 +248,7 @@ def create_app() -> web.Application:
     
     logger.info("Application routes registered")
     logger.info("API endpoints available:")
+    logger.info("  GET /api/stories")
     logger.info("  GET /api/subscription/telegram/{telegram_id}")
     logger.info("  GET /api/health")
     
