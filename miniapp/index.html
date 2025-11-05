@@ -1277,8 +1277,8 @@
             const trafficPercent = getTrafficPercent(data.usedTrafficBytes || 0, data.trafficLimitBytes || 0);
             const trafficAngle = (trafficPercent / 100) * 360;
             
-            // Сохраняем subscriptionUrl для использования в инструкциях
-            window.subscriptionUrl = data.subscriptionUrl || '';
+            // Сохраняем shortUuid для использования в инструкциях
+            window.shortUuid = data.shortUuid || '';
 
             // Определяем класс для круга в зависимости от процента
             let trafficCircleClass = '';
@@ -2001,15 +2001,15 @@
         // Обработка импорта подписки
         function handleImportSubscription(event) {
             event.preventDefault();
-            const subscriptionUrl = window.subscriptionUrl;
-            if (!subscriptionUrl) {
+            const shortUuid = window.shortUuid;
+            if (!shortUuid) {
                 if (window.tg && window.tg.showAlert) {
                     window.tg.showAlert('Подписка не найдена');
                 }
                 return false;
             }
             
-            const importLink = `https://captiveapple.heavengateway.com/${subscriptionUrl}`;
+            const importLink = `https://captiveapple.heavengateway.com/${shortUuid}`;
             
             // Открываем ссылку во внешнем браузере
             if (window.tg && window.tg.openLink) {
