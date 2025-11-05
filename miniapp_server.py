@@ -298,21 +298,21 @@ def create_app() -> web.Application:
     
     # Serve logo
     async def serve_logo(request):
-        """Serve logo.png file."""
-        logo_path = ROOT_DIR / 'logo.png'
+        """Serve logo.svg file."""
+        logo_path = ROOT_DIR / 'logo.svg'
         if not logo_path.exists() or not logo_path.is_file():
             return web.Response(status=404, text="Logo not found")
         
         return web.Response(
             body=logo_path.read_bytes(),
-            content_type='image/png',
+            content_type='image/svg+xml',
             headers={
                 'Access-Control-Allow-Origin': '*',
                 'Cache-Control': 'public, max-age=3600'
             }
         )
     
-    app.router.add_get('/api/logo.png', serve_logo)
+    app.router.add_get('/api/logo.svg', serve_logo)
     
     # Health check endpoint
     async def health_check(request):
@@ -330,7 +330,7 @@ def create_app() -> web.Application:
     logger.info("  GET /api/banners")
     logger.info("  GET /api/banners/{filename}")
     logger.info("  GET /api/icons/{filename}")
-    logger.info("  GET /api/logo.png")
+    logger.info("  GET /api/logo.svg")
     logger.info("  GET /api/health")
     
     return app
