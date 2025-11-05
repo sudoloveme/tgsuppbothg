@@ -172,6 +172,56 @@
             opacity: 0.8;
         }
 
+        /* Expired Subscription Card */
+        .expired-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .expired-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333333;
+            margin-bottom: 12px;
+        }
+
+        .expired-text {
+            font-size: 14px;
+            color: #333333;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .expired-date {
+            font-weight: 600;
+        }
+
+        .expired-divider {
+            height: 1px;
+            background: #e5e5ea;
+            margin: 16px 0;
+        }
+
+        .expired-button {
+            width: 100%;
+            background: #5C8FFC;
+            color: #ffffff;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .expired-button:active {
+            opacity: 0.8;
+        }
+
         /* Subscription Card */
         .subscription-card {
             background: #ffffff;
@@ -882,6 +932,19 @@
                     <div class="traffic-limit-text">Либо вы можете сбросить лимит трафика платно по кнопке ниже -</div>
                     <button class="traffic-limit-button" onclick="tg.showAlert('Функционал скоро появится')">
                         Сбросить трафик
+                    </button>
+                </div>
+                ` : ''}
+
+                ${status === 'EXPIRED' ? `
+                <!-- Истекшая подписка -->
+                <div class="expired-card">
+                    <div class="expired-title">Ваша подписка истекла</div>
+                    <div class="expired-text">Ваша подписка закончилась <span class="expired-date">${expireAt}</span>.</div>
+                    <div class="expired-text">Вы можете оформить подписку прямо сейчас по кнопке ниже -</div>
+                    <div class="expired-divider"></div>
+                    <button class="expired-button" onclick="tg.showAlert('Функционал скоро появится')">
+                        Оформить подписку
                     </button>
                 </div>
                 ` : ''}
