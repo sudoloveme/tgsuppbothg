@@ -35,11 +35,12 @@
             color: #ffffff;
         }
 
-        /* На мобильных устройствах увеличиваем отступ сверху для email */
+        /* На мобильных устройствах email должен быть ниже кнопок Telegram */
         @media (max-width: 768px) {
             .top-header {
-                padding-top: 140px;
-                padding-top: calc(140px + env(safe-area-inset-top));
+                /* Увеличиваем отступ чтобы email был ниже зеленых кнопок Telegram */
+                padding-top: 180px;
+                padding-top: calc(180px + env(safe-area-inset-top, 0px));
             }
         }
 
