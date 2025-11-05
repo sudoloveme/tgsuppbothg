@@ -352,10 +352,17 @@
             gap: 8px;
             margin-bottom: 16px;
             flex-wrap: nowrap;
-            align-items: flex-start;
+            align-items: center;
             position: relative;
             width: 100%;
-            justify-content: space-between;
+            justify-content: flex-start;
+        }
+
+        .traffic-date-separator {
+            color: #8e8e93;
+            font-size: 14px;
+            margin: 0 4px;
+            flex-shrink: 0;
         }
 
         .traffic-date-input-group {
@@ -415,7 +422,6 @@
             scrollbar-width: thin;
             scrollbar-color: #8e8e93 #f5f5f5;
             max-width: 100%;
-            /* Максимум 7 столбцов видно одновременно (7 * 40px + отступы) */
             position: relative;
         }
 
@@ -444,9 +450,9 @@
         }
 
         .traffic-chart-bar {
-            flex: 0 0 auto;
-            width: 40px;
+            flex: 1;
             min-width: 32px;
+            max-width: 48px;
             background: #007AFF;
             border-radius: 4px 4px 0 0;
             position: relative;
@@ -465,16 +471,16 @@
 
         .traffic-chart-labels {
             display: flex;
-            justify-content: flex-start;
+            justify-content: space-between;
             gap: 4px;
             padding: 0 4px;
-            min-width: max-content;
+            width: 100%;
         }
 
         .traffic-chart-label {
-            flex: 0 0 auto;
-            width: 40px;
+            flex: 1;
             min-width: 32px;
+            max-width: 48px;
             text-align: center;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -1226,6 +1232,7 @@
                                     <div class="traffic-date-input-group">
                                         <input type="date" id="trafficStartDate" class="traffic-date-input" onchange="handleDateChange()">
                                     </div>
+                                    <span class="traffic-date-separator">—</span>
                                     <div class="traffic-date-input-group">
                                         <input type="date" id="trafficEndDate" class="traffic-date-input" onchange="handleDateChange()">
                                     </div>
