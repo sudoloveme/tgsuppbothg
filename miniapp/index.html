@@ -344,6 +344,57 @@
             padding: 20px;
             color: #8e8e93;
             font-size: 14px;
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .traffic-chart-skeleton {
+            height: 200px;
+            margin: 20px 0;
+            position: relative;
+            padding: 0 20px;
+        }
+
+        .traffic-chart-skeleton-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 180px;
+            gap: 4px;
+        }
+
+        .traffic-chart-skeleton-bar {
+            flex: 1;
+            min-width: 32px;
+            max-width: 48px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            border-radius: 4px 4px 0 0;
+            animation: skeleton-loading 1.5s ease-in-out infinite;
+        }
+
+        .traffic-chart-skeleton-label {
+            flex: 1;
+            min-width: 32px;
+            max-width: 48px;
+            height: 40px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            border-radius: 4px;
+            animation: skeleton-loading 1.5s ease-in-out infinite;
+            margin-top: 8px;
+        }
+
+        @keyframes skeleton-loading {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
         }
 
         .traffic-chart {
@@ -1239,7 +1290,28 @@
                                 </div>
                                 <div class="traffic-date-error" id="trafficDateError"></div>
                             </div>
-                            <div class="traffic-details-loading" style="display: block;">Загрузка данных...</div>
+                            <div class="traffic-details-loading" style="display: none;">
+                                <div class="traffic-chart-skeleton">
+                                    <div class="traffic-chart-skeleton-container">
+                                        <div class="traffic-chart-skeleton-bar" style="height: 60%;"></div>
+                                        <div class="traffic-chart-skeleton-bar" style="height: 80%;"></div>
+                                        <div class="traffic-chart-skeleton-bar" style="height: 45%;"></div>
+                                        <div class="traffic-chart-skeleton-bar" style="height: 90%;"></div>
+                                        <div class="traffic-chart-skeleton-bar" style="height: 70%;"></div>
+                                        <div class="traffic-chart-skeleton-bar" style="height: 55%;"></div>
+                                        <div class="traffic-chart-skeleton-bar" style="height: 85%;"></div>
+                                    </div>
+                                    <div class="traffic-chart-labels" style="justify-content: space-between; padding: 0 20px;">
+                                        <div class="traffic-chart-skeleton-label"></div>
+                                        <div class="traffic-chart-skeleton-label"></div>
+                                        <div class="traffic-chart-skeleton-label"></div>
+                                        <div class="traffic-chart-skeleton-label"></div>
+                                        <div class="traffic-chart-skeleton-label"></div>
+                                        <div class="traffic-chart-skeleton-label"></div>
+                                        <div class="traffic-chart-skeleton-label"></div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="traffic-chart-wrapper" style="display: none;">
                                 <div class="traffic-chart"></div>
                             </div>
@@ -1626,7 +1698,7 @@
             const loadingEl = section.querySelector('.traffic-details-loading');
             const chartWrapper = section.querySelector('.traffic-chart-wrapper');
             
-            if (loadingEl) loadingEl.style.display = 'block';
+            if (loadingEl) loadingEl.style.display = 'flex';
             if (chartWrapper) chartWrapper.style.display = 'none';
             
             try {
