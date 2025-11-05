@@ -38,8 +38,8 @@
         /* На мобильных устройствах email должен быть ниже кнопок Telegram */
         @media (max-width: 768px) {
             .top-header {
-                padding-top: 80px !important;
-                padding-top: calc(80px + env(safe-area-inset-top, 0px)) !important;
+                padding-top: 100px !important;
+                padding-top: calc(100px + env(safe-area-inset-top, 0px)) !important;
             }
         }
 
@@ -363,7 +363,7 @@
                     // Используем большее значение для гарантии что email будет ниже кнопок
                     const safeAreaTop = parseInt(getComputedStyle(document.documentElement)
                         .getPropertyValue('env(safe-area-inset-top)') || '0');
-                    const paddingTop = 240 + safeAreaTop;
+                    const paddingTop = 100 + safeAreaTop;
                     header.style.setProperty('padding-top', `${paddingTop}px`, 'important');
                     console.log('Set header padding-top (mobile):', paddingTop, 'px, safe-area:', safeAreaTop);
                 }
@@ -375,7 +375,7 @@
                 if (header) {
                     const safeAreaTop = parseInt(getComputedStyle(document.documentElement)
                         .getPropertyValue('env(safe-area-inset-top)') || '0');
-                    const paddingTop = 240 + safeAreaTop;
+                    const paddingTop = 100 + safeAreaTop;
                     header.style.setProperty('padding-top', `${paddingTop}px`, 'important');
                 }
             }, 500);
