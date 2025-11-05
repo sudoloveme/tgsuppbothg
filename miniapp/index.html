@@ -131,6 +131,47 @@
             opacity: 0.8;
         }
 
+        /* Traffic Limit Exceeded Card */
+        .traffic-limit-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .traffic-limit-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #000000;
+            margin-bottom: 12px;
+        }
+
+        .traffic-limit-text {
+            font-size: 14px;
+            color: #000000;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .traffic-limit-button {
+            width: 100%;
+            background: #34C759;
+            color: #ffffff;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            margin-top: 16px;
+        }
+
+        .traffic-limit-button:active {
+            opacity: 0.8;
+        }
+
         /* Subscription Card */
         .subscription-card {
             background: #ffffff;
@@ -826,6 +867,18 @@
                     <div class="blocked-text">Возможно вы просто все еще не оплатили подписку после создания аккаунта, либо на то есть причины.</div>
                     <button class="blocked-button" onclick="tg.openLink('https://t.me/hgvpnhelpbot')">
                         Узнать почему
+                    </button>
+                </div>
+                ` : ''}
+
+                ${status === 'LIMITED' ? `
+                <!-- Превышен лимит трафика -->
+                <div class="traffic-limit-card">
+                    <div class="traffic-limit-title">Вы использовали весь трафик!</div>
+                    <div class="traffic-limit-text">Автоматический сброс трафика произойдет через ${daysUntilReset} ${daysUntilReset === 1 ? 'день' : daysUntilReset < 5 ? 'дня' : 'дней'}.</div>
+                    <div class="traffic-limit-text">Либо вы можете сбросить лимит трафика платно по кнопке ниже -</div>
+                    <button class="traffic-limit-button" onclick="tg.showAlert('Функционал скоро появится')">
+                        Сбросить трафик
                     </button>
                 </div>
                 ` : ''}
