@@ -1395,6 +1395,13 @@
             if (section.classList.contains('active')) {
                 // Скрываем
                 section.classList.remove('active');
+                // Очищаем данные графика
+                window.trafficChartData = null;
+                const dayDetails = document.getElementById('trafficDayDetails');
+                if (dayDetails) {
+                    dayDetails.classList.remove('active');
+                    dayDetails.innerHTML = '';
+                }
             } else {
                 // Показываем и загружаем данные
                 section.classList.add('active');
