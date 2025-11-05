@@ -18,82 +18,47 @@
             color: #000000;
             min-height: 100vh;
             padding: 0;
-            padding-bottom: 80px;
+            padding-bottom: 20px;
         }
 
-        /* Header with dark background */
+        /* Header with dark grey background */
         .top-header {
-            background: #1a1a1a;
+            background: #4a4a4a;
             color: #ffffff;
-            padding: 12px 20px;
+            padding: 16px 20px;
             padding-top: 50px;
-            position: relative;
-        }
-
-        .back-button {
-            position: absolute;
-            left: 20px;
-            top: 50px;
-            background: none;
-            border: none;
-            color: #ffffff;
-            font-size: 20px;
-            cursor: pointer;
-            padding: 8px;
-        }
-
-        .header-content {
-            text-align: center;
-        }
-
-        .header-label {
-            font-size: 14px;
-            color: #ffffff;
-            opacity: 0.8;
-            margin-bottom: 4px;
         }
 
         .header-email {
-            font-size: 24px;
+            font-size: 18px;
             font-weight: 600;
             color: #ffffff;
-            margin-bottom: 12px;
-        }
-
-        /* Balance Card */
-        .balance-card {
-            background: #ffffff;
-            border-radius: 16px;
-            padding: 20px;
-            margin: -20px 16px 16px 16px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
-            z-index: 1;
-        }
-
-        .balance-label {
-            font-size: 14px;
-            color: #8e8e93;
-            margin-bottom: 4px;
-        }
-
-        .balance-amount {
-            font-size: 28px;
-            font-weight: 600;
-            color: #000000;
-        }
-
-        .balance-arrow {
-            color: #8e8e93;
-            font-size: 18px;
         }
 
         /* Main Content */
         .content {
-            padding: 0 16px;
+            padding: 16px;
+        }
+
+        /* Status Card */
+        .status-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .status-label {
+            font-size: 14px;
+            color: #8e8e93;
+            margin-bottom: 8px;
+        }
+
+        .status-value {
+            font-size: 32px;
+            font-weight: 600;
+            color: #000000;
         }
 
         /* Subscription Card */
@@ -103,13 +68,6 @@
             padding: 20px;
             margin-bottom: 16px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        }
-
-        .subscription-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 16px;
         }
 
         .subscription-title {
@@ -122,26 +80,37 @@
         .subscription-subtitle {
             font-size: 14px;
             color: #8e8e93;
+            margin-bottom: 16px;
         }
 
-        .info-icon {
-            width: 24px;
-            height: 24px;
-            background: #ff3b30;
-            border-radius: 50%;
+        .info-row {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            color: #ffffff;
+            padding: 12px 0;
+            border-bottom: 1px solid #e5e5ea;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
             font-size: 14px;
-            font-weight: bold;
-            flex-shrink: 0;
+            color: #8e8e93;
+        }
+
+        .info-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #000000;
+            text-align: right;
         }
 
         .top-up-button {
             width: 100%;
-            background: #ffd60a;
-            color: #000000;
+            background: #007AFF;
+            color: #ffffff;
             border: none;
             padding: 16px;
             border-radius: 12px;
@@ -154,31 +123,6 @@
 
         .top-up-button:active {
             opacity: 0.8;
-        }
-
-        /* Status Badge */
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-top: 8px;
-        }
-
-        .status-active {
-            background: #34c759;
-            color: #ffffff;
-        }
-
-        .status-expired {
-            background: #ff3b30;
-            color: #ffffff;
-        }
-
-        .status-inactive {
-            background: #8e8e93;
-            color: #ffffff;
         }
 
         /* Traffic Card */
@@ -205,16 +149,16 @@
         }
 
         .traffic-circle {
-            width: 120px;
-            height: 120px;
+            width: 140px;
+            height: 140px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
             background: conic-gradient(
-                #34c759 0deg,
-                #34c759 var(--progress-angle, 0deg),
+                #007AFF 0deg,
+                #007AFF var(--progress-angle, 0deg),
                 #e5e5ea var(--progress-angle, 0deg),
                 #e5e5ea 360deg
             );
@@ -239,8 +183,8 @@
         }
 
         .traffic-circle-inner {
-            width: 90px;
-            height: 90px;
+            width: 110px;
+            height: 110px;
             background: #ffffff;
             border-radius: 50%;
             display: flex;
@@ -250,7 +194,7 @@
         }
 
         .traffic-amount {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 600;
             color: #000000;
         }
@@ -281,31 +225,6 @@
             color: #000000;
         }
 
-        /* Info Row */
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #e5e5ea;
-        }
-
-        .info-row:last-child {
-            border-bottom: none;
-        }
-
-        .info-label {
-            font-size: 14px;
-            color: #8e8e93;
-        }
-
-        .info-value {
-            font-size: 16px;
-            font-weight: 600;
-            color: #000000;
-            text-align: right;
-        }
-
         /* Loading State */
         .loading {
             text-align: center;
@@ -316,7 +235,7 @@
             width: 50px;
             height: 50px;
             border: 4px solid #e5e5ea;
-            border-top-color: #ffd60a;
+            border-top-color: #007AFF;
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin: 0 auto 20px;
@@ -357,8 +276,8 @@
         }
 
         .refresh-btn {
-            background: #ffd60a;
-            color: #000000;
+            background: #007AFF;
+            color: #ffffff;
             border: none;
             padding: 14px 28px;
             border-radius: 12px;
@@ -372,24 +291,17 @@
             opacity: 0.8;
         }
 
-        /* Date formatting */
-        .date-value {
-            font-size: 16px;
-            font-weight: 600;
-            color: #000000;
-        }
-
         @media (max-width: 480px) {
             .top-header {
                 padding-top: 40px;
             }
 
             .header-email {
-                font-size: 20px;
+                font-size: 16px;
             }
 
-            .balance-amount {
-                font-size: 24px;
+            .status-value {
+                font-size: 28px;
             }
         }
     </style>
@@ -397,20 +309,7 @@
 <body>
     <!-- Top Header -->
     <div class="top-header">
-        <button class="back-button" onclick="window.history.back()">←</button>
-        <div class="header-content">
-            <div class="header-label">Мой email</div>
-            <div class="header-email" id="headerEmail">Загрузка...</div>
-        </div>
-    </div>
-
-    <!-- Balance Card -->
-    <div class="balance-card" id="balanceCard" style="display: none;">
-        <div>
-            <div class="balance-label">Статус подписки</div>
-            <div class="balance-amount" id="balanceStatus">-</div>
-        </div>
-        <div class="balance-arrow">›</div>
+        <div class="header-email" id="headerEmail">Загрузка...</div>
     </div>
 
     <!-- Main Content -->
@@ -521,8 +420,6 @@
         function displaySubscriptionData(data) {
             const content = document.getElementById('content');
             const headerEmail = document.getElementById('headerEmail');
-            const balanceCard = document.getElementById('balanceCard');
-            const balanceStatus = document.getElementById('balanceStatus');
             
             // Обновляем email в header
             if (data.email) {
@@ -534,33 +431,26 @@
             // Статус подписки
             const status = data.status || 'UNKNOWN';
             let statusText = 'Неизвестно';
-            let statusClass = 'status-inactive';
 
             if (status === 'ACTIVE') {
                 statusText = 'Активна';
-                statusClass = 'status-active';
             } else if (status === 'EXPIRED') {
                 statusText = 'Истекла';
-                statusClass = 'status-expired';
             } else {
                 statusText = 'Неактивна';
-                statusClass = 'status-inactive';
             }
-            
-            // Показываем карточку баланса
-            balanceStatus.textContent = statusText;
-            balanceCard.style.display = 'flex';
 
-            // Форматирование даты
+            // Форматирование даты в формате "27 Декабря, 2025 г."
             function formatDate(dateStr) {
                 if (!dateStr) return 'Не указано';
                 try {
                     const date = new Date(dateStr);
-                    return date.toLocaleDateString('ru-RU', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                    });
+                    const months = ['Января', 'Февраля', 'Марта', 'Апреля', 'Мая', 'Июня', 
+                                   'Июля', 'Августа', 'Сентября', 'Октября', 'Ноября', 'Декабря'];
+                    const day = date.getDate();
+                    const month = months[date.getMonth()];
+                    const year = date.getFullYear();
+                    return `${day} ${month}, ${year} г.`;
                 } catch (e) {
                     return dateStr;
                 }
@@ -571,10 +461,10 @@
                 if (!bytes && bytes !== 0) return '0 GB';
                 const gb = bytes / (1024 * 1024 * 1024);
                 if (gb >= 1) {
-                    return `${gb.toFixed(2)} GB`;
+                    return `${gb.toFixed(1)} GB`;
                 }
                 const mb = bytes / (1024 * 1024);
-                return `${mb.toFixed(2)} MB`;
+                return `${mb.toFixed(1)} MB`;
             }
 
             // Вычисление процента использования трафика
@@ -598,15 +488,16 @@
             }
 
             const html = `
+                <!-- Статус подписки -->
+                <div class="status-card">
+                    <div class="status-label">Статус подписки</div>
+                    <div class="status-value">${statusText}</div>
+                </div>
+
+                <!-- Управление подпиской -->
                 <div class="subscription-card">
-                    <div class="subscription-header">
-                        <div>
-                            <div class="subscription-title">Управление подпиской</div>
-                            <div class="subscription-subtitle">Информация о вашей подписке</div>
-                            <div class="status-badge ${statusClass}">${statusText}</div>
-                        </div>
-                        <div class="info-icon">i</div>
-                    </div>
+                    <div class="subscription-title">Управление подпиской</div>
+                    <div class="subscription-subtitle">Информация о вашей подписке</div>
                     <div class="info-row">
                         <div class="info-label">Дата окончания</div>
                         <div class="info-value">${expireAt}</div>
@@ -616,6 +507,7 @@
                     </button>
                 </div>
 
+                <!-- Трафик -->
                 ${data.trafficLimitBytes ? `
                     <div class="traffic-card">
                         <div class="traffic-title">Трафик</div>
@@ -628,7 +520,7 @@
                             </div>
                         </div>
                         <div class="traffic-info">
-                            <div class="traffic-used">Использовано</div>
+                            <div class="traffic-used">Израсходовано</div>
                             <div class="traffic-limit">${trafficPercent.toFixed(1)}%</div>
                         </div>
                     </div>
