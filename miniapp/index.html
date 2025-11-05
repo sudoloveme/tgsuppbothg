@@ -91,25 +91,44 @@
             }
         }
 
-        /* Status Card */
-        .status-card {
+        /* Blocked Account Card */
+        .blocked-card {
             background: #ffffff;
-            border-radius: 20px;
+            border-radius: 12px;
             padding: 20px;
             margin-bottom: 16px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
-        .status-label {
-            font-size: 14px;
-            color: #8e8e93;
-            margin-bottom: 8px;
+        .blocked-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333333;
+            margin-bottom: 12px;
         }
 
-        .status-value {
-            font-size: 32px;
+        .blocked-text {
+            font-size: 14px;
+            color: #666666;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .blocked-button {
+            width: 100%;
+            background: #FF5C5C;
+            color: #ffffff;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
             font-weight: 600;
-            color: #000000;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .blocked-button:active {
+            opacity: 0.8;
         }
 
         /* Subscription Card */
@@ -800,11 +819,16 @@
             }
 
             const html = `
-                <!-- Статус подписки -->
-                <div class="status-card">
-                    <div class="status-label">Статус подписки</div>
-                    <div class="status-value">${statusText}</div>
+                ${status === 'DISABLED' ? `
+                <!-- Блокированный аккаунт -->
+                <div class="blocked-card">
+                    <div class="blocked-title">Ваш аккаунт заблокирован</div>
+                    <div class="blocked-text">Возможно вы просто все еще не оплатили подписку после создания аккаунта, либо на то есть причины.</div>
+                    <button class="blocked-button" onclick="tg.openLink('https://t.me/hgvpnhelpbot')">
+                        Узнать почему
+                    </button>
                 </div>
+                ` : ''}
 
                 <!-- Управление подпиской -->
                 <div class="subscription-card">
