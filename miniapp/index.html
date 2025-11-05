@@ -384,6 +384,9 @@
             -webkit-overflow-scrolling: touch;
             scrollbar-width: thin;
             scrollbar-color: #8e8e93 #f5f5f5;
+            max-width: 100%;
+            /* Максимум 7 столбцов видно одновременно (7 * 40px + отступы) */
+            position: relative;
         }
 
         .traffic-chart-wrapper::-webkit-scrollbar {
@@ -412,9 +415,8 @@
 
         .traffic-chart-bar {
             flex: 0 0 auto;
-            width: calc((100% - 32px) / 7);
+            width: 40px;
             min-width: 32px;
-            max-width: 48px;
             background: #007AFF;
             border-radius: 4px 4px 0 0;
             position: relative;
@@ -441,9 +443,8 @@
 
         .traffic-chart-label {
             flex: 0 0 auto;
-            width: calc((100% - 32px) / 7);
+            width: 40px;
             min-width: 32px;
-            max-width: 48px;
             text-align: center;
             overflow: hidden;
             text-overflow: ellipsis;
