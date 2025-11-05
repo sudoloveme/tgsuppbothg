@@ -322,6 +322,117 @@
             color: #007AFF;
         }
 
+        /* Traffic Details Expandable Section */
+        .traffic-details-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e5ea;
+            display: none;
+        }
+
+        .traffic-details-section.active {
+            display: block;
+        }
+
+        .traffic-details-loading {
+            text-align: center;
+            padding: 20px;
+            color: #8e8e93;
+            font-size: 14px;
+        }
+
+        .traffic-chart {
+            margin: 20px 0;
+            position: relative;
+            height: 200px;
+        }
+
+        .traffic-chart-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 180px;
+            gap: 4px;
+            padding: 0 4px;
+        }
+
+        .traffic-chart-bar {
+            flex: 1;
+            background: #007AFF;
+            border-radius: 4px 4px 0 0;
+            min-width: 8px;
+            position: relative;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .traffic-chart-bar:hover {
+            opacity: 0.8;
+        }
+
+        .traffic-chart-bar.active {
+            background: #34C759;
+        }
+
+        .traffic-chart-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 10px;
+            color: #8e8e93;
+            gap: 4px;
+        }
+
+        .traffic-chart-label {
+            flex: 1;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .traffic-day-details {
+            margin-top: 16px;
+            padding: 12px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .traffic-day-details.active {
+            display: block;
+        }
+
+        .traffic-day-details-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #000000;
+            margin-bottom: 12px;
+        }
+
+        .traffic-node-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e5ea;
+        }
+
+        .traffic-node-item:last-child {
+            border-bottom: none;
+        }
+
+        .traffic-node-name {
+            font-size: 14px;
+            color: #000000;
+            flex: 1;
+        }
+
+        .traffic-node-amount {
+            font-size: 14px;
+            font-weight: 600;
+            color: #000000;
+        }
+
         .traffic-circle-container {
             display: flex;
             justify-content: center;
@@ -981,7 +1092,7 @@
                     <div class="traffic-card">
                         <div class="traffic-header">
                             <div class="traffic-title">Трафик</div>
-                            <button class="traffic-details-btn" onclick="tg.showAlert('Функционал скоро появится')">Детализация</button>
+                            <button class="traffic-details-btn" onclick="toggleTrafficDetails('${data.email || ''}', '${data.status || ''}')">Детализация</button>
                         </div>
                         <div class="traffic-circle-container">
                             <div class="traffic-circle ${trafficCircleClass}" style="--progress-angle: ${trafficAngle}deg">
@@ -998,6 +1109,12 @@
                         <div class="traffic-info-row">
                             <div class="traffic-used-label">До сброса</div>
                             <div class="traffic-percentage">${daysUntilReset} ${daysUntilReset === 1 ? 'день' : daysUntilReset < 5 ? 'дня' : 'дней'}</div>
+                        </div>
+                        <!-- Раскрывающийся блок детализации -->
+                        <div class="traffic-details-section" id="trafficDetailsSection">
+                            <div class="traffic-details-loading" id="trafficDetailsLoading">Загрузка данных...</div>
+                            <div class="traffic-chart" id="trafficChart" style="display: none;"></div>
+                            <div class="traffic-day-details" id="trafficDayDetails"></div>
                         </div>
                     </div>
                 ` : ''}
@@ -1062,6 +1179,225 @@
             if (loadingScreen) {
                 loadingScreen.style.display = 'none';
             }
+        }
+
+        // Функция для получения дат начала и конца месяца
+        function getMonthDateRange() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const day = now.getDate();
+            
+            // Начало месяца (1 число, начало дня)
+            const startDate = new Date(year, month, 1, 0, 0, 0, 0);
+            // Текущая дата (сегодня, конец дня)
+            const endDate = new Date(year, month, day, 23, 59, 59, 999);
+            
+            // Форматирование в ISO формат
+            const formatISO = (date) => {
+                return date.toISOString();
+            };
+            
+            return {
+                start: formatISO(startDate),
+                end: formatISO(endDate)
+            };
+        }
+
+        // Функция для форматирования даты для отображения
+        function formatDateShort(dateStr) {
+            if (!dateStr) return '';
+            try {
+                const date = new Date(dateStr);
+                return date.getDate().toString();
+            } catch (e) {
+                return '';
+            }
+        }
+
+        // Группировка данных по дням
+        function groupTrafficByDay(data) {
+            const grouped = {};
+            
+            data.forEach(item => {
+                const dateStr = item.date.split('T')[0]; // YYYY-MM-DD
+                
+                if (!grouped[dateStr]) {
+                    grouped[dateStr] = {
+                        date: dateStr,
+                        total: 0,
+                        nodes: []
+                    };
+                }
+                
+                grouped[dateStr].total += item.total;
+                grouped[dateStr].nodes.push({
+                    nodeName: item.nodeName,
+                    total: item.total
+                });
+            });
+            
+            // Сортируем по дате
+            return Object.values(grouped).sort((a, b) => {
+                return new Date(a.date) - new Date(b.date);
+            });
+        }
+
+        // Отображение графика трафика
+        function renderTrafficChart(groupedData) {
+            const chartContainer = document.getElementById('trafficChart');
+            const dayDetails = document.getElementById('trafficDayDetails');
+            
+            if (!groupedData || groupedData.length === 0) {
+                chartContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #8e8e93;">Нет данных за этот период</div>';
+                chartContainer.style.display = 'block';
+                return;
+            }
+            
+            // Находим максимальное значение для масштабирования
+            const maxTotal = Math.max(...groupedData.map(d => d.total));
+            
+            let chartHTML = '<div class="traffic-chart-container">';
+            let labelsHTML = '<div class="traffic-chart-labels">';
+            
+            groupedData.forEach((dayData, index) => {
+                const height = maxTotal > 0 ? (dayData.total / maxTotal) * 100 : 0;
+                const day = formatDateShort(dayData.date);
+                
+                chartHTML += `
+                    <div class="traffic-chart-bar" 
+                         data-index="${index}"
+                         data-date="${dayData.date}"
+                         style="height: ${height}%"
+                         onclick="showDayDetails(${index}, '${dayData.date}', ${JSON.stringify(dayData.nodes).replace(/"/g, '&quot;')})">
+                    </div>
+                `;
+                
+                labelsHTML += `<div class="traffic-chart-label">${day}</div>`;
+            });
+            
+            chartHTML += '</div>';
+            labelsHTML += '</div>';
+            
+            chartContainer.innerHTML = chartHTML + labelsHTML;
+            chartContainer.style.display = 'block';
+        }
+
+        // Показать детали по дням
+        function showDayDetails(index, date, nodes) {
+            const dayDetails = document.getElementById('trafficDayDetails');
+            const bars = document.querySelectorAll('.traffic-chart-bar');
+            
+            // Убираем активный класс со всех баров
+            bars.forEach(bar => bar.classList.remove('active'));
+            
+            // Добавляем активный класс к выбранному бару
+            if (bars[index]) {
+                bars[index].classList.add('active');
+            }
+            
+            // Форматируем дату
+            const dateObj = new Date(date);
+            const formattedDate = dateObj.toLocaleDateString('ru-RU', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+            
+            // Форматируем общий трафик за день
+            const totalBytes = nodes.reduce((sum, node) => sum + node.total, 0);
+            const totalFormatted = formatBytes(totalBytes);
+            
+            let detailsHTML = `
+                <div class="traffic-day-details-title">${formattedDate}</div>
+                <div class="traffic-node-item" style="margin-bottom: 8px; padding-bottom: 8px;">
+                    <div class="traffic-node-name" style="font-weight: 600;">Всего</div>
+                    <div class="traffic-node-amount">${totalFormatted}</div>
+                </div>
+            `;
+            
+            nodes.forEach(node => {
+                const nodeFormatted = formatBytes(node.total);
+                detailsHTML += `
+                    <div class="traffic-node-item">
+                        <div class="traffic-node-name">${node.nodeName}</div>
+                        <div class="traffic-node-amount">${nodeFormatted}</div>
+                    </div>
+                `;
+            });
+            
+            dayDetails.innerHTML = detailsHTML;
+            dayDetails.classList.add('active');
+        }
+
+        // Загрузка детализации трафика
+        async function loadTrafficDetails() {
+            const telegramId = getTelegramId();
+            if (!telegramId) {
+                return;
+            }
+            
+            const loadingEl = document.getElementById('trafficDetailsLoading');
+            const chartEl = document.getElementById('trafficChart');
+            
+            loadingEl.style.display = 'block';
+            chartEl.style.display = 'none';
+            
+            try {
+                const dateRange = getMonthDateRange();
+                const baseUrl = window.location.origin;
+                const apiUrl = `${baseUrl}/api/traffic/usage/${telegramId}?start=${encodeURIComponent(dateRange.start)}&end=${encodeURIComponent(dateRange.end)}`;
+                
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Группируем данные по дням
+                const groupedData = groupTrafficByDay(data);
+                
+                // Отображаем график
+                loadingEl.style.display = 'none';
+                renderTrafficChart(groupedData);
+                
+            } catch (error) {
+                console.error('Error loading traffic details:', error);
+                loadingEl.textContent = 'Ошибка загрузки данных';
+            }
+        }
+
+        // Переключение видимости детализации
+        function toggleTrafficDetails() {
+            const section = document.getElementById('trafficDetailsSection');
+            if (!section) return;
+            
+            if (section.classList.contains('active')) {
+                // Скрываем
+                section.classList.remove('active');
+            } else {
+                // Показываем и загружаем данные
+                section.classList.add('active');
+                loadTrafficDetails();
+            }
+        }
+
+        // Функция formatBytes должна быть доступна глобально
+        function formatBytes(bytes) {
+            if (!bytes && bytes !== 0) return '0 GB';
+            const gb = bytes / (1024 * 1024 * 1024);
+            if (gb >= 1) {
+                return `${gb.toFixed(1)} GB`;
+            }
+            const mb = bytes / (1024 * 1024);
+            return `${mb.toFixed(1)} MB`;
         }
 
         // Инициализация

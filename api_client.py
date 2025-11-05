@@ -285,3 +285,66 @@ def format_user_info(user_data: Dict[str, Any]) -> str:
     
     return "\n".join(lines)
 
+
+async def get_traffic_usage_range(uuid: str, start_date: str, end_date: str) -> Optional[list]:
+    """
+    Get traffic usage statistics for a date range.
+    
+    Args:
+        uuid: User UUID
+        start_date: Start date in ISO format (e.g., "2025-11-01T00:00:00.000Z")
+        end_date: End date in ISO format (e.g., "2025-11-05T23:59:59.999Z")
+        
+    Returns:
+        List of usage statistics or None if error
+    """
+    if not BACKEND_API_URL:
+        logger.warning("BACKEND_API_URL not configured. Cannot get traffic usage.")
+        return None
+    
+    if not uuid:
+        logger.warning("UUID is required for traffic usage query")
+        return None
+    
+    try:
+        url = f"{BACKEND_API_URL}/api/users/stats/usage/range/{uuid}"
+        params = {
+            "start": start_date,
+            "end": end_date
+        }
+        
+        logger.info(f"Fetching traffic usage for UUID {uuid} from {start_date} to {end_date}")
+        
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.get(
+                url,
+                headers=_get_headers(),
+                params=params
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                # API returns {"response": [...]}
+                if isinstance(data, dict) and "response" in data:
+                    return data["response"]
+                elif isinstance(data, list):
+                    return data
+                else:
+                    logger.warning(f"Unexpected response format: {data}")
+                    return None
+            else:
+                logger.warning(f"Failed to get traffic usage: HTTP {response.status_code}")
+                try:
+                    error_data = response.json()
+                    logger.warning(f"Error response: {error_data}")
+                except:
+                    logger.warning(f"Error response text: {response.text}")
+                return None
+                
+    except httpx.TimeoutException:
+        logger.error(f"Timeout getting traffic usage for UUID {uuid}")
+        return None
+    except Exception as e:
+        logger.exception(f"Error getting traffic usage for UUID {uuid}: {e}")
+        return None
+

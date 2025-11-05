@@ -10,7 +10,7 @@ from aiohttp import web
 from aiohttp.web_request import Request
 from aiohttp.web_response import Response
 
-from api_client import get_user_by_uuid
+from api_client import get_user_by_uuid, get_traffic_usage_range
 
 logger = logging.getLogger("support-bot")
 
@@ -263,6 +263,74 @@ def create_app() -> web.Application:
     
     app.router.add_get('/api/banners/{filename}', serve_banner_image)
     
+    # Traffic usage details API
+    async def get_traffic_usage_details(request):
+        """Get traffic usage details by Telegram ID for date range."""
+        telegram_id_str = request.match_info.get('telegram_id')
+        start_date = request.query.get('start')
+        end_date = request.query.get('end')
+        
+        if not telegram_id_str:
+            return web.json_response(
+                {"error": "Telegram ID is required"},
+                status=400,
+                headers={'Access-Control-Allow-Origin': '*'}
+            )
+        
+        if not start_date or not end_date:
+            return web.json_response(
+                {"error": "start and end date parameters are required"},
+                status=400,
+                headers={'Access-Control-Allow-Origin': '*'}
+            )
+        
+        try:
+            telegram_id = int(telegram_id_str)
+            
+            # Get UUID from database by Telegram ID
+            from database import db_get_user_backend_data
+            backend_data = db_get_user_backend_data(telegram_id)
+            
+            if not backend_data or not backend_data[0]:
+                return web.json_response(
+                    {"error": "User not found or not linked"},
+                    status=404,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            uuid = backend_data[0]
+            
+            # Get traffic usage from backend API
+            usage_data = await get_traffic_usage_range(uuid, start_date, end_date)
+            
+            if usage_data is None:
+                return web.json_response(
+                    {"error": "Failed to fetch traffic usage data"},
+                    status=500,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            return web.json_response(
+                usage_data,
+                headers={'Access-Control-Allow-Origin': '*'}
+            )
+            
+        except ValueError:
+            return web.json_response(
+                {"error": "Invalid Telegram ID"},
+                status=400,
+                headers={'Access-Control-Allow-Origin': '*'}
+            )
+        except Exception as e:
+            logger.exception(f"Error getting traffic usage: {e}")
+            return web.json_response(
+                {"error": "Internal server error"},
+                status=500,
+                headers={'Access-Control-Allow-Origin': '*'}
+            )
+    
+    app.router.add_get('/api/traffic/usage/{telegram_id}', get_traffic_usage_details)
+    
     # Serve icon images
     async def serve_icon_image(request):
         """Serve icon image file."""
@@ -331,6 +399,7 @@ def create_app() -> web.Application:
     logger.info("  GET /api/banners/{filename}")
     logger.info("  GET /api/icons/{filename}")
     logger.info("  GET /api/logo.svg")
+    logger.info("  GET /api/traffic/usage/{telegram_id}?start=...&end=...")
     logger.info("  GET /api/health")
     
     return app
