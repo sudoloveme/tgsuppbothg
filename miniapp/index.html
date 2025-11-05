@@ -707,6 +707,16 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
+            max-height: 1000px;
+            opacity: 1;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out, margin-bottom 0.3s ease-out;
+        }
+
+        .installation-grid.hidden {
+            max-height: 0;
+            opacity: 0;
+            margin-bottom: 0;
         }
 
         .installation-btn {
@@ -753,7 +763,6 @@
 
         /* Installation Instructions Section */
         .installation-instructions {
-            margin-top: 20px;
             max-height: 0;
             overflow: hidden;
             opacity: 0;
