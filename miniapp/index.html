@@ -1530,8 +1530,69 @@
             }
         }
 
-        // Загрузка детализации трафика
-        async function loadTrafficDetails(section, period = 'current') {
+        // Валидация дат и проверка ограничения в 3 месяца
+        function validateDateRange(startDate, endDate) {
+            if (!startDate || !endDate) {
+                return { valid: false, error: 'Выберите обе даты' };
+            }
+            
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            
+            if (start > end) {
+                return { valid: false, error: 'Дата начала не может быть больше даты окончания' };
+            }
+            
+            // Проверяем, что разница не превышает 3 месяца (примерно 90 дней)
+            const diffTime = end - start;
+            const diffDays = diffTime / (1000 * 60 * 60 * 24);
+            const maxDays = 90; // 3 месяца
+            
+            if (diffDays > maxDays) {
+                return { valid: false, error: 'Максимальный период - 3 месяца (90 дней)' };
+            }
+            
+            return { valid: true, error: null };
+        }
+
+        // Обработка изменения дат
+        function handleDateChange() {
+            const section = document.querySelector('.traffic-details-section.active');
+            if (!section) return;
+            
+            const startInput = section.querySelector('#trafficStartDate');
+            const endInput = section.querySelector('#trafficEndDate');
+            const errorEl = section.querySelector('#trafficDateError');
+            
+            if (!startInput || !endInput) return;
+            
+            const startDate = startInput.value;
+            const endDate = endInput.value;
+            
+            // Если обе даты выбраны, валидируем и загружаем данные
+            if (startDate && endDate) {
+                const validation = validateDateRange(startDate, endDate);
+                
+                if (!validation.valid) {
+                    if (errorEl) {
+                        errorEl.textContent = validation.error;
+                        errorEl.classList.add('show');
+                    }
+                    return;
+                }
+                
+                // Скрываем ошибку
+                if (errorEl) {
+                    errorEl.classList.remove('show');
+                }
+                
+                // Загружаем данные
+                loadTrafficDetailsWithDates(section, startDate, endDate);
+            }
+        }
+
+        // Загрузка детализации трафика с кастомными датами
+        async function loadTrafficDetailsWithDates(section, startDate, endDate) {
             const telegramId = getTelegramId();
             if (!telegramId) {
                 return;
@@ -1539,16 +1600,17 @@
             
             const loadingEl = section.querySelector('.traffic-details-loading');
             const chartWrapper = section.querySelector('.traffic-chart-wrapper');
-            const periodSelector = section.querySelector('.traffic-period-selector');
             
             if (loadingEl) loadingEl.style.display = 'block';
             if (chartWrapper) chartWrapper.style.display = 'none';
-            if (periodSelector) periodSelector.style.display = 'none';
             
             try {
-                const dateRange = getDateRange(period);
+                // Форматируем даты в ISO формат
+                const startISO = new Date(startDate + 'T00:00:00.000Z').toISOString();
+                const endISO = new Date(endDate + 'T23:59:59.999Z').toISOString();
+                
                 const baseUrl = window.location.origin;
-                const apiUrl = `${baseUrl}/api/traffic/usage/${telegramId}?start=${encodeURIComponent(dateRange.start)}&end=${encodeURIComponent(dateRange.end)}`;
+                const apiUrl = `${baseUrl}/api/traffic/usage/${telegramId}?start=${encodeURIComponent(startISO)}&end=${encodeURIComponent(endISO)}`;
                 
                 const response = await fetch(apiUrl, {
                     method: 'GET',
@@ -1568,7 +1630,6 @@
                 
                 // Отображаем график
                 if (loadingEl) loadingEl.style.display = 'none';
-                if (periodSelector) periodSelector.style.display = 'flex';
                 renderTrafficChart(groupedData, chartWrapper);
                 
             } catch (error) {
@@ -1577,19 +1638,68 @@
             }
         }
 
-        // Выбор периода для отображения
-        function selectTrafficPeriod(period, buttonElement) {
-            // Находим родительский контейнер
-            const section = buttonElement.closest('.traffic-details-section');
-            if (!section) return;
+        // Загрузка детализации трафика (с установкой дат по умолчанию)
+        async function loadTrafficDetails(section) {
+            const telegramId = getTelegramId();
+            if (!telegramId) {
+                return;
+            }
             
-            // Обновляем активную кнопку
-            const buttons = section.querySelectorAll('.traffic-period-btn');
-            buttons.forEach(btn => btn.classList.remove('active'));
-            buttonElement.classList.add('active');
+            const loadingEl = section.querySelector('.traffic-details-loading');
+            const chartWrapper = section.querySelector('.traffic-chart-wrapper');
+            const dateSelector = section.querySelector('.traffic-date-selector');
+            const startInput = section.querySelector('#trafficStartDate');
+            const endInput = section.querySelector('#trafficEndDate');
             
-            // Загружаем данные для выбранного периода
-            loadTrafficDetails(section, period);
+            if (loadingEl) loadingEl.style.display = 'block';
+            if (chartWrapper) chartWrapper.style.display = 'none';
+            if (dateSelector) dateSelector.style.display = 'none';
+            
+            // Устанавливаем даты по умолчанию (текущий месяц)
+            const dateRange = getDateRange('current');
+            const startDate = new Date(dateRange.start);
+            const endDate = new Date(dateRange.end);
+            
+            // Форматируем для input type="date" (YYYY-MM-DD)
+            const formatDateForInput = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+            
+            if (startInput) startInput.value = formatDateForInput(startDate);
+            if (endInput) endInput.value = formatDateForInput(endDate);
+            
+            try {
+                const baseUrl = window.location.origin;
+                const apiUrl = `${baseUrl}/api/traffic/usage/${telegramId}?start=${encodeURIComponent(dateRange.start)}&end=${encodeURIComponent(dateRange.end)}`;
+                
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Группируем данные по дням
+                const groupedData = groupTrafficByDay(data);
+                
+                // Отображаем график и селектор дат
+                if (loadingEl) loadingEl.style.display = 'none';
+                if (dateSelector) dateSelector.style.display = 'flex';
+                renderTrafficChart(groupedData, chartWrapper);
+                
+            } catch (error) {
+                console.error('Error loading traffic details:', error);
+                if (loadingEl) loadingEl.textContent = 'Ошибка загрузки данных';
+            }
         }
 
         // Переключение видимости детализации
