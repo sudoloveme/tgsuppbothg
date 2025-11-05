@@ -1520,7 +1520,7 @@
             }
         }
 
-        // Валидация дат и проверка ограничения в 3 месяца
+        // Валидация дат - ограничение последними 3 месяцами
         function validateDateRange(startDate, endDate) {
             if (!startDate || !endDate) {
                 return { valid: false, error: 'Выберите обе даты' };
@@ -1528,18 +1528,26 @@
             
             const start = new Date(startDate);
             const end = new Date(endDate);
+            const today = new Date();
+            today.setHours(23, 59, 59, 999); // Конец сегодняшнего дня
             
+            // Проверяем, что дата начала не больше даты окончания
             if (start > end) {
                 return { valid: false, error: 'Дата начала не может быть больше даты окончания' };
             }
             
-            // Проверяем, что разница не превышает 3 месяца (примерно 90 дней)
-            const diffTime = end - start;
-            const diffDays = diffTime / (1000 * 60 * 60 * 24);
-            const maxDays = 90; // 3 месяца
+            // Проверяем, что дата окончания не в будущем
+            if (end > today) {
+                return { valid: false, error: 'Дата окончания не может быть в будущем' };
+            }
             
-            if (diffDays > maxDays) {
-                return { valid: false, error: 'Максимальный период - 3 месяца (90 дней)' };
+            // Проверяем, что дата начала не раньше 3 месяцев назад
+            const threeMonthsAgo = new Date(today);
+            threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+            threeMonthsAgo.setHours(0, 0, 0, 0);
+            
+            if (start < threeMonthsAgo) {
+                return { valid: false, error: 'Можно выбрать период только за последние 3 месяца' };
             }
             
             return { valid: true, error: null };
