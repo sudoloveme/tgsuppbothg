@@ -347,20 +347,76 @@
             height: 200px;
         }
 
+        .traffic-period-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .traffic-period-btn {
+            flex: 1;
+            min-width: 80px;
+            padding: 8px 12px;
+            background: #f5f5f5;
+            border: 1px solid #e5e5ea;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #000000;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .traffic-period-btn.active {
+            background: #007AFF;
+            color: #ffffff;
+            border-color: #007AFF;
+        }
+
+        .traffic-period-btn:active {
+            opacity: 0.8;
+        }
+
+        .traffic-chart-wrapper {
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: #8e8e93 #f5f5f5;
+        }
+
+        .traffic-chart-wrapper::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .traffic-chart-wrapper::-webkit-scrollbar-track {
+            background: #f5f5f5;
+            border-radius: 3px;
+        }
+
+        .traffic-chart-wrapper::-webkit-scrollbar-thumb {
+            background: #8e8e93;
+            border-radius: 3px;
+        }
+
         .traffic-chart-container {
             display: flex;
             align-items: flex-end;
-            justify-content: space-between;
+            justify-content: flex-start;
             height: 180px;
             gap: 4px;
             padding: 0 4px;
+            min-width: max-content;
         }
 
         .traffic-chart-bar {
-            flex: 1;
+            flex: 0 0 auto;
+            width: calc((100% - 32px) / 7);
+            min-width: 32px;
+            max-width: 48px;
             background: #007AFF;
             border-radius: 4px 4px 0 0;
-            min-width: 8px;
             position: relative;
             cursor: pointer;
             transition: opacity 0.2s;
@@ -374,17 +430,20 @@
             background: #34C759;
         }
 
+
         .traffic-chart-labels {
             display: flex;
-            justify-content: space-between;
-            margin-top: 8px;
-            font-size: 10px;
-            color: #8e8e93;
+            justify-content: flex-start;
             gap: 4px;
+            padding: 0 4px;
+            min-width: max-content;
         }
 
         .traffic-chart-label {
-            flex: 1;
+            flex: 0 0 auto;
+            width: calc((100% - 32px) / 7);
+            min-width: 32px;
+            max-width: 48px;
             text-align: center;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -1131,8 +1190,16 @@
                         </div>
                         <!-- Раскрывающийся блок детализации -->
                         <div class="traffic-details-section">
+                            <div class="traffic-period-selector" style="display: none;">
+                                <button class="traffic-period-btn active" data-period="current" onclick="selectTrafficPeriod('current', this)">Текущий месяц</button>
+                                <button class="traffic-period-btn" data-period="previous" onclick="selectTrafficPeriod('previous', this)">Предыдущий</button>
+                                <button class="traffic-period-btn" data-period="2months" onclick="selectTrafficPeriod('2months', this)">2 месяца назад</button>
+                                <button class="traffic-period-btn" data-period="3months" onclick="selectTrafficPeriod('3months', this)">Последние 3 месяца</button>
+                            </div>
                             <div class="traffic-details-loading" style="display: block;">Загрузка данных...</div>
-                            <div class="traffic-chart" style="display: none;"></div>
+                            <div class="traffic-chart-wrapper" style="display: none;">
+                                <div class="traffic-chart"></div>
+                            </div>
                             <div class="traffic-day-details"></div>
                         </div>
                     </div>
@@ -1200,26 +1267,45 @@
             }
         }
 
-        // Функция для получения дат начала и конца месяца
-        function getMonthDateRange() {
+        // Функция для получения дат диапазона
+        function getDateRange(period) {
             const now = new Date();
             const year = now.getFullYear();
             const month = now.getMonth();
             const day = now.getDate();
             
-            // Начало месяца (1 число, начало дня)
-            const startDate = new Date(year, month, 1, 0, 0, 0, 0);
-            // Текущая дата (сегодня, конец дня)
-            const endDate = new Date(year, month, day, 23, 59, 59, 999);
+            let startDate, endDate;
             
-            // Форматирование в ISO формат
-            const formatISO = (date) => {
-                return date.toISOString();
-            };
+            switch(period) {
+                case 'current':
+                    // Текущий месяц с 1 числа до сегодня
+                    startDate = new Date(year, month, 1, 0, 0, 0, 0);
+                    endDate = new Date(year, month, day, 23, 59, 59, 999);
+                    break;
+                case 'previous':
+                    // Предыдущий месяц полностью
+                    startDate = new Date(year, month - 1, 1, 0, 0, 0, 0);
+                    endDate = new Date(year, month, 0, 23, 59, 59, 999); // последний день предыдущего месяца
+                    break;
+                case '2months':
+                    // Два месяца назад полностью
+                    startDate = new Date(year, month - 2, 1, 0, 0, 0, 0);
+                    endDate = new Date(year, month - 1, 0, 23, 59, 59, 999);
+                    break;
+                case '3months':
+                    // Последние 3 месяца (90 дней назад)
+                    startDate = new Date(year, month, day - 90, 0, 0, 0, 0);
+                    endDate = new Date(year, month, day, 23, 59, 59, 999);
+                    break;
+                default:
+                    // По умолчанию текущий месяц
+                    startDate = new Date(year, month, 1, 0, 0, 0, 0);
+                    endDate = new Date(year, month, day, 23, 59, 59, 999);
+            }
             
             return {
-                start: formatISO(startDate),
-                end: formatISO(endDate)
+                start: startDate.toISOString(),
+                end: endDate.toISOString()
             };
         }
 
@@ -1284,15 +1370,18 @@
         }
 
         // Отображение графика трафика
-        function renderTrafficChart(groupedData, chartContainer) {
-            if (!chartContainer) {
-                chartContainer = document.querySelector('.traffic-chart');
+        function renderTrafficChart(groupedData, chartWrapper) {
+            if (!chartWrapper) {
+                chartWrapper = document.querySelector('.traffic-chart-wrapper');
             }
+            if (!chartWrapper) return;
+            
+            const chartContainer = chartWrapper.querySelector('.traffic-chart');
             if (!chartContainer) return;
             
             if (!groupedData || groupedData.length === 0) {
                 chartContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #8e8e93;">Нет данных за этот период</div>';
-                chartContainer.style.display = 'block';
+                chartWrapper.style.display = 'block';
                 return;
             }
             
@@ -1321,15 +1410,12 @@
                     </div>
                 `;
                 
-                // Показываем месяц только один раз (в начале месяца или при смене месяца)
-                const showMonth = index === 0 || 
-                    (index > 0 && formatDateWithDayMonth(groupedData[index - 1].date).month !== dateInfo.month);
-                
+                // Показываем месяц под каждым днем
                 labelsHTML += `
                     <div class="traffic-chart-label">
                         <span class="traffic-chart-label-day">${dateInfo.day}</span>
                         <span class="traffic-chart-label-weekday">${dateInfo.weekday}</span>
-                        ${showMonth ? `<span class="traffic-chart-label-month">${dateInfo.month}</span>` : '<span class="traffic-chart-label-month" style="visibility: hidden;">.</span>'}
+                        <span class="traffic-chart-label-month">${dateInfo.month}</span>
                     </div>
                 `;
             });
@@ -1338,7 +1424,12 @@
             labelsHTML += '</div>';
             
             chartContainer.innerHTML = chartHTML + labelsHTML;
-            chartContainer.style.display = 'block';
+            chartWrapper.style.display = 'block';
+            
+            // Прокручиваем к концу (к самым свежим данным)
+            setTimeout(() => {
+                chartWrapper.scrollLeft = chartWrapper.scrollWidth;
+            }, 100);
         }
 
         // Показать детали по дням
@@ -1414,20 +1505,22 @@
         }
 
         // Загрузка детализации трафика
-        async function loadTrafficDetails(section) {
+        async function loadTrafficDetails(section, period = 'current') {
             const telegramId = getTelegramId();
             if (!telegramId) {
                 return;
             }
             
             const loadingEl = section.querySelector('.traffic-details-loading');
-            const chartEl = section.querySelector('.traffic-chart');
+            const chartWrapper = section.querySelector('.traffic-chart-wrapper');
+            const periodSelector = section.querySelector('.traffic-period-selector');
             
             if (loadingEl) loadingEl.style.display = 'block';
-            if (chartEl) chartEl.style.display = 'none';
+            if (chartWrapper) chartWrapper.style.display = 'none';
+            if (periodSelector) periodSelector.style.display = 'none';
             
             try {
-                const dateRange = getMonthDateRange();
+                const dateRange = getDateRange(period);
                 const baseUrl = window.location.origin;
                 const apiUrl = `${baseUrl}/api/traffic/usage/${telegramId}?start=${encodeURIComponent(dateRange.start)}&end=${encodeURIComponent(dateRange.end)}`;
                 
@@ -1449,12 +1542,28 @@
                 
                 // Отображаем график
                 if (loadingEl) loadingEl.style.display = 'none';
-                renderTrafficChart(groupedData, chartEl);
+                if (periodSelector) periodSelector.style.display = 'flex';
+                renderTrafficChart(groupedData, chartWrapper);
                 
             } catch (error) {
                 console.error('Error loading traffic details:', error);
                 if (loadingEl) loadingEl.textContent = 'Ошибка загрузки данных';
             }
+        }
+
+        // Выбор периода для отображения
+        function selectTrafficPeriod(period, buttonElement) {
+            // Находим родительский контейнер
+            const section = buttonElement.closest('.traffic-details-section');
+            if (!section) return;
+            
+            // Обновляем активную кнопку
+            const buttons = section.querySelectorAll('.traffic-period-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            buttonElement.classList.add('active');
+            
+            // Загружаем данные для выбранного периода
+            loadTrafficDetails(section, period);
         }
 
         // Переключение видимости детализации
@@ -1478,9 +1587,9 @@
                     dayDetails.innerHTML = '';
                 }
             } else {
-                // Показываем и загружаем данные
+                // Показываем и загружаем данные (по умолчанию текущий месяц)
                 section.classList.add('active');
-                loadTrafficDetails(section);
+                loadTrafficDetails(section, 'current');
             }
         }
 
