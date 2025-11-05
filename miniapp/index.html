@@ -1977,6 +1977,24 @@
             return `${mb.toFixed(1)} MB`;
         }
 
+        // Переключение инструкций по установке
+        function toggleInstallationInstructions(platform) {
+            const instructionsEl = document.getElementById(`${platform}-instructions`);
+            if (!instructionsEl) return;
+            
+            if (instructionsEl.classList.contains('active')) {
+                // Скрываем с анимацией
+                instructionsEl.classList.remove('active');
+            } else {
+                // Скрываем все другие инструкции
+                const allInstructions = document.querySelectorAll('.installation-instructions');
+                allInstructions.forEach(el => el.classList.remove('active'));
+                
+                // Показываем выбранные инструкции с анимацией
+                instructionsEl.classList.add('active');
+            }
+        }
+
         // Инициализация
         loadPromoBanners();
         
