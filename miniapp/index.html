@@ -1472,7 +1472,7 @@
                             <div class="installation-step-title">2. Импортируйте подписку</div>
                             <div class="installation-step-content">
                                 <div class="installation-links">
-                                    <a href="${importSubscriptionLink}" class="installation-link" ${subscriptionUrl ? `onclick="tg.openLink('${importSubscriptionLink}'); return false;"` : `onclick="tg.showAlert('Подписка не найдена'); return false;"`}>
+                                    <a href="#" id="ios-import-link" class="installation-link" onclick="handleImportSubscription(event); return false;">
                                         Импортировать подписку <span class="installation-link-arrow">→</span>
                                     </a>
                                 </div>
@@ -1995,6 +1995,26 @@
             }
             const mb = bytes / (1024 * 1024);
             return `${mb.toFixed(1)} MB`;
+        }
+
+        // Обработка импорта подписки
+        function handleImportSubscription(event) {
+            const subscriptionUrl = window.subscriptionUrl;
+            if (!subscriptionUrl) {
+                if (window.tg && window.tg.showAlert) {
+                    window.tg.showAlert('Подписка не найдена');
+                }
+                return;
+            }
+            
+            const importLink = `happ://add/${encodeURIComponent(subscriptionUrl)}`;
+            
+            if (window.tg && window.tg.openLink) {
+                window.tg.openLink(importLink);
+            } else {
+                // Fallback: открываем ссылку напрямую
+                window.location.href = importLink;
+            }
         }
 
         // Переключение инструкций по установке
