@@ -388,6 +388,25 @@
             text-align: center;
             overflow: hidden;
             text-overflow: ellipsis;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .traffic-chart-label-day {
+            font-size: 10px;
+            font-weight: 600;
+            color: #000000;
+        }
+
+        .traffic-chart-label-weekday {
+            font-size: 9px;
+            color: #8e8e93;
+        }
+
+        .traffic-chart-label-month {
+            font-size: 9px;
+            color: #8e8e93;
         }
 
         .traffic-day-details {
@@ -1215,6 +1234,27 @@
             }
         }
 
+        // Функция для форматирования даты с днем недели и месяцем
+        function formatDateWithDayMonth(dateStr) {
+            if (!dateStr) return { day: '', weekday: '', month: '' };
+            try {
+                const date = new Date(dateStr);
+                const day = date.getDate().toString();
+                
+                // Аббревиатуры дней недели (Пн, Вт, Ср, Чт, Пт, Сб, Вс)
+                const weekdays = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+                const weekday = weekdays[date.getDay()];
+                
+                // Аббревиатуры месяцев (янв, фев, мар, апр, май, июн, июл, авг, сен, окт, ноя, дек)
+                const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+                const month = months[date.getMonth()];
+                
+                return { day, weekday, month };
+            } catch (e) {
+                return { day: '', weekday: '', month: '' };
+            }
+        }
+
         // Группировка данных по дням
         function groupTrafficByDay(data) {
             const grouped = {};
@@ -1269,7 +1309,7 @@
             
             groupedData.forEach((dayData, index) => {
                 const height = maxTotal > 0 ? (dayData.total / maxTotal) * 100 : 0;
-                const day = formatDateShort(dayData.date);
+                const dateInfo = formatDateWithDayMonth(dayData.date);
                 
                 chartHTML += `
                     <div class="traffic-chart-bar" 
@@ -1281,7 +1321,17 @@
                     </div>
                 `;
                 
-                labelsHTML += `<div class="traffic-chart-label">${day}</div>`;
+                // Показываем месяц только один раз (в начале месяца или при смене месяца)
+                const showMonth = index === 0 || 
+                    (index > 0 && formatDateWithDayMonth(groupedData[index - 1].date).month !== dateInfo.month);
+                
+                labelsHTML += `
+                    <div class="traffic-chart-label">
+                        <span class="traffic-chart-label-day">${dateInfo.day}</span>
+                        <span class="traffic-chart-label-weekday">${dateInfo.weekday}</span>
+                        ${showMonth ? `<span class="traffic-chart-label-month">${dateInfo.month}</span>` : '<span class="traffic-chart-label-month" style="visibility: hidden;">.</span>'}
+                    </div>
+                `;
             });
             
             chartHTML += '</div>';
