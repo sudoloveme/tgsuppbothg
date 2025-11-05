@@ -751,6 +751,87 @@
             align-self: flex-start;
         }
 
+        /* Installation Instructions Section */
+        .installation-instructions {
+            margin-top: 20px;
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out, margin-top 0.3s ease-out;
+            display: block;
+        }
+
+        .installation-instructions.active {
+            max-height: 2000px;
+            opacity: 1;
+            margin-top: 20px;
+        }
+
+        .installation-instructions-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .installation-instructions-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #000000;
+        }
+
+        .installation-instructions-hide {
+            font-size: 14px;
+            color: #007AFF;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 8px;
+            transition: opacity 0.2s;
+        }
+
+        .installation-instructions-hide:active {
+            opacity: 0.6;
+        }
+
+        .installation-step {
+            margin-bottom: 24px;
+        }
+
+        .installation-step-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #000000;
+            margin-bottom: 12px;
+        }
+
+        .installation-step-content {
+            font-size: 14px;
+            color: #000000;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .installation-link {
+            display: inline-flex;
+            align-items: center;
+            color: #007AFF;
+            font-size: 14px;
+            text-decoration: none;
+            margin-top: 8px;
+            margin-right: 16px;
+            transition: opacity 0.2s;
+        }
+
+        .installation-link:active {
+            opacity: 0.6;
+        }
+
+        .installation-link-arrow {
+            margin-left: 4px;
+            font-size: 12px;
+        }
+
         /* Loading State / Splash Screen */
         .loading {
             display: flex;
@@ -1324,7 +1405,7 @@
                 <div class="installation-card">
                     <div class="installation-title">Установка</div>
                     <div class="installation-grid">
-                        <button class="installation-btn" onclick="tg.showAlert('Функционал скоро появится')">
+                        <button class="installation-btn" onclick="toggleInstallationInstructions('ios')">
                             <div class="installation-icon">
                                 <img src="/api/icons/ios.svg" alt="iOS">
                             </div>
@@ -1348,6 +1429,42 @@
                             </div>
                             <div class="installation-text">Windows</div>
                         </button>
+                    </div>
+                    
+                    <!-- Блок инструкций для iOS -->
+                    <div class="installation-instructions" id="ios-instructions">
+                        <div class="installation-instructions-header">
+                            <div class="installation-instructions-title">iPhone и iPad</div>
+                            <button class="installation-instructions-hide" onclick="toggleInstallationInstructions('ios')">Скрыть</button>
+                        </div>
+                        
+                        <div class="installation-step">
+                            <div class="installation-step-title">1. Скачайте и установите приложение Happ</div>
+                            <div class="installation-step-content">
+                                <a href="#" class="installation-link" onclick="tg.showAlert('Функционал скоро появится'); return false;">
+                                    Открыть App Store <span class="installation-link-arrow">→</span>
+                                </a>
+                                <a href="#" class="installation-link" onclick="tg.showAlert('Функционал скоро появится'); return false;">
+                                    Открыть App Store Russia <span class="installation-link-arrow">→</span>
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div class="installation-step">
+                            <div class="installation-step-title">2. Импортируйте подписку</div>
+                            <div class="installation-step-content">
+                                <a href="#" class="installation-link" onclick="tg.showAlert('Функционал скоро появится'); return false;">
+                                    Импортировать подписку <span class="installation-link-arrow">→</span>
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div class="installation-step">
+                            <div class="installation-step-title">3. Запуск VPN</div>
+                            <div class="installation-step-content">
+                                На главной странице нажмите большую кнопку включения в центре для подключения к VPN. Если нужно, выберите другой сервер, нажав на него в списке внизу.
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
