@@ -1111,10 +1111,10 @@
                             <div class="traffic-percentage">${daysUntilReset} ${daysUntilReset === 1 ? 'день' : daysUntilReset < 5 ? 'дня' : 'дней'}</div>
                         </div>
                         <!-- Раскрывающийся блок детализации -->
-                        <div class="traffic-details-section" id="trafficDetailsSection">
-                            <div class="traffic-details-loading" id="trafficDetailsLoading">Загрузка данных...</div>
-                            <div class="traffic-chart" id="trafficChart" style="display: none;"></div>
-                            <div class="traffic-day-details" id="trafficDayDetails"></div>
+                        <div class="traffic-details-section">
+                            <div class="traffic-details-loading" style="display: block;">Загрузка данных...</div>
+                            <div class="traffic-chart" style="display: none;"></div>
+                            <div class="traffic-day-details"></div>
                         </div>
                     </div>
                 ` : ''}
@@ -1244,9 +1244,11 @@
         }
 
         // Отображение графика трафика
-        function renderTrafficChart(groupedData) {
-            const chartContainer = document.getElementById('trafficChart');
-            const dayDetails = document.getElementById('trafficDayDetails');
+        function renderTrafficChart(groupedData, chartContainer) {
+            if (!chartContainer) {
+                chartContainer = document.querySelector('.traffic-chart');
+            }
+            if (!chartContainer) return;
             
             if (!groupedData || groupedData.length === 0) {
                 chartContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #8e8e93;">Нет данных за этот период</div>';
@@ -1257,6 +1259,11 @@
             // Находим максимальное значение для масштабирования
             const maxTotal = Math.max(...groupedData.map(d => d.total));
             
+            // Сохраняем данные для каждого дня в отдельном объекте
+            const chartId = 'chart_' + Date.now();
+            window.trafficChartData = window.trafficChartData || {};
+            window.trafficChartData[chartId] = groupedData;
+            
             let chartHTML = '<div class="traffic-chart-container">';
             let labelsHTML = '<div class="traffic-chart-labels">';
             
@@ -1264,16 +1271,13 @@
                 const height = maxTotal > 0 ? (dayData.total / maxTotal) * 100 : 0;
                 const day = formatDateShort(dayData.date);
                 
-                // Сохраняем данные для каждого дня в отдельном объекте
-                window.trafficChartData = window.trafficChartData || {};
-                window.trafficChartData[index] = dayData;
-                
                 chartHTML += `
                     <div class="traffic-chart-bar" 
+                         data-chart-id="${chartId}"
                          data-index="${index}"
                          data-date="${dayData.date}"
                          style="height: ${height}%"
-                         onclick="showDayDetails(${index})">
+                         onclick="showDayDetails(this)">
                     </div>
                 `;
                 
@@ -1288,26 +1292,40 @@
         }
 
         // Показать детали по дням
-        function showDayDetails(index) {
-            const dayDetails = document.getElementById('trafficDayDetails');
-            const bars = document.querySelectorAll('.traffic-chart-bar');
+        function showDayDetails(barElement) {
+            const chartId = barElement.getAttribute('data-chart-id');
+            const index = parseInt(barElement.getAttribute('data-index'));
+            
+            // Находим родительский контейнер
+            const trafficCard = barElement.closest('.traffic-card');
+            if (!trafficCard) return;
+            
+            const dayDetails = trafficCard.querySelector('.traffic-day-details');
+            const bars = trafficCard.querySelectorAll('.traffic-chart-bar');
             
             // Получаем данные из глобального объекта
-            if (!window.trafficChartData || !window.trafficChartData[index]) {
+            if (!window.trafficChartData || !window.trafficChartData[chartId]) {
                 return;
             }
             
-            const dayData = window.trafficChartData[index];
+            const groupedData = window.trafficChartData[chartId];
+            if (!groupedData[index]) {
+                return;
+            }
+            
+            const dayData = groupedData[index];
             const date = dayData.date;
             const nodes = dayData.nodes;
             
-            // Убираем активный класс со всех баров
-            bars.forEach(bar => bar.classList.remove('active'));
+            // Убираем активный класс со всех баров в этом графике
+            bars.forEach(bar => {
+                if (bar.getAttribute('data-chart-id') === chartId) {
+                    bar.classList.remove('active');
+                }
+            });
             
             // Добавляем активный класс к выбранному бару
-            if (bars[index]) {
-                bars[index].classList.add('active');
-            }
+            barElement.classList.add('active');
             
             // Форматируем дату
             const dateObj = new Date(date);
@@ -1339,22 +1357,24 @@
                 `;
             });
             
-            dayDetails.innerHTML = detailsHTML;
-            dayDetails.classList.add('active');
+            if (dayDetails) {
+                dayDetails.innerHTML = detailsHTML;
+                dayDetails.classList.add('active');
+            }
         }
 
         // Загрузка детализации трафика
-        async function loadTrafficDetails() {
+        async function loadTrafficDetails(section) {
             const telegramId = getTelegramId();
             if (!telegramId) {
                 return;
             }
             
-            const loadingEl = document.getElementById('trafficDetailsLoading');
-            const chartEl = document.getElementById('trafficChart');
+            const loadingEl = section.querySelector('.traffic-details-loading');
+            const chartEl = section.querySelector('.traffic-chart');
             
-            loadingEl.style.display = 'block';
-            chartEl.style.display = 'none';
+            if (loadingEl) loadingEl.style.display = 'block';
+            if (chartEl) chartEl.style.display = 'none';
             
             try {
                 const dateRange = getMonthDateRange();
@@ -1378,18 +1398,23 @@
                 const groupedData = groupTrafficByDay(data);
                 
                 // Отображаем график
-                loadingEl.style.display = 'none';
-                renderTrafficChart(groupedData);
+                if (loadingEl) loadingEl.style.display = 'none';
+                renderTrafficChart(groupedData, chartEl);
                 
             } catch (error) {
                 console.error('Error loading traffic details:', error);
-                loadingEl.textContent = 'Ошибка загрузки данных';
+                if (loadingEl) loadingEl.textContent = 'Ошибка загрузки данных';
             }
         }
 
         // Переключение видимости детализации
         function toggleTrafficDetails() {
-            const section = document.getElementById('trafficDetailsSection');
+            // Находим блок детализации относительно кнопки
+            const btn = event.target;
+            const trafficCard = btn.closest('.traffic-card');
+            if (!trafficCard) return;
+            
+            const section = trafficCard.querySelector('.traffic-details-section');
             if (!section) return;
             
             if (section.classList.contains('active')) {
@@ -1397,7 +1422,7 @@
                 section.classList.remove('active');
                 // Очищаем данные графика
                 window.trafficChartData = null;
-                const dayDetails = document.getElementById('trafficDayDetails');
+                const dayDetails = section.querySelector('.traffic-day-details');
                 if (dayDetails) {
                     dayDetails.classList.remove('active');
                     dayDetails.innerHTML = '';
@@ -1405,7 +1430,7 @@
             } else {
                 // Показываем и загружаем данные
                 section.classList.add('active');
-                loadTrafficDetails();
+                loadTrafficDetails(section);
             }
         }
 
