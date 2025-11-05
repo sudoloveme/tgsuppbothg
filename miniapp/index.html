@@ -369,16 +369,15 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            padding: 60px 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
             background: #ffffff;
-        }
-
-        .loading-logo {
-            width: 120px;
-            height: 120px;
-            margin-bottom: 32px;
-            object-fit: contain;
+            z-index: 9999;
         }
 
         .loading-text {
@@ -461,8 +460,7 @@
 
     <!-- Main Content -->
     <div class="content" id="content">
-        <div class="loading">
-            <img src="/api/logo.svg" alt="Logo" class="loading-logo" id="loadingLogo" onerror="this.style.display='none'">
+        <div class="loading" id="loadingScreen">
             <div class="loading-text">
                 Загрузка
                 <div class="loading-spinner"></div>
@@ -894,6 +892,12 @@
             `;
 
             content.innerHTML = html;
+            
+            // Скрываем экран загрузки после отображения данных
+            const loadingScreen = document.getElementById('loadingScreen');
+            if (loadingScreen) {
+                loadingScreen.style.display = 'none';
+            }
         }
 
         // Отображение ошибки
@@ -909,6 +913,12 @@
                     </button>
                 </div>
             `;
+            
+            // Скрываем экран загрузки при ошибке
+            const loadingScreen = document.getElementById('loadingScreen');
+            if (loadingScreen) {
+                loadingScreen.style.display = 'none';
+            }
         }
 
         // Инициализация
