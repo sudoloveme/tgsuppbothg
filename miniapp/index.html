@@ -39,8 +39,8 @@
         @media (max-width: 768px) {
             .top-header {
                 /* Увеличиваем отступ чтобы email был ниже зеленых кнопок Telegram */
-                padding-top: 200px;
-                padding-top: calc(200px + env(safe-area-inset-top, 0px));
+                padding-top: 220px !important;
+                padding-top: calc(220px + env(safe-area-inset-top, 0px)) !important;
             }
         }
 
@@ -359,13 +359,25 @@
                 const header = document.querySelector('.top-header');
                 if (header) {
                     // Учитываем высоту статус-бара и кнопок Telegram
+                    // Используем большее значение для гарантии что email будет ниже кнопок
                     const safeAreaTop = parseInt(getComputedStyle(document.documentElement)
                         .getPropertyValue('env(safe-area-inset-top)') || '0');
-                    const paddingTop = 200 + safeAreaTop;
-                    header.style.paddingTop = `${paddingTop}px`;
-                    console.log('Set header padding-top:', paddingTop, 'px');
+                    const paddingTop = 240 + safeAreaTop;
+                    header.style.setProperty('padding-top', `${paddingTop}px`, 'important');
+                    console.log('Set header padding-top (mobile):', paddingTop, 'px, safe-area:', safeAreaTop);
                 }
             }, 100);
+            
+            // Также применяем после полной загрузки
+            setTimeout(() => {
+                const header = document.querySelector('.top-header');
+                if (header) {
+                    const safeAreaTop = parseInt(getComputedStyle(document.documentElement)
+                        .getPropertyValue('env(safe-area-inset-top)') || '0');
+                    const paddingTop = 240 + safeAreaTop;
+                    header.style.setProperty('padding-top', `${paddingTop}px`, 'important');
+                }
+            }, 500);
         }
         
         // Проверяем User-Agent для Telegram
