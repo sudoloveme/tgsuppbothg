@@ -1494,6 +1494,13 @@
             const chartContainer = chartWrapper.querySelector('.traffic-chart');
             if (!chartContainer) return;
             
+            // Находим родительский section и скрываем скелетон
+            const section = chartWrapper.closest('.traffic-details-section');
+            if (section) {
+                const loadingEl = section.querySelector('.traffic-details-loading');
+                if (loadingEl) loadingEl.style.display = 'none';
+            }
+            
             if (!groupedData || groupedData.length === 0) {
                 chartContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #8e8e93;">Нет данных за этот период</div>';
                 chartWrapper.style.display = 'block';
