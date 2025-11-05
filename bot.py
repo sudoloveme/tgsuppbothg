@@ -28,6 +28,11 @@ from commands import (
     cmd_info,
     cmd_stats,
     cmd_diag,
+    cmd_addbanner,
+    cmd_listbanners,
+    cmd_delbanner,
+    cmd_togglebanner,
+    cmd_bannerlink,
 )
 from handlers import (
     handle_callback_buttons,
@@ -77,6 +82,12 @@ def main() -> None:
     application.add_handler(CommandHandler("diag", cmd_diag))
     # Statistics command
     application.add_handler(CommandHandler("stats", cmd_stats))
+    # Banner management commands (admin only)
+    application.add_handler(CommandHandler("addbanner", cmd_addbanner))
+    application.add_handler(CommandHandler("listbanners", cmd_listbanners))
+    application.add_handler(CommandHandler("delbanner", cmd_delbanner))
+    application.add_handler(CommandHandler("togglebanner", cmd_togglebanner))
+    application.add_handler(CommandHandler("bannerlink", cmd_bannerlink))
     if SUPPORT_CHAT_ID is not None:
         application.add_handler(CommandHandler("panel", cmd_panel))
         application.add_handler(CommandHandler("linkmail", cmd_linkmail))

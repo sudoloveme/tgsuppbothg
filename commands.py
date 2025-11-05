@@ -14,6 +14,10 @@ from database import (
     db_get_user_backend_data,
     db_save_user_backend_data,
     db_get_ratings_stats,
+    db_add_promo_banner,
+    db_get_all_promo_banners,
+    db_delete_promo_banner,
+    db_update_promo_banner,
 )
 from api_client import get_user_by_email, get_user_by_uuid, update_user_telegram_id, format_user_info
 from helpers import check_admin_and_forum, check_admin_permission
@@ -333,4 +337,233 @@ async def cmd_diag(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         lines.append(f"owner_id: {OWNER_ID}")
 
     await update.effective_message.reply_text("\n".join(lines))
+
+
+async def cmd_addbanner(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Add a promo banner. Reply to a photo message with /addbanner <link_url> [order]."""
+    # Check admin permission
+    is_allowed, error_msg = await check_admin_permission(update, context, allow_owner=True)
+    if not is_allowed:
+        await update.effective_message.reply_text(error_msg or "Доступ запрещен.")
+        return
+    
+    # Check if message is a reply to a photo
+    if not update.effective_message.reply_to_message:
+        await update.effective_message.reply_text(
+            "Использование: ответьте на фото командой /addbanner <ссылка> [порядок]\n\n"
+            "Пример: /addbanner https://example.com 1"
+        )
+        return
+    
+    replied_message = update.effective_message.reply_to_message
+    
+    # Get photo
+    photo = None
+    if replied_message.photo:
+        photo = replied_message.photo[-1]  # Get largest photo
+    elif replied_message.document and replied_message.document.mime_type and replied_message.document.mime_type.startswith('image/'):
+        photo = replied_message.document
+    
+    if not photo:
+        await update.effective_message.reply_text("❌ Пожалуйста, ответьте на сообщение с изображением.")
+        return
+    
+    # Get link URL and order from command args
+    link_url = None
+    display_order = 0
+    
+    if context.args and len(context.args) > 0:
+        link_url = context.args[0].strip()
+        if len(context.args) > 1:
+            try:
+                display_order = int(context.args[1])
+            except ValueError:
+                pass
+    
+    # Download photo
+    try:
+        processing_msg = await update.effective_message.reply_text("⏳ Загрузка изображения...")
+        
+        file = await context.bot.get_file(photo.file_id)
+        file_ext = file.file_path.split('.')[-1] if '.' in file.file_path else 'jpg'
+        
+        # Save to banners directory
+        from pathlib import Path
+        banners_dir = Path(__file__).parent / "miniapp" / "banners"
+        banners_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Generate unique filename
+        import time
+        filename = f"banner_{int(time.time())}.{file_ext}"
+        file_path = banners_dir / filename
+        
+        await file.download_to_drive(file_path)
+        
+        # Add to database
+        banner_id = db_add_promo_banner(filename, link_url, display_order)
+        
+        if banner_id:
+            await processing_msg.edit_text(
+                f"✅ Баннер добавлен!\n\n"
+                f"ID: {banner_id}\n"
+                f"Файл: {filename}\n"
+                f"Ссылка: {link_url or 'не указана'}\n"
+                f"Порядок: {display_order}"
+            )
+        else:
+            await processing_msg.edit_text("❌ Ошибка при добавлении баннера в базу данных.")
+            file_path.unlink()  # Delete file if DB insert failed
+            
+    except Exception as e:
+        logger.exception(f"Error adding banner: {e}")
+        await update.effective_message.reply_text(
+            f"❌ Ошибка при добавлении баннера:\n<code>{str(e)}</code>",
+            parse_mode=ParseMode.HTML
+        )
+
+
+async def cmd_listbanners(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """List all promo banners."""
+    # Check admin permission
+    is_allowed, error_msg = await check_admin_permission(update, context, allow_owner=True)
+    if not is_allowed:
+        await update.effective_message.reply_text(error_msg or "Доступ запрещен.")
+        return
+    
+    banners = db_get_all_promo_banners()
+    
+    if not banners:
+        await update.effective_message.reply_text("📋 Баннеров пока нет.")
+        return
+    
+    lines = ["📋 Список баннеров:\n"]
+    for banner in banners:
+        status = "✅ Активен" if banner['is_active'] else "❌ Неактивен"
+        lines.append(
+            f"ID: {banner['id']} | {status}\n"
+            f"Файл: {banner['image_filename']}\n"
+            f"Ссылка: {banner['link_url'] or 'не указана'}\n"
+            f"Порядок: {banner['display_order']}\n"
+        )
+    
+    await update.effective_message.reply_text("\n".join(lines))
+
+
+async def cmd_delbanner(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Delete a promo banner. Usage: /delbanner <id>"""
+    # Check admin permission
+    is_allowed, error_msg = await check_admin_permission(update, context, allow_owner=True)
+    if not is_allowed:
+        await update.effective_message.reply_text(error_msg or "Доступ запрещен.")
+        return
+    
+    if not context.args or len(context.args) == 0:
+        await update.effective_message.reply_text("Использование: /delbanner <id>")
+        return
+    
+    try:
+        banner_id = int(context.args[0])
+        
+        # Get banner info before deleting
+        banners = db_get_all_promo_banners()
+        banner = next((b for b in banners if b['id'] == banner_id), None)
+        
+        if not banner:
+            await update.effective_message.reply_text(f"❌ Баннер с ID {banner_id} не найден.")
+            return
+        
+        # Delete file
+        from pathlib import Path
+        banners_dir = Path(__file__).parent / "miniapp" / "banners"
+        file_path = banners_dir / banner['image_filename']
+        if file_path.exists():
+            file_path.unlink()
+        
+        # Delete from database
+        if db_delete_promo_banner(banner_id):
+            await update.effective_message.reply_text(f"✅ Баннер {banner_id} удален.")
+        else:
+            await update.effective_message.reply_text(f"❌ Ошибка при удалении баннера.")
+            
+    except ValueError:
+        await update.effective_message.reply_text("❌ Неверный формат ID. Используйте число.")
+    except Exception as e:
+        logger.exception(f"Error deleting banner: {e}")
+        await update.effective_message.reply_text(
+            f"❌ Ошибка при удалении баннера:\n<code>{str(e)}</code>",
+            parse_mode=ParseMode.HTML
+        )
+
+
+async def cmd_togglebanner(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Toggle banner active status. Usage: /togglebanner <id>"""
+    # Check admin permission
+    is_allowed, error_msg = await check_admin_permission(update, context, allow_owner=True)
+    if not is_allowed:
+        await update.effective_message.reply_text(error_msg or "Доступ запрещен.")
+        return
+    
+    if not context.args or len(context.args) == 0:
+        await update.effective_message.reply_text("Использование: /togglebanner <id>")
+        return
+    
+    try:
+        banner_id = int(context.args[0])
+        
+        # Get current status
+        banners = db_get_all_promo_banners()
+        banner = next((b for b in banners if b['id'] == banner_id), None)
+        
+        if not banner:
+            await update.effective_message.reply_text(f"❌ Баннер с ID {banner_id} не найден.")
+            return
+        
+        new_status = 0 if banner['is_active'] else 1
+        if db_update_promo_banner(banner_id, is_active=new_status):
+            status_text = "активирован" if new_status else "деактивирован"
+            await update.effective_message.reply_text(f"✅ Баннер {banner_id} {status_text}.")
+        else:
+            await update.effective_message.reply_text(f"❌ Ошибка при обновлении баннера.")
+            
+    except ValueError:
+        await update.effective_message.reply_text("❌ Неверный формат ID. Используйте число.")
+    except Exception as e:
+        logger.exception(f"Error toggling banner: {e}")
+        await update.effective_message.reply_text(
+            f"❌ Ошибка при обновлении баннера:\n<code>{str(e)}</code>",
+            parse_mode=ParseMode.HTML
+        )
+
+
+async def cmd_bannerlink(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Set link URL for a banner. Usage: /bannerlink <id> <url>"""
+    # Check admin permission
+    is_allowed, error_msg = await check_admin_permission(update, context, allow_owner=True)
+    if not is_allowed:
+        await update.effective_message.reply_text(error_msg or "Доступ запрещен.")
+        return
+    
+    if not context.args or len(context.args) < 2:
+        await update.effective_message.reply_text("Использование: /bannerlink <id> <url>")
+        return
+    
+    try:
+        banner_id = int(context.args[0])
+        link_url = context.args[1].strip()
+        
+        if db_update_promo_banner(banner_id, link_url=link_url):
+            await update.effective_message.reply_text(
+                f"✅ Ссылка для баннера {banner_id} обновлена:\n{link_url}"
+            )
+        else:
+            await update.effective_message.reply_text(f"❌ Ошибка при обновлении ссылки.")
+            
+    except ValueError:
+        await update.effective_message.reply_text("❌ Неверный формат ID. Используйте число.")
+    except Exception as e:
+        logger.exception(f"Error updating banner link: {e}")
+        await update.effective_message.reply_text(
+            f"❌ Ошибка при обновлении ссылки:\n<code>{str(e)}</code>",
+            parse_mode=ParseMode.HTML
+        )
 

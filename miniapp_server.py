@@ -16,6 +16,9 @@ logger = logging.getLogger("support-bot")
 
 # Path to mini-app directory
 MINIAPP_DIR = Path(__file__).parent / "miniapp"
+# Path to banners directory
+BANNERS_DIR = Path(__file__).parent / "miniapp" / "banners"
+BANNERS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 async def get_subscription_by_telegram_id(request: Request) -> Response:
@@ -205,6 +208,56 @@ def create_app() -> web.Application:
     logger.info("Registering API routes...")
     app.router.add_get('/api/subscription/telegram/{telegram_id}', get_subscription_by_telegram_id)
     
+    # Promo banners API
+    async def get_promo_banners(request):
+        """Get list of active promo banners."""
+        from database import db_get_active_promo_banners
+        banners = db_get_active_promo_banners()
+        # Add full URL for images
+        base_url = str(request.url).split('/api')[0]
+        result = []
+        for banner in banners:
+            result.append({
+                'id': banner['id'],
+                'image_url': f"{base_url}/api/banners/{banner['image_filename']}",
+                'link_url': banner['link_url'],
+                'display_order': banner['display_order']
+            })
+        return web.json_response(result, headers={'Access-Control-Allow-Origin': '*'})
+    
+    app.router.add_get('/api/banners', get_promo_banners)
+    
+    # Serve banner images
+    async def serve_banner_image(request):
+        """Serve banner image file."""
+        filename = request.match_info.get('filename')
+        if not filename or '..' in filename or '/' in filename:
+            return web.Response(status=404, text="Not Found")
+        
+        file_path = BANNERS_DIR / filename
+        if not file_path.exists() or not file_path.is_file():
+            return web.Response(status=404, text="Not Found")
+        
+        # Determine content type
+        content_type = 'image/jpeg'
+        if filename.lower().endswith('.png'):
+            content_type = 'image/png'
+        elif filename.lower().endswith('.gif'):
+            content_type = 'image/gif'
+        elif filename.lower().endswith('.webp'):
+            content_type = 'image/webp'
+        
+        return web.Response(
+            body=file_path.read_bytes(),
+            content_type=content_type,
+            headers={
+                'Access-Control-Allow-Origin': '*',
+                'Cache-Control': 'public, max-age=3600'
+            }
+        )
+    
+    app.router.add_get('/api/banners/{filename}', serve_banner_image)
+    
     # Health check endpoint
     async def health_check(request):
         return web.json_response({"status": "ok", "service": "mini-app"})
@@ -218,6 +271,8 @@ def create_app() -> web.Application:
     logger.info("Application routes registered")
     logger.info("API endpoints available:")
     logger.info("  GET /api/subscription/telegram/{telegram_id}")
+    logger.info("  GET /api/banners")
+    logger.info("  GET /api/banners/{filename}")
     logger.info("  GET /api/health")
     
     return app

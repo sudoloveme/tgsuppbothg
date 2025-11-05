@@ -65,6 +65,18 @@ def _db_connect() -> sqlite3.Connection:
         "  PRIMARY KEY (user_id, support_chat_id)\n"
         ")"
     )
+    # Promo banners table
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS promo_banners (\n"
+        "  id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
+        "  image_filename TEXT NOT NULL,\n"
+        "  link_url TEXT,\n"
+        "  display_order INTEGER DEFAULT 0,\n"
+        "  is_active INTEGER DEFAULT 1,\n"
+        "  created_at TEXT DEFAULT CURRENT_TIMESTAMP,\n"
+        "  updated_at TEXT DEFAULT CURRENT_TIMESTAMP\n"
+        ")"
+    )
     # Migrate from legacy table if present
     try:
         conn.execute(
@@ -297,4 +309,120 @@ def db_get_user_backend_data(user_id: int) -> Optional[tuple[str, str]]:
     except Exception:
         logger.exception("DB read failed (get user backend data): user_id=%s", user_id)
         return None
+
+
+def db_add_promo_banner(image_filename: str, link_url: Optional[str] = None, display_order: int = 0) -> Optional[int]:
+    """Add a new promo banner to database. Returns banner ID."""
+    try:
+        conn = _db_connect()
+        cur = conn.execute(
+            "INSERT INTO promo_banners (image_filename, link_url, display_order) VALUES (?, ?, ?)",
+            (image_filename, link_url, display_order)
+        )
+        banner_id = cur.lastrowid
+        conn.commit()
+        conn.close()
+        logger.info("Added promo banner: id=%s filename=%s", banner_id, image_filename)
+        return banner_id
+    except Exception:
+        logger.exception("DB write failed (add promo banner): filename=%s", image_filename)
+        return None
+
+
+def db_get_active_promo_banners() -> list[dict]:
+    """Get all active promo banners ordered by display_order."""
+    try:
+        conn = _db_connect()
+        cur = conn.execute(
+            "SELECT id, image_filename, link_url, display_order FROM promo_banners WHERE is_active=1 ORDER BY display_order ASC, id ASC"
+        )
+        banners = []
+        for row in cur.fetchall():
+            banners.append({
+                'id': row[0],
+                'image_filename': row[1],
+                'link_url': row[2],
+                'display_order': row[3]
+            })
+        conn.close()
+        return banners
+    except Exception:
+        logger.exception("DB read failed (get active promo banners)")
+        return []
+
+
+def db_update_promo_banner(banner_id: int, image_filename: Optional[str] = None, link_url: Optional[str] = None, display_order: Optional[int] = None, is_active: Optional[int] = None) -> bool:
+    """Update promo banner. Returns True if successful."""
+    try:
+        conn = _db_connect()
+        updates = []
+        params = []
+        
+        if image_filename is not None:
+            updates.append("image_filename=?")
+            params.append(image_filename)
+        if link_url is not None:
+            updates.append("link_url=?")
+            params.append(link_url)
+        if display_order is not None:
+            updates.append("display_order=?")
+            params.append(display_order)
+        if is_active is not None:
+            updates.append("is_active=?")
+            params.append(is_active)
+        
+        if not updates:
+            conn.close()
+            return False
+        
+        updates.append("updated_at=CURRENT_TIMESTAMP")
+        params.append(banner_id)
+        
+        query = f"UPDATE promo_banners SET {', '.join(updates)} WHERE id=?"
+        conn.execute(query, params)
+        conn.commit()
+        conn.close()
+        logger.info("Updated promo banner: id=%s", banner_id)
+        return True
+    except Exception:
+        logger.exception("DB write failed (update promo banner): id=%s", banner_id)
+        return False
+
+
+def db_delete_promo_banner(banner_id: int) -> bool:
+    """Delete promo banner. Returns True if successful."""
+    try:
+        conn = _db_connect()
+        conn.execute("DELETE FROM promo_banners WHERE id=?", (banner_id,))
+        conn.commit()
+        conn.close()
+        logger.info("Deleted promo banner: id=%s", banner_id)
+        return True
+    except Exception:
+        logger.exception("DB write failed (delete promo banner): id=%s", banner_id)
+        return False
+
+
+def db_get_all_promo_banners() -> list[dict]:
+    """Get all promo banners (including inactive) ordered by display_order."""
+    try:
+        conn = _db_connect()
+        cur = conn.execute(
+            "SELECT id, image_filename, link_url, display_order, is_active, created_at FROM promo_banners ORDER BY display_order ASC, id ASC"
+        )
+        banners = []
+        for row in cur.fetchall():
+            banners.append({
+                'id': row[0],
+                'image_filename': row[1],
+                'link_url': row[2],
+                'display_order': row[3],
+                'is_active': bool(row[4]),
+                'created_at': row[5]
+            })
+        conn.close()
+        return banners
+    except Exception:
+        logger.exception("DB read failed (get all promo banners)")
+        return []
 

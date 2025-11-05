@@ -452,27 +452,82 @@
         // Отключаем подтверждение закрытия
         tg.disableClosingConfirmation();
         
-        // Промо-баннеры (заглушки)
-        const promoBanners = [
-            'https://via.placeholder.com/400x180/007AFF/FFFFFF?text=Banner+1',
-            'https://via.placeholder.com/400x180/FF9500/FFFFFF?text=Banner+2'
-        ];
-        
         let currentPromoIndex = 0;
         let promoInterval = null;
+        let promoBanners = [];
+        
+        // Загрузка промо-баннеров из API
+        async function loadPromoBanners() {
+            try {
+                const baseUrl = window.location.origin;
+                const apiUrl = `${baseUrl}/api/banners`;
+                
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+                
+                if (!response.ok) {
+                    console.warn('Failed to load promo banners:', response.status);
+                    return;
+                }
+                
+                const banners = await response.json();
+                promoBanners = banners;
+                
+                if (promoBanners.length === 0) {
+                    // Скрываем секцию баннеров, если их нет
+                    const promoSection = document.getElementById('promoSection');
+                    if (promoSection) {
+                        promoSection.style.display = 'none';
+                    }
+                    return;
+                }
+                
+                initPromoBanners();
+            } catch (error) {
+                console.error('Error loading promo banners:', error);
+                // Скрываем секцию баннеров при ошибке
+                const promoSection = document.getElementById('promoSection');
+                if (promoSection) {
+                    promoSection.style.display = 'none';
+                }
+            }
+        }
         
         // Инициализация промо-баннеров
         function initPromoBanners() {
             const carousel = document.getElementById('promoCarousel');
             const indicators = document.getElementById('promoIndicators');
             
+            // Очищаем существующие баннеры
+            carousel.innerHTML = '';
+            indicators.innerHTML = '';
+            
             promoBanners.forEach((banner, index) => {
                 // Баннер
                 const bannerDiv = document.createElement('div');
                 bannerDiv.className = 'promo-banner';
+                
+                // Добавляем обработчик клика
+                if (banner.link_url) {
+                    bannerDiv.style.cursor = 'pointer';
+                    bannerDiv.addEventListener('click', () => {
+                        if (banner.link_url) {
+                            tg.openLink(banner.link_url);
+                        }
+                    });
+                }
+                
                 const img = document.createElement('img');
-                img.src = banner;
+                img.src = banner.image_url;
                 img.alt = `Banner ${index + 1}`;
+                img.onerror = function() {
+                    console.error('Failed to load banner image:', banner.image_url);
+                    this.style.display = 'none';
+                };
                 bannerDiv.appendChild(img);
                 carousel.appendChild(bannerDiv);
                 
@@ -484,14 +539,20 @@
             });
             
             // Автопрокрутка каждые 10 секунд
-            promoInterval = setInterval(() => {
-                currentPromoIndex = (currentPromoIndex + 1) % promoBanners.length;
-                carousel.scrollTo({
-                    left: currentPromoIndex * carousel.offsetWidth,
-                    behavior: 'smooth'
-                });
-                updatePromoIndicators();
-            }, 10000);
+            if (promoInterval) {
+                clearInterval(promoInterval);
+            }
+            
+            if (promoBanners.length > 1) {
+                promoInterval = setInterval(() => {
+                    currentPromoIndex = (currentPromoIndex + 1) % promoBanners.length;
+                    carousel.scrollTo({
+                        left: currentPromoIndex * carousel.offsetWidth,
+                        behavior: 'smooth'
+                    });
+                    updatePromoIndicators();
+                }, 10000);
+            }
             
             // Обновление индикаторов при ручной прокрутке
             carousel.addEventListener('scroll', () => {
@@ -770,7 +831,7 @@
         }
 
         // Инициализация
-        initPromoBanners();
+        loadPromoBanners();
         
         // Загрузка данных при открытии
         setTimeout(() => {
