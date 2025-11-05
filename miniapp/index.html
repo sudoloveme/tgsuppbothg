@@ -1264,12 +1264,16 @@
                 const height = maxTotal > 0 ? (dayData.total / maxTotal) * 100 : 0;
                 const day = formatDateShort(dayData.date);
                 
+                // Сохраняем данные для каждого дня в отдельном объекте
+                window.trafficChartData = window.trafficChartData || {};
+                window.trafficChartData[index] = dayData;
+                
                 chartHTML += `
                     <div class="traffic-chart-bar" 
                          data-index="${index}"
                          data-date="${dayData.date}"
                          style="height: ${height}%"
-                         onclick="showDayDetails(${index}, '${dayData.date}', ${JSON.stringify(dayData.nodes).replace(/"/g, '&quot;')})">
+                         onclick="showDayDetails(${index})">
                     </div>
                 `;
                 
@@ -1284,9 +1288,18 @@
         }
 
         // Показать детали по дням
-        function showDayDetails(index, date, nodes) {
+        function showDayDetails(index) {
             const dayDetails = document.getElementById('trafficDayDetails');
             const bars = document.querySelectorAll('.traffic-chart-bar');
+            
+            // Получаем данные из глобального объекта
+            if (!window.trafficChartData || !window.trafficChartData[index]) {
+                return;
+            }
+            
+            const dayData = window.trafficChartData[index];
+            const date = dayData.date;
+            const nodes = dayData.nodes;
             
             // Убираем активный класс со всех баров
             bars.forEach(bar => bar.classList.remove('active'));
@@ -1305,12 +1318,12 @@
             });
             
             // Форматируем общий трафик за день
-            const totalBytes = nodes.reduce((sum, node) => sum + node.total, 0);
+            const totalBytes = dayData.total;
             const totalFormatted = formatBytes(totalBytes);
             
             let detailsHTML = `
                 <div class="traffic-day-details-title">${formattedDate}</div>
-                <div class="traffic-node-item" style="margin-bottom: 8px; padding-bottom: 8px;">
+                <div class="traffic-node-item" style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 2px solid #007AFF;">
                     <div class="traffic-node-name" style="font-weight: 600;">Всего</div>
                     <div class="traffic-node-amount">${totalFormatted}</div>
                 </div>
