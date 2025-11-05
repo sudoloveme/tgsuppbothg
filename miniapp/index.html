@@ -26,13 +26,21 @@
             background: #4a4a4a;
             color: #ffffff;
             padding: 16px 20px;
-            padding-top: 140px;
+            padding-top: 80px;
         }
 
         .header-email {
             font-size: 18px;
             font-weight: 600;
             color: #ffffff;
+        }
+
+        /* На мобильных устройствах увеличиваем отступ сверху для email */
+        @media (max-width: 768px) {
+            .top-header {
+                padding-top: 140px;
+                padding-top: calc(140px + env(safe-area-inset-top));
+            }
         }
 
         /* Main Content */
