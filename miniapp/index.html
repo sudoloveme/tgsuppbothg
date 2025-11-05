@@ -326,11 +326,17 @@
         .traffic-details-section {
             margin-top: 20px;
             padding-top: 20px;
-            display: none;
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out, padding-top 0.3s ease-out;
+            display: block;
         }
 
         .traffic-details-section.active {
-            display: block;
+            max-height: 2000px;
+            opacity: 1;
+            padding-top: 20px;
         }
 
         .traffic-details-loading {
@@ -1745,17 +1751,20 @@
             if (!section) return;
             
             if (section.classList.contains('active')) {
-                // Скрываем
+                // Скрываем с анимацией
                 section.classList.remove('active');
-                // Очищаем данные графика
-                window.trafficChartData = null;
-                const dayDetails = section.querySelector('.traffic-day-details');
-                if (dayDetails) {
-                    dayDetails.classList.remove('active');
-                    dayDetails.innerHTML = '';
-                }
+                
+                // Очищаем данные графика после завершения анимации
+                setTimeout(() => {
+                    window.trafficChartData = null;
+                    const dayDetails = section.querySelector('.traffic-day-details');
+                    if (dayDetails) {
+                        dayDetails.classList.remove('active');
+                        dayDetails.innerHTML = '';
+                    }
+                }, 300); // Время анимации
             } else {
-                // Показываем и загружаем данные (по умолчанию текущий месяц)
+                // Показываем с анимацией и загружаем данные
                 section.classList.add('active');
                 loadTrafficDetails(section);
             }
