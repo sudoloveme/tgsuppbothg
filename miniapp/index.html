@@ -81,13 +81,13 @@
         .content {
             padding: 0 16px;
             /* Учитываем safe-area для iOS устройств */
-            padding-top: env(safe-area-inset-top, 0px);
+            padding-top: env(safe-area-inset-top, 30px);
         }
 
         /* На мобильных устройствах, если баннеры скрыты, добавляем больше отступ сверху */
         @media (max-width: 768px) {
             .content.no-banners {
-                padding-top: calc(100px + env(safe-area-inset-top, 0px));
+                padding-top: calc(100px + env(safe-area-inset-top, 30px));
             }
         }
 
