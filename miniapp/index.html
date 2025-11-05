@@ -349,7 +349,7 @@
 
         .traffic-date-selector {
             display: flex;
-            gap: 12px;
+            gap: 8px;
             margin-bottom: 16px;
             flex-wrap: wrap;
             align-items: center;
@@ -357,25 +357,17 @@
 
         .traffic-date-input-group {
             flex: 1;
-            min-width: 140px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .traffic-date-label {
-            font-size: 12px;
-            color: #8e8e93;
-            font-weight: 500;
+            min-width: 120px;
+            max-width: 150px;
         }
 
         .traffic-date-input {
             width: 100%;
-            padding: 10px 12px;
+            padding: 6px 10px;
             background: #f5f5f5;
             border: 1px solid #e5e5ea;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 13px;
             color: #000000;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             outline: none;
@@ -1213,12 +1205,10 @@
                         <div class="traffic-details-section">
                             <div class="traffic-date-selector" style="display: none;">
                                 <div class="traffic-date-input-group">
-                                    <label class="traffic-date-label" for="trafficStartDate">С</label>
                                     <input type="date" id="trafficStartDate" class="traffic-date-input" onchange="handleDateChange()">
                                     <div class="traffic-date-error" id="trafficDateError"></div>
                                 </div>
                                 <div class="traffic-date-input-group">
-                                    <label class="traffic-date-label" for="trafficEndDate">По</label>
                                     <input type="date" id="trafficEndDate" class="traffic-date-input" onchange="handleDateChange()">
                                 </div>
                             </div>
@@ -1668,8 +1658,21 @@
                 return `${year}-${month}-${day}`;
             };
             
-            if (startInput) startInput.value = formatDateForInput(startDate);
-            if (endInput) endInput.value = formatDateForInput(endDate);
+            // Устанавливаем максимальную дату (сегодня) и минимальную (3 месяца назад)
+            const today = new Date();
+            const threeMonthsAgo = new Date(today);
+            threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+            
+            if (startInput) {
+                startInput.value = formatDateForInput(startDate);
+                startInput.max = formatDateForInput(today);
+                startInput.min = formatDateForInput(threeMonthsAgo);
+            }
+            if (endInput) {
+                endInput.value = formatDateForInput(endDate);
+                endInput.max = formatDateForInput(today);
+                endInput.min = formatDateForInput(threeMonthsAgo);
+            }
             
             try {
                 const baseUrl = window.location.origin;
