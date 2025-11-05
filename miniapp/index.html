@@ -349,23 +349,15 @@
 
         .traffic-date-selector {
             display: flex;
-            gap: 0;
+            gap: 8px;
             margin-bottom: 16px;
             flex-wrap: nowrap;
             align-items: center;
             position: relative;
             width: 100%;
-            justify-content: center;
+            justify-content: space-between;
             padding: 0 20px;
             box-sizing: border-box;
-        }
-
-        .traffic-date-separator {
-            color: #8e8e93;
-            font-size: 14px;
-            margin: 0 12px;
-            flex-shrink: 0;
-            white-space: nowrap;
         }
 
         .traffic-date-input-group {
@@ -1235,7 +1227,6 @@
                                     <div class="traffic-date-input-group">
                                         <input type="date" id="trafficStartDate" class="traffic-date-input" onchange="handleDateChange()">
                                     </div>
-                                    <span class="traffic-date-separator">—</span>
                                     <div class="traffic-date-input-group">
                                         <input type="date" id="trafficEndDate" class="traffic-date-input" onchange="handleDateChange()">
                                     </div>
