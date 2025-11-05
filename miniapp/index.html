@@ -347,35 +347,55 @@
             height: 200px;
         }
 
-        .traffic-period-selector {
+        .traffic-date-selector {
             display: flex;
-            gap: 8px;
+            gap: 12px;
             margin-bottom: 16px;
             flex-wrap: wrap;
+            align-items: center;
         }
 
-        .traffic-period-btn {
+        .traffic-date-input-group {
             flex: 1;
-            min-width: 80px;
-            padding: 8px 12px;
+            min-width: 140px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .traffic-date-label {
+            font-size: 12px;
+            color: #8e8e93;
+            font-weight: 500;
+        }
+
+        .traffic-date-input {
+            width: 100%;
+            padding: 10px 12px;
             background: #f5f5f5;
             border: 1px solid #e5e5ea;
             border-radius: 8px;
-            font-size: 13px;
+            font-size: 14px;
             color: #000000;
-            cursor: pointer;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            outline: none;
             transition: all 0.2s;
-            text-align: center;
         }
 
-        .traffic-period-btn.active {
-            background: #007AFF;
-            color: #ffffff;
+        .traffic-date-input:focus {
             border-color: #007AFF;
+            background: #ffffff;
         }
 
-        .traffic-period-btn:active {
-            opacity: 0.8;
+        .traffic-date-error {
+            font-size: 11px;
+            color: #ff3b30;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .traffic-date-error.show {
+            display: block;
         }
 
         .traffic-chart-wrapper {
@@ -1191,11 +1211,16 @@
                         </div>
                         <!-- Раскрывающийся блок детализации -->
                         <div class="traffic-details-section">
-                            <div class="traffic-period-selector" style="display: none;">
-                                <button class="traffic-period-btn active" data-period="current" onclick="selectTrafficPeriod('current', this)">Текущий месяц</button>
-                                <button class="traffic-period-btn" data-period="previous" onclick="selectTrafficPeriod('previous', this)">Предыдущий</button>
-                                <button class="traffic-period-btn" data-period="2months" onclick="selectTrafficPeriod('2months', this)">2 месяца назад</button>
-                                <button class="traffic-period-btn" data-period="3months" onclick="selectTrafficPeriod('3months', this)">Последние 3 месяца</button>
+                            <div class="traffic-date-selector" style="display: none;">
+                                <div class="traffic-date-input-group">
+                                    <label class="traffic-date-label" for="trafficStartDate">С</label>
+                                    <input type="date" id="trafficStartDate" class="traffic-date-input" onchange="handleDateChange()">
+                                    <div class="traffic-date-error" id="trafficDateError"></div>
+                                </div>
+                                <div class="traffic-date-input-group">
+                                    <label class="traffic-date-label" for="trafficEndDate">По</label>
+                                    <input type="date" id="trafficEndDate" class="traffic-date-input" onchange="handleDateChange()">
+                                </div>
                             </div>
                             <div class="traffic-details-loading" style="display: block;">Загрузка данных...</div>
                             <div class="traffic-chart-wrapper" style="display: none;">
@@ -1590,7 +1615,7 @@
             } else {
                 // Показываем и загружаем данные (по умолчанию текущий месяц)
                 section.classList.add('active');
-                loadTrafficDetails(section, 'current');
+                loadTrafficDetails(section);
             }
         }
 
