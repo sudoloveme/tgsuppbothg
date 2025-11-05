@@ -19,6 +19,9 @@ MINIAPP_DIR = Path(__file__).parent / "miniapp"
 # Path to banners directory
 BANNERS_DIR = Path(__file__).parent / "miniapp" / "banners"
 BANNERS_DIR.mkdir(parents=True, exist_ok=True)
+# Path to icons directory
+ICONS_DIR = Path(__file__).parent / "miniapp" / "icons"
+ICONS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 async def get_subscription_by_telegram_id(request: Request) -> Response:
@@ -258,6 +261,39 @@ def create_app() -> web.Application:
     
     app.router.add_get('/api/banners/{filename}', serve_banner_image)
     
+    # Serve icon images
+    async def serve_icon_image(request):
+        """Serve icon image file."""
+        filename = request.match_info.get('filename')
+        if not filename or '..' in filename or '/' in filename:
+            return web.Response(status=404, text="Not Found")
+        
+        file_path = ICONS_DIR / filename
+        if not file_path.exists() or not file_path.is_file():
+            return web.Response(status=404, text="Not Found")
+        
+        # Determine content type
+        content_type = 'image/svg+xml'
+        if filename.lower().endswith('.png'):
+            content_type = 'image/png'
+        elif filename.lower().endswith('.jpg') or filename.lower().endswith('.jpeg'):
+            content_type = 'image/jpeg'
+        elif filename.lower().endswith('.gif'):
+            content_type = 'image/gif'
+        elif filename.lower().endswith('.webp'):
+            content_type = 'image/webp'
+        
+        return web.Response(
+            body=file_path.read_bytes(),
+            content_type=content_type,
+            headers={
+                'Access-Control-Allow-Origin': '*',
+                'Cache-Control': 'public, max-age=3600'
+            }
+        )
+    
+    app.router.add_get('/api/icons/{filename}', serve_icon_image)
+    
     # Health check endpoint
     async def health_check(request):
         return web.json_response({"status": "ok", "service": "mini-app"})
@@ -273,6 +309,7 @@ def create_app() -> web.Application:
     logger.info("  GET /api/subscription/telegram/{telegram_id}")
     logger.info("  GET /api/banners")
     logger.info("  GET /api/banners/{filename}")
+    logger.info("  GET /api/icons/{filename}")
     logger.info("  GET /api/health")
     
     return app

@@ -327,10 +327,10 @@
             border-radius: 12px;
             padding: 16px;
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             align-items: center;
-            justify-content: center;
-            gap: 8px;
+            justify-content: flex-start;
+            gap: 12px;
             cursor: pointer;
             transition: background 0.2s;
         }
@@ -340,15 +340,22 @@
         }
 
         .installation-icon {
-            font-size: 24px;
-            margin-bottom: 4px;
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        .installation-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
 
         .installation-text {
             font-size: 14px;
             font-weight: 600;
             color: #000000;
-            text-align: center;
+            text-align: left;
         }
 
         /* Loading State */
@@ -836,19 +843,27 @@
                     <div class="installation-title">Установка</div>
                     <div class="installation-grid">
                         <button class="installation-btn" onclick="tg.showAlert('Функционал скоро появится')">
-                            <div class="installation-icon">🍎</div>
+                            <div class="installation-icon">
+                                <img src="/api/icons/ios.svg" alt="iOS">
+                            </div>
                             <div class="installation-text">iPhone и iPad</div>
                         </button>
                         <button class="installation-btn" onclick="tg.showAlert('Функционал скоро появится')">
-                            <div class="installation-icon">🤖</div>
+                            <div class="installation-icon">
+                                <img src="/api/icons/android.svg" alt="Android">
+                            </div>
                             <div class="installation-text">Android</div>
                         </button>
                         <button class="installation-btn" onclick="tg.showAlert('Функционал скоро появится')">
-                            <div class="installation-icon">💻</div>
+                            <div class="installation-icon">
+                                <img src="/api/icons/macos.svg" alt="macOS">
+                            </div>
                             <div class="installation-text">MacOS (ARM)</div>
                         </button>
                         <button class="installation-btn" onclick="tg.showAlert('Функционал скоро появится')">
-                            <div class="installation-icon">🪟</div>
+                            <div class="installation-icon">
+                                <img src="/api/icons/windows.svg" alt="Windows">
+                            </div>
                             <div class="installation-text">Windows</div>
                         </button>
                     </div>
