@@ -2000,22 +2000,27 @@
 
         // Обработка импорта подписки
         function handleImportSubscription(event) {
+            event.preventDefault();
             const subscriptionUrl = window.subscriptionUrl;
             if (!subscriptionUrl) {
                 if (window.tg && window.tg.showAlert) {
                     window.tg.showAlert('Подписка не найдена');
                 }
-                return;
+                return false;
             }
             
             const importLink = `https://captiveapple.heavengateway.com/${subscriptionUrl}`;
             
+            // Открываем ссылку во внешнем браузере
             if (window.tg && window.tg.openLink) {
-                window.tg.openLink(importLink);
+                // tg.openLink с try_instant_view: false открывает во внешнем браузере
+                window.tg.openLink(importLink, {try_instant_view: false});
             } else {
-                // Fallback: открываем ссылку напрямую
-                window.location.href = importLink;
+                // Fallback: используем window.open для открытия во внешнем браузере
+                window.open(importLink, '_blank', 'noopener,noreferrer');
             }
+            
+            return false;
         }
 
         // Переключение инструкций по установке
