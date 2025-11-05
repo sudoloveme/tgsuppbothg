@@ -25,6 +25,8 @@
         .promo-section {
             margin-bottom: 16px;
             position: relative;
+            /* Учитываем safe-area для iOS устройств */
+            padding-top: env(safe-area-inset-top, 0px);
         }
 
         .promo-carousel {
@@ -78,6 +80,15 @@
         /* Main Content */
         .content {
             padding: 0 16px;
+            /* Учитываем safe-area для iOS устройств */
+            padding-top: env(safe-area-inset-top, 0px);
+        }
+
+        /* На мобильных устройствах, если баннеры скрыты, добавляем больше отступ сверху */
+        @media (max-width: 768px) {
+            .content.no-banners {
+                padding-top: calc(100px + env(safe-area-inset-top, 0px));
+            }
         }
 
         /* Status Card */
@@ -480,10 +491,32 @@
                 if (promoBanners.length === 0) {
                     // Скрываем секцию баннеров, если их нет
                     const promoSection = document.getElementById('promoSection');
+                    const content = document.getElementById('content');
                     if (promoSection) {
                         promoSection.style.display = 'none';
                     }
+                    // Добавляем класс для дополнительного отступа сверху
+                    if (content && isMobile) {
+                        content.classList.add('no-banners');
+                        // Динамически устанавливаем отступ с учетом safe-area
+                        const safeAreaTop = parseInt(getComputedStyle(document.documentElement)
+                            .getPropertyValue('env(safe-area-inset-top)') || '0');
+                        const paddingTop = 100 + safeAreaTop;
+                        content.style.setProperty('padding-top', `${paddingTop}px`, 'important');
+                    }
                     return;
+                }
+                
+                // Убираем класс no-banners, если баннеры есть
+                const content = document.getElementById('content');
+                if (content) {
+                    content.classList.remove('no-banners');
+                    // Сбрасываем динамический отступ, если он был установлен
+                    if (isMobile) {
+                        const safeAreaTop = parseInt(getComputedStyle(document.documentElement)
+                            .getPropertyValue('env(safe-area-inset-top)') || '0');
+                        content.style.setProperty('padding-top', `${safeAreaTop}px`, 'important');
+                    }
                 }
                 
                 initPromoBanners();
@@ -491,8 +524,18 @@
                 console.error('Error loading promo banners:', error);
                 // Скрываем секцию баннеров при ошибке
                 const promoSection = document.getElementById('promoSection');
+                const content = document.getElementById('content');
                 if (promoSection) {
                     promoSection.style.display = 'none';
+                }
+                // Добавляем класс для дополнительного отступа сверху
+                if (content && isMobile) {
+                    content.classList.add('no-banners');
+                    // Динамически устанавливаем отступ с учетом safe-area
+                    const safeAreaTop = parseInt(getComputedStyle(document.documentElement)
+                        .getPropertyValue('env(safe-area-inset-top)') || '0');
+                    const paddingTop = 100 + safeAreaTop;
+                    content.style.setProperty('padding-top', `${paddingTop}px`, 'important');
                 }
             }
         }
