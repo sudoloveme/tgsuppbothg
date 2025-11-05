@@ -22,6 +22,8 @@ BANNERS_DIR.mkdir(parents=True, exist_ok=True)
 # Path to icons directory
 ICONS_DIR = Path(__file__).parent / "miniapp" / "icons"
 ICONS_DIR.mkdir(parents=True, exist_ok=True)
+# Path to root directory (for logo.png)
+ROOT_DIR = Path(__file__).parent
 
 
 async def get_subscription_by_telegram_id(request: Request) -> Response:
@@ -294,6 +296,24 @@ def create_app() -> web.Application:
     
     app.router.add_get('/api/icons/{filename}', serve_icon_image)
     
+    # Serve logo
+    async def serve_logo(request):
+        """Serve logo.png file."""
+        logo_path = ROOT_DIR / 'logo.png'
+        if not logo_path.exists() or not logo_path.is_file():
+            return web.Response(status=404, text="Logo not found")
+        
+        return web.Response(
+            body=logo_path.read_bytes(),
+            content_type='image/png',
+            headers={
+                'Access-Control-Allow-Origin': '*',
+                'Cache-Control': 'public, max-age=3600'
+            }
+        )
+    
+    app.router.add_get('/api/logo.png', serve_logo)
+    
     # Health check endpoint
     async def health_check(request):
         return web.json_response({"status": "ok", "service": "mini-app"})
@@ -310,6 +330,7 @@ def create_app() -> web.Application:
     logger.info("  GET /api/banners")
     logger.info("  GET /api/banners/{filename}")
     logger.info("  GET /api/icons/{filename}")
+    logger.info("  GET /api/logo.png")
     logger.info("  GET /api/health")
     
     return app
