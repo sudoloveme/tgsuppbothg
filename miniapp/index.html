@@ -326,15 +326,16 @@
         // Инициализация WebApp
         tg.ready();
         
-        // Устанавливаем полноэкранный режим
-        tg.expand(); // Расширяем на весь экран
+        // Устанавливаем полноэкранный режим (убирает верхнюю и нижнюю панели Telegram)
+        tg.expand(); // Сначала расширяем
+        tg.requestFullscreen(); // Затем запрашиваем полноэкранный режим
+        
+        // Настройка цветов
         tg.setHeaderColor('#4a4a4a'); // Цвет header совпадает с нашим
         tg.setBackgroundColor('#4a4a4a'); // Цвет фона при загрузке
         
-        // Отключаем стандартный header Telegram для полноэкранного режима
-        if (tg.platform === 'ios' || tg.platform === 'android') {
-            tg.enableClosingConfirmation();
-        }
+        // Отключаем подтверждение закрытия
+        tg.disableClosingConfirmation();
         
         // Проверяем User-Agent для Telegram
         const userAgent = navigator.userAgent || navigator.vendor || window.opera;
