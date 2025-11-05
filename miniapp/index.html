@@ -352,13 +352,16 @@
             gap: 8px;
             margin-bottom: 16px;
             flex-wrap: wrap;
-            align-items: center;
+            align-items: flex-start;
+            position: relative;
         }
 
         .traffic-date-input-group {
             flex: 1;
             min-width: 120px;
             max-width: 150px;
+            display: flex;
+            flex-direction: column;
         }
 
         .traffic-date-input {
@@ -384,10 +387,24 @@
             color: #ff3b30;
             margin-top: 4px;
             display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            width: 100%;
+            text-align: center;
+            padding-top: 8px;
+            z-index: 10;
         }
 
         .traffic-date-error.show {
             display: block;
+        }
+
+        .traffic-date-selector-wrapper {
+            position: relative;
+            width: 100%;
+            margin-bottom: 16px;
         }
 
         .traffic-chart-wrapper {
@@ -1203,14 +1220,16 @@
                         </div>
                         <!-- Раскрывающийся блок детализации -->
                         <div class="traffic-details-section">
-                            <div class="traffic-date-selector" style="display: none;">
-                                <div class="traffic-date-input-group">
-                                    <input type="date" id="trafficStartDate" class="traffic-date-input" onchange="handleDateChange()">
-                                    <div class="traffic-date-error" id="trafficDateError"></div>
+                            <div class="traffic-date-selector-wrapper" style="display: none;">
+                                <div class="traffic-date-selector">
+                                    <div class="traffic-date-input-group">
+                                        <input type="date" id="trafficStartDate" class="traffic-date-input" onchange="handleDateChange()">
+                                    </div>
+                                    <div class="traffic-date-input-group">
+                                        <input type="date" id="trafficEndDate" class="traffic-date-input" onchange="handleDateChange()">
+                                    </div>
                                 </div>
-                                <div class="traffic-date-input-group">
-                                    <input type="date" id="trafficEndDate" class="traffic-date-input" onchange="handleDateChange()">
-                                </div>
+                                <div class="traffic-date-error" id="trafficDateError"></div>
                             </div>
                             <div class="traffic-details-loading" style="display: block;">Загрузка данных...</div>
                             <div class="traffic-chart-wrapper" style="display: none;">
@@ -1567,6 +1586,11 @@
             const startDate = startInput.value;
             const endDate = endInput.value;
             
+            // Скрываем ошибку при изменении дат
+            if (errorEl) {
+                errorEl.classList.remove('show');
+            }
+            
             // Если обе даты выбраны, валидируем и загружаем данные
             if (startDate && endDate) {
                 const validation = validateDateRange(startDate, endDate);
@@ -1577,11 +1601,6 @@
                         errorEl.classList.add('show');
                     }
                     return;
-                }
-                
-                // Скрываем ошибку
-                if (errorEl) {
-                    errorEl.classList.remove('show');
                 }
                 
                 // Загружаем данные
@@ -1645,13 +1664,13 @@
             
             const loadingEl = section.querySelector('.traffic-details-loading');
             const chartWrapper = section.querySelector('.traffic-chart-wrapper');
-            const dateSelector = section.querySelector('.traffic-date-selector');
+            const dateSelectorWrapper = section.querySelector('.traffic-date-selector-wrapper');
             const startInput = section.querySelector('#trafficStartDate');
             const endInput = section.querySelector('#trafficEndDate');
             
             if (loadingEl) loadingEl.style.display = 'block';
             if (chartWrapper) chartWrapper.style.display = 'none';
-            if (dateSelector) dateSelector.style.display = 'none';
+            if (dateSelectorWrapper) dateSelectorWrapper.style.display = 'none';
             
             // Устанавливаем даты по умолчанию (текущий месяц)
             const dateRange = getDateRange('current');
@@ -1704,7 +1723,7 @@
                 
                 // Отображаем график и селектор дат
                 if (loadingEl) loadingEl.style.display = 'none';
-                if (dateSelector) dateSelector.style.display = 'flex';
+                if (dateSelectorWrapper) dateSelectorWrapper.style.display = 'block';
                 renderTrafficChart(groupedData, chartWrapper);
                 
             } catch (error) {
