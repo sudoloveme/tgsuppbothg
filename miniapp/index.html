@@ -1276,8 +1276,9 @@
             const limitTraffic = formatBytes(data.trafficLimitBytes || 0);
             const trafficPercent = getTrafficPercent(data.usedTrafficBytes || 0, data.trafficLimitBytes || 0);
             const trafficAngle = (trafficPercent / 100) * 360;
-            const subscriptionUrl = data.subscriptionUrl || '';
-            const importSubscriptionLink = subscriptionUrl ? `happ://add/${encodeURIComponent(subscriptionUrl)}` : '#';
+            
+            // Сохраняем subscriptionUrl для использования в инструкциях
+            window.subscriptionUrl = data.subscriptionUrl || '';
 
             // Определяем класс для круга в зависимости от процента
             let trafficCircleClass = '';
