@@ -1997,19 +1997,34 @@
 
         // Переключение инструкций по установке
         function toggleInstallationInstructions(platform) {
+            const installationCard = document.querySelector('.installation-card');
+            if (!installationCard) return;
+            
+            const grid = installationCard.querySelector('.installation-grid');
             const instructionsEl = document.getElementById(`${platform}-instructions`);
-            if (!instructionsEl) return;
+            
+            if (!grid || !instructionsEl) return;
             
             if (instructionsEl.classList.contains('active')) {
-                // Скрываем с анимацией
+                // Скрываем инструкции и показываем grid
                 instructionsEl.classList.remove('active');
+                
+                // Показываем grid после завершения анимации закрытия
+                setTimeout(() => {
+                    grid.classList.remove('hidden');
+                }, 300);
             } else {
+                // Скрываем grid
+                grid.classList.add('hidden');
+                
                 // Скрываем все другие инструкции
                 const allInstructions = document.querySelectorAll('.installation-instructions');
                 allInstructions.forEach(el => el.classList.remove('active'));
                 
-                // Показываем выбранные инструкции с анимацией
-                instructionsEl.classList.add('active');
+                // Показываем выбранные инструкции с анимацией после скрытия grid
+                setTimeout(() => {
+                    instructionsEl.classList.add('active');
+                }, 300);
             }
         }
 
