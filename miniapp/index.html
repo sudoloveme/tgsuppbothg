@@ -812,14 +812,19 @@
             margin-bottom: 8px;
         }
 
+        .installation-links {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
         .installation-link {
             display: inline-flex;
             align-items: center;
             color: #007AFF;
             font-size: 14px;
             text-decoration: none;
-            margin-top: 8px;
-            margin-right: 16px;
             transition: opacity 0.2s;
         }
 
@@ -1441,21 +1446,25 @@
                         <div class="installation-step">
                             <div class="installation-step-title">1. Скачайте и установите приложение Happ</div>
                             <div class="installation-step-content">
-                                <a href="#" class="installation-link" onclick="tg.showAlert('Функционал скоро появится'); return false;">
-                                    Открыть App Store <span class="installation-link-arrow">→</span>
-                                </a>
-                                <a href="#" class="installation-link" onclick="tg.showAlert('Функционал скоро появится'); return false;">
-                                    Открыть App Store Russia <span class="installation-link-arrow">→</span>
-                                </a>
+                                <div class="installation-links">
+                                    <a href="#" class="installation-link" onclick="tg.showAlert('Функционал скоро появится'); return false;">
+                                        Открыть App Store <span class="installation-link-arrow">→</span>
+                                    </a>
+                                    <a href="#" class="installation-link" onclick="tg.showAlert('Функционал скоро появится'); return false;">
+                                        Открыть App Store Russia <span class="installation-link-arrow">→</span>
+                                    </a>
+                                </div>
                             </div>
                         </div>
                         
                         <div class="installation-step">
                             <div class="installation-step-title">2. Импортируйте подписку</div>
                             <div class="installation-step-content">
-                                <a href="#" class="installation-link" onclick="tg.showAlert('Функционал скоро появится'); return false;">
-                                    Импортировать подписку <span class="installation-link-arrow">→</span>
-                                </a>
+                                <div class="installation-links">
+                                    <a href="#" class="installation-link" onclick="tg.showAlert('Функционал скоро появится'); return false;">
+                                        Импортировать подписку <span class="installation-link-arrow">→</span>
+                                    </a>
+                                </div>
                             </div>
                         </div>
                         
