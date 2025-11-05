@@ -1276,6 +1276,8 @@
             const limitTraffic = formatBytes(data.trafficLimitBytes || 0);
             const trafficPercent = getTrafficPercent(data.usedTrafficBytes || 0, data.trafficLimitBytes || 0);
             const trafficAngle = (trafficPercent / 100) * 360;
+            const subscriptionUrl = data.subscriptionUrl || '';
+            const importSubscriptionLink = subscriptionUrl ? `happ://add/${encodeURIComponent(subscriptionUrl)}` : '#';
 
             // Определяем класс для круга в зависимости от процента
             let trafficCircleClass = '';
@@ -1470,7 +1472,7 @@
                             <div class="installation-step-title">2. Импортируйте подписку</div>
                             <div class="installation-step-content">
                                 <div class="installation-links">
-                                    <a href="#" class="installation-link" onclick="tg.showAlert('Функционал скоро появится'); return false;">
+                                    <a href="${importSubscriptionLink}" class="installation-link" ${subscriptionUrl ? `onclick="tg.openLink('${importSubscriptionLink}'); return false;"` : `onclick="tg.showAlert('Подписка не найдена'); return false;"`}>
                                         Импортировать подписку <span class="installation-link-arrow">→</span>
                                     </a>
                                 </div>
