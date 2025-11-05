@@ -787,8 +787,11 @@
         // Расчет дней до сброса трафика (до 1 числа следующего месяца)
         function calculateDaysUntilReset() {
             const now = new Date();
-            const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-            const diffTime = nextMonth - now;
+            // Устанавливаем время в начало дня для точного расчета
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+            // Следующий месяц, 1 число, начало дня
+            const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0, 0);
+            const diffTime = nextMonth - today;
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             return diffDays;
         }
