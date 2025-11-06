@@ -350,51 +350,29 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            gap: 12px;
         }
 
-        .traffic-chart-skeleton {
-            margin: 20px 0;
-            position: relative;
+        .traffic-loading-text {
+            font-size: 14px;
+            color: #8e8e93;
         }
 
-        .traffic-chart-skeleton-container {
-            display: flex;
-            align-items: flex-end;
-            justify-content: space-between;
-            height: 180px;
-            gap: 4px;
-            padding: 0 4px;
-            width: 100%;
+        .traffic-loading-spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #e5e5ea;
+            border-top-color: #007AFF;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
 
-        .traffic-chart-skeleton-bar {
-            flex: 1;
-            min-width: 32px;
-            max-width: 48px;
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            border-radius: 4px 4px 0 0;
-            animation: skeleton-loading 1.5s ease-in-out infinite;
-        }
-
-        .traffic-chart-skeleton-label {
-            flex: 1;
-            min-width: 32px;
-            max-width: 48px;
-            height: 20px;
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            border-radius: 4px;
-            animation: skeleton-loading 1.5s ease-in-out infinite;
-            margin-top: 8px;
-        }
-
-        @keyframes skeleton-loading {
+        @keyframes spin {
             0% {
-                background-position: 200% 0;
+                transform: rotate(0deg);
             }
             100% {
-                background-position: -200% 0;
+                transform: rotate(360deg);
             }
         }
 
@@ -1436,26 +1414,8 @@
                                 <div class="traffic-date-error" id="trafficDateError"></div>
                             </div>
                             <div class="traffic-details-loading" style="display: none;">
-                                <div class="traffic-chart-skeleton">
-                                    <div class="traffic-chart-skeleton-container">
-                                        <div class="traffic-chart-skeleton-bar" style="height: 60%;"></div>
-                                        <div class="traffic-chart-skeleton-bar" style="height: 80%;"></div>
-                                        <div class="traffic-chart-skeleton-bar" style="height: 45%;"></div>
-                                        <div class="traffic-chart-skeleton-bar" style="height: 90%;"></div>
-                                        <div class="traffic-chart-skeleton-bar" style="height: 70%;"></div>
-                                        <div class="traffic-chart-skeleton-bar" style="height: 55%;"></div>
-                                        <div class="traffic-chart-skeleton-bar" style="height: 85%;"></div>
-                                    </div>
-                                    <div class="traffic-chart-labels" style="justify-content: space-between; padding: 0 4px;">
-                                        <div class="traffic-chart-skeleton-label"></div>
-                                        <div class="traffic-chart-skeleton-label"></div>
-                                        <div class="traffic-chart-skeleton-label"></div>
-                                        <div class="traffic-chart-skeleton-label"></div>
-                                        <div class="traffic-chart-skeleton-label"></div>
-                                        <div class="traffic-chart-skeleton-label"></div>
-                                        <div class="traffic-chart-skeleton-label"></div>
-                                    </div>
-                                </div>
+                                <div class="traffic-loading-spinner"></div>
+                                <div class="traffic-loading-text">Загрузка</div>
                             </div>
                             <div class="traffic-chart-wrapper" style="display: none;">
                                 <div class="traffic-chart"></div>
@@ -1811,29 +1771,11 @@
                 const loadingEl = section.querySelector('.traffic-details-loading');
                 if (loadingEl) {
                     loadingEl.style.display = 'none';
-                    // Восстанавливаем оригинальный HTML скелетона на случай если он был изменен при ошибке
-                    if (!loadingEl.querySelector('.traffic-chart-skeleton')) {
+                    // Восстанавливаем оригинальный HTML плейсхолдера на случай если он был изменен при ошибке
+                    if (!loadingEl.querySelector('.traffic-loading-spinner')) {
                         loadingEl.innerHTML = `
-                            <div class="traffic-chart-skeleton">
-                                <div class="traffic-chart-skeleton-container">
-                                    <div class="traffic-chart-skeleton-bar" style="height: 60%;"></div>
-                                    <div class="traffic-chart-skeleton-bar" style="height: 80%;"></div>
-                                    <div class="traffic-chart-skeleton-bar" style="height: 45%;"></div>
-                                    <div class="traffic-chart-skeleton-bar" style="height: 90%;"></div>
-                                    <div class="traffic-chart-skeleton-bar" style="height: 70%;"></div>
-                                    <div class="traffic-chart-skeleton-bar" style="height: 55%;"></div>
-                                    <div class="traffic-chart-skeleton-bar" style="height: 85%;"></div>
-                                </div>
-                                <div class="traffic-chart-labels" style="justify-content: space-between; padding: 0 4px;">
-                                    <div class="traffic-chart-skeleton-label"></div>
-                                    <div class="traffic-chart-skeleton-label"></div>
-                                    <div class="traffic-chart-skeleton-label"></div>
-                                    <div class="traffic-chart-skeleton-label"></div>
-                                    <div class="traffic-chart-skeleton-label"></div>
-                                    <div class="traffic-chart-skeleton-label"></div>
-                                    <div class="traffic-chart-skeleton-label"></div>
-                                </div>
-                            </div>
+                            <div class="traffic-loading-spinner"></div>
+                            <div class="traffic-loading-text">Загрузка</div>
                         `;
                     }
                 }
@@ -2106,7 +2048,10 @@
                 console.error('Error loading traffic details:', error);
                 if (loadingEl) {
                     loadingEl.style.display = 'flex';
-                    loadingEl.innerHTML = '<div style="text-align: center; color: #ff3b30;">Ошибка загрузки данных</div>';
+                    loadingEl.innerHTML = `
+                        <div class="traffic-loading-spinner" style="border-top-color: #ff3b30;"></div>
+                        <div class="traffic-loading-text" style="color: #ff3b30;">Ошибка загрузки данных</div>
+                    `;
                 }
             }
         }
