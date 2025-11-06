@@ -1051,6 +1051,11 @@
         // Отключаем подтверждение закрытия
         tg.disableClosingConfirmation();
         
+        // Отключаем сворачивание при свайпе вниз
+        if (tg.disableVerticalSwipes) {
+            tg.disableVerticalSwipes();
+        }
+        
         let currentPromoIndex = 0;
         let promoInterval = null;
         let promoBanners = [];
