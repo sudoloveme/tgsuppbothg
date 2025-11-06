@@ -1635,6 +1635,8 @@
             const expireAt = formatDate(data.expireAt);
             const daysUntilExpiry = calculateDaysUntilExpiry(data.expireAt);
             const daysUntilReset = calculateDaysUntilReset();
+            const usedTraffic = formatBytes(data.usedTrafficBytes || 0);
+            const limitTraffic = formatBytes(data.trafficLimitBytes || 0);
             const lifetimeTraffic = formatBytes(data.lifetimeUsedTrafficBytes || 0);
             const trafficPercent = getTrafficPercent(data.usedTrafficBytes || 0, data.trafficLimitBytes || 0);
             const trafficAngle = (trafficPercent / 100) * 360;
