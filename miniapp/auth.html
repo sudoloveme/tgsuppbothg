@@ -289,6 +289,28 @@
                 return;
             }
             
+            // Валидация разрешенных доменов
+            const allowedDomains = [
+                'gmail.com',
+                'yandex.ru',
+                'yandex.com',
+                'mail.ru',
+                'yahoo.com',
+                'outlook.com',
+                'hotmail.com',
+                'icloud.com',
+                'protonmail.com',
+                'proton.me',
+                'heavengate.net',
+                'adacigroup.kz'
+            ];
+            
+            const emailDomain = email.split('@')[1]?.toLowerCase() || '';
+            if (!allowedDomains.includes(emailDomain)) {
+                tg.showAlert('Разрешены только популярные почтовые сервисы (Gmail, Yandex, Mail.ru, Yahoo, Outlook и др.) или корпоративные домены heavengate.net и adacigroup.kz');
+                return;
+            }
+            
             const telegramId = getTelegramId();
             if (!telegramId) {
                 tg.showAlert('Не удалось определить пользователя. Пожалуйста, откройте приложение через Telegram бота.');

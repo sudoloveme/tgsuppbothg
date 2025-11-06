@@ -430,6 +430,30 @@ def create_app() -> web.Application:
                     headers={'Access-Control-Allow-Origin': '*'}
                 )
             
+            # Validate allowed email domains
+            allowed_domains = [
+                'gmail.com',
+                'yandex.ru',
+                'yandex.com',
+                'mail.ru',
+                'yahoo.com',
+                'outlook.com',
+                'hotmail.com',
+                'icloud.com',
+                'protonmail.com',
+                'proton.me',
+                'heavengate.net',
+                'adacigroup.kz'
+            ]
+            
+            email_domain = email.split('@')[1].lower() if '@' in email else ''
+            if email_domain not in allowed_domains:
+                return web.json_response(
+                    {"error": "Разрешены только популярные почтовые сервисы (Gmail, Yandex, Mail.ru, Yahoo, Outlook и др.) или корпоративные домены heavengate.net и adacigroup.kz"},
+                    status=400,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
             # Check if OTP was sent recently (within 1 minute)
             from datetime import datetime, timedelta
             last_otp_time = database.db_get_last_otp_time(email, telegram_id)
