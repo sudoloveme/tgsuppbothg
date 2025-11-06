@@ -353,13 +353,20 @@ def create_app() -> web.Application:
         elif filename.lower().endswith('.webp'):
             content_type = 'image/webp'
         
+        # Для логотипа отключаем кеш, чтобы всегда загружалась актуальная версия
+        cache_control = 'no-cache, no-store, must-revalidate' if filename == 'logo.svg' else 'public, max-age=3600'
+        headers = {
+            'Access-Control-Allow-Origin': '*',
+            'Cache-Control': cache_control
+        }
+        if filename == 'logo.svg':
+            headers['Pragma'] = 'no-cache'
+            headers['Expires'] = '0'
+        
         return web.Response(
             body=file_path.read_bytes(),
             content_type=content_type,
-            headers={
-                'Access-Control-Allow-Origin': '*',
-                'Cache-Control': 'public, max-age=3600'
-            }
+            headers=headers
         )
     
     app.router.add_get('/api/icons/{filename}', serve_icon_image)
