@@ -179,8 +179,32 @@
             tg.disableVerticalSwipes();
         }
 
-        // Обработка авторизации (заглушка)
-        function handleAuth() {
+        // Получение Telegram ID
+        function getTelegramId() {
+            try {
+                if (tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) {
+                    return tg.initDataUnsafe.user.id;
+                }
+                
+                // Fallback: try to parse initData
+                if (tg.initData) {
+                    const params = new URLSearchParams(tg.initData);
+                    const userStr = params.get('user');
+                    if (userStr) {
+                        const user = JSON.parse(userStr);
+                        if (user.id) {
+                            return user.id;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Error getting Telegram ID:', e);
+            }
+            return null;
+        }
+
+        // Обработка отправки OTP
+        async function handleAuth() {
             const emailInput = document.getElementById('authEmail');
             const email = emailInput?.value.trim();
             
@@ -196,8 +220,107 @@
                 return;
             }
             
-            // Заглушка - показываем сообщение
-            tg.showAlert('Функционал авторизации будет реализован позже. Введенный email: ' + email);
+            const telegramId = getTelegramId();
+            if (!telegramId) {
+                tg.showAlert('Не удалось определить пользователя. Пожалуйста, откройте приложение через Telegram бота.');
+                return;
+            }
+            
+            // Отправка OTP
+            try {
+                const baseUrl = window.location.origin;
+                const response = await fetch(`${baseUrl}/api/auth/send-otp`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        telegram_id: telegramId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    // Показываем форму ввода OTP
+                    showOtpForm(email, telegramId);
+                } else {
+                    tg.showAlert(data.error || 'Ошибка отправки кода. Попробуйте позже.');
+                }
+            } catch (error) {
+                console.error('Error sending OTP:', error);
+                tg.showAlert('Ошибка отправки кода. Попробуйте позже.');
+            }
+        }
+
+        // Показать форму ввода OTP
+        function showOtpForm(email, telegramId) {
+            const content = document.querySelector('.auth-card');
+            content.innerHTML = `
+                <div class="auth-title">Введите код</div>
+                <p style="font-size: 14px; color: #8e8e93; margin-bottom: 24px; text-align: center;">
+                    Мы отправили код подтверждения на<br><strong>${email}</strong>
+                </p>
+                <label class="auth-label" for="authOtp">Код подтверждения</label>
+                <input 
+                    type="text" 
+                    id="authOtp" 
+                    class="auth-input" 
+                    placeholder="000000"
+                    maxlength="6"
+                    autocomplete="one-time-code"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
+                >
+                <button class="auth-button" onclick="handleVerifyOtp('${email}', ${telegramId})">
+                    Подтвердить
+                </button>
+                <button class="auth-button" style="background: #8e8e93; margin-top: 8px;" onclick="location.reload()">
+                    Отменить
+                </button>
+            `;
+        }
+
+        // Обработка проверки OTP
+        async function handleVerifyOtp(email, telegramId) {
+            const otpInput = document.getElementById('authOtp');
+            const otpCode = otpInput?.value.trim();
+            
+            if (!otpCode || otpCode.length !== 6) {
+                tg.showAlert('Пожалуйста, введите 6-значный код');
+                return;
+            }
+            
+            try {
+                const baseUrl = window.location.origin;
+                const response = await fetch(`${baseUrl}/api/auth/verify-otp`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        telegram_id: telegramId,
+                        otp_code: otpCode
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    tg.showAlert('Авторизация успешна!');
+                    // Перенаправляем на главную страницу
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1000);
+                } else {
+                    tg.showAlert(data.error || 'Неверный код. Попробуйте еще раз.');
+                }
+            } catch (error) {
+                console.error('Error verifying OTP:', error);
+                tg.showAlert('Ошибка проверки кода. Попробуйте позже.');
+            }
         }
     </script>
 </body>

@@ -77,6 +77,16 @@ def _db_connect() -> sqlite3.Connection:
         "  updated_at TEXT DEFAULT CURRENT_TIMESTAMP\n"
         ")"
     )
+    # OTP codes table for email authentication
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS otp_codes (\n"
+        "  email TEXT NOT NULL,\n"
+        "  telegram_id INTEGER NOT NULL,\n"
+        "  otp_code TEXT NOT NULL,\n"
+        "  created_at TEXT DEFAULT CURRENT_TIMESTAMP,\n"
+        "  PRIMARY KEY (email, telegram_id)\n"
+        ")"
+    )
     # Migrate from legacy table if present
     try:
         conn.execute(
@@ -425,4 +435,68 @@ def db_get_all_promo_banners() -> list[dict]:
     except Exception:
         logger.exception("DB read failed (get all promo banners)")
         return []
+
+
+# OTP functions
+def db_store_otp(email: str, telegram_id: int, otp_code: str) -> None:
+    """Store OTP code in database."""
+    try:
+        conn = _db_connect()
+        conn.execute(
+            "INSERT OR REPLACE INTO otp_codes (email, telegram_id, otp_code, created_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)",
+            (email, telegram_id, otp_code)
+        )
+        conn.commit()
+        conn.close()
+        logger.info(f"Stored OTP for email: {email}, telegram_id: {telegram_id}")
+    except Exception:
+        logger.exception(f"DB write failed (store OTP): email={email}, telegram_id={telegram_id}")
+
+
+def db_get_otp(email: str, telegram_id: int) -> Optional[tuple[str, str]]:
+    """Get OTP code for email and telegram_id. Returns (otp_code, created_at) or None."""
+    try:
+        conn = _db_connect()
+        cur = conn.execute(
+            "SELECT otp_code, created_at FROM otp_codes WHERE email=? AND telegram_id=?",
+            (email, telegram_id)
+        )
+        row = cur.fetchone()
+        conn.close()
+        if row:
+            return (row[0], row[1])
+        return None
+    except Exception:
+        logger.exception(f"DB read failed (get OTP): email={email}, telegram_id={telegram_id}")
+        return None
+
+
+def db_delete_otp(email: str, telegram_id: int) -> None:
+    """Delete OTP code from database."""
+    try:
+        conn = _db_connect()
+        conn.execute(
+            "DELETE FROM otp_codes WHERE email=? AND telegram_id=?",
+            (email, telegram_id)
+        )
+        conn.commit()
+        conn.close()
+        logger.info(f"Deleted OTP for email: {email}, telegram_id: {telegram_id}")
+    except Exception:
+        logger.exception(f"DB write failed (delete OTP): email={email}, telegram_id={telegram_id}")
+
+
+def db_cleanup_expired_otps(expiry_minutes: int) -> None:
+    """Clean up expired OTP codes from database."""
+    try:
+        conn = _db_connect()
+        conn.execute(
+            "DELETE FROM otp_codes WHERE datetime(created_at, '+' || ? || ' minutes') < datetime('now')",
+            (expiry_minutes,)
+        )
+        conn.commit()
+        conn.close()
+        logger.info(f"Cleaned up expired OTP codes (expiry: {expiry_minutes} minutes)")
+    except Exception:
+        logger.exception("DB write failed (cleanup expired OTPs)")
 

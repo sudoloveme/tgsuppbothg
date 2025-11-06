@@ -10,7 +10,10 @@ from aiohttp import web
 from aiohttp.web_request import Request
 from aiohttp.web_response import Response
 
-from api_client import get_user_by_uuid, get_traffic_usage_range
+from api_client import get_user_by_uuid, get_traffic_usage_range, get_user_by_email, create_user, update_user_telegram_id
+import database
+import otp_manager
+import smtp_client
 
 logger = logging.getLogger("support-bot")
 
@@ -395,6 +398,153 @@ def create_app() -> web.Application:
     
     app.router.add_get('/api/health', health_check)
     
+    # Authentication endpoints
+    async def send_otp(request: Request) -> Response:
+        """Send OTP code to user's email. POST /api/auth/send-otp"""
+        try:
+            data = await request.json()
+            email = data.get('email', '').strip().lower()
+            telegram_id = data.get('telegram_id')
+            
+            if not email:
+                return web.json_response(
+                    {"error": "Email is required"},
+                    status=400,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            if not telegram_id:
+                return web.json_response(
+                    {"error": "Telegram ID is required"},
+                    status=400,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            # Validate email format
+            import re
+            email_pattern = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
+            if not re.match(email_pattern, email):
+                return web.json_response(
+                    {"error": "Invalid email format"},
+                    status=400,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            # Generate OTP
+            otp_code = otp_manager.generate_otp()
+            
+            # Store OTP
+            otp_manager.store_otp(email, telegram_id, otp_code)
+            
+            # Send email (run in executor since it's blocking)
+            import asyncio
+            loop = asyncio.get_event_loop()
+            email_sent = await loop.run_in_executor(None, smtp_client.send_otp_email, email, otp_code)
+            
+            if email_sent:
+                logger.info(f"OTP sent to {email} for telegram_id {telegram_id}")
+                return web.json_response(
+                    {"success": True, "message": "OTP code sent to your email"},
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            else:
+                return web.json_response(
+                    {"error": "Failed to send email. Please try again later."},
+                    status=500,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+                
+        except Exception as e:
+            logger.exception(f"Error sending OTP: {e}")
+            return web.json_response(
+                {"error": "Internal server error"},
+                status=500,
+                headers={'Access-Control-Allow-Origin': '*'}
+            )
+    
+    async def verify_otp(request: Request) -> Response:
+        """Verify OTP code and create/update user. POST /api/auth/verify-otp"""
+        try:
+            data = await request.json()
+            email = data.get('email', '').strip().lower()
+            telegram_id = data.get('telegram_id')
+            otp_code = data.get('otp_code', '').strip()
+            
+            if not email or not telegram_id or not otp_code:
+                return web.json_response(
+                    {"error": "Email, telegram_id, and otp_code are required"},
+                    status=400,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            # Verify OTP
+            if not otp_manager.verify_otp(email, telegram_id, otp_code):
+                return web.json_response(
+                    {"error": "Invalid or expired OTP code"},
+                    status=400,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            # Check if user exists on backend
+            user_data = await get_user_by_email(email)
+            
+            if user_data is None:
+                # User doesn't exist, create new user
+                logger.info(f"Creating new user for email: {email}, telegram_id: {telegram_id}")
+                user_data = await create_user(email, telegram_id)
+                
+                if user_data is None:
+                    return web.json_response(
+                        {"error": "Failed to create user. Please try again later."},
+                        status=500,
+                        headers={'Access-Control-Allow-Origin': '*'}
+                    )
+                
+                uuid = user_data.get('uuid')
+                if uuid:
+                    # Save to local database
+                    database.db_save_user_backend_data(telegram_id, uuid, email)
+                    logger.info(f"Created user and saved to local DB: email={email}, telegram_id={telegram_id}, uuid={uuid}")
+            else:
+                # User exists, update telegram_id
+                uuid = user_data.get('uuid')
+                if uuid:
+                    logger.info(f"Updating telegram_id for existing user: email={email}, telegram_id={telegram_id}, uuid={uuid}")
+                    updated_user = await update_user_telegram_id(uuid, telegram_id)
+                    
+                    if updated_user:
+                        # Save to local database
+                        database.db_save_user_backend_data(telegram_id, uuid, email)
+                        logger.info(f"Updated user and saved to local DB: email={email}, telegram_id={telegram_id}, uuid={uuid}")
+                    else:
+                        return web.json_response(
+                            {"error": "Failed to update user. Please try again later."},
+                            status=500,
+                            headers={'Access-Control-Allow-Origin': '*'}
+                        )
+                else:
+                    return web.json_response(
+                        {"error": "User data is invalid"},
+                        status=500,
+                        headers={'Access-Control-Allow-Origin': '*'}
+                    )
+            
+            return web.json_response(
+                {"success": True, "message": "Authentication successful"},
+                headers={'Access-Control-Allow-Origin': '*'}
+            )
+            
+        except Exception as e:
+            logger.exception(f"Error verifying OTP: {e}")
+            return web.json_response(
+                {"error": "Internal server error"},
+                status=500,
+                headers={'Access-Control-Allow-Origin': '*'}
+            )
+    
+    app.router.add_post('/api/auth/send-otp', send_otp)
+    app.router.add_post('/api/auth/verify-otp', verify_otp)
+    
     # Static files (catch-all, must be last)
     logger.info("Registering static files route...")
     app.router.add_get('/{path:.*}', serve_static)
@@ -408,6 +558,8 @@ def create_app() -> web.Application:
     logger.info("  GET /api/logo.svg")
     logger.info("  GET /api/traffic/usage/{telegram_id}?start=...&end=...")
     logger.info("  GET /api/health")
+    logger.info("  POST /api/auth/send-otp")
+    logger.info("  POST /api/auth/verify-otp")
     
     return app
 

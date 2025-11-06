@@ -348,3 +348,65 @@ async def get_traffic_usage_range(uuid: str, start_date: str, end_date: str) -> 
         logger.exception(f"Error getting traffic usage for UUID {uuid}: {e}")
         return None
 
+
+async def create_user(email: str, telegram_id: int) -> Optional[Dict[str, Any]]:
+    """
+    Create a new user on the backend.
+    
+    Args:
+        email: User's email address
+        telegram_id: User's Telegram ID
+        
+    Returns:
+        Created user data dict or None if error
+    """
+    if not BACKEND_API_URL:
+        logger.error("BACKEND_API_URL is not configured")
+        return None
+    
+    url = f"{BACKEND_API_URL.rstrip('/')}/api/users"
+    
+    # Generate username from email (replace special chars with underscore)
+    import re
+    username = re.sub(r'[^a-zA-Z0-9]', '_', email.lower())
+    
+    # Calculate expireAt (current date + 10 seconds)
+    from datetime import datetime, timedelta
+    expire_at = (datetime.now() + timedelta(seconds=10)).isoformat() + 'Z'
+    
+    payload = {
+        "username": username,
+        "status": "DISABLED",
+        "trafficLimitBytes": 1,
+        "trafficLimitStrategy": "MONTH",
+        "expireAt": expire_at,
+        "telegramId": telegram_id,
+        "email": email,
+        "activateAllInbounds": True
+    }
+    
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(url, json=payload, headers=_get_headers())
+            response.raise_for_status()
+            data = response.json()
+            
+            if "response" in data:
+                return data["response"]
+            return None
+    except httpx.HTTPStatusError as e:
+        logger.error(f"HTTP error creating user: {e.response.status_code}")
+        if e.response.status_code == 400:
+            try:
+                error_data = e.response.json()
+                logger.error(f"Error details: {error_data}")
+            except:
+                logger.warning(f"Error response text: {e.response.text}")
+        return None
+    except httpx.RequestError as e:
+        logger.error(f"Request error creating user: {e}")
+        return None
+    except Exception as e:
+        logger.exception(f"Unexpected error creating user: {e}")
+        return None
+
