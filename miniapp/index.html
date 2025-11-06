@@ -274,7 +274,7 @@
             color: #ffffff;
             border: none;
             padding: 16px;
-            border-radius: 12px;
+            border-radius: 12px;÷
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
@@ -2022,6 +2022,17 @@
             }
             const mb = bytes / (1024 * 1024);
             return `${mb.toFixed(1)} MB`;
+        }
+
+        // Обработка ссылок App Store
+        function handleAppStoreLink(event, url) {
+            event.preventDefault();
+            if (window.tg && window.tg.openLink) {
+                window.tg.openLink(url, {try_instant_view: false});
+            } else {
+                window.open(url, '_blank', 'noopener,noreferrer');
+            }
+            return false;
         }
 
         // Обработка импорта подписки
