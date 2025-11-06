@@ -580,6 +580,7 @@
 
         .traffic-chart-label-day {
             font-size: 10px;
+            margin-top: 2px;
             font-weight: 600;
             color: #000000;
         }
@@ -2357,9 +2358,9 @@
             if (platform === 'macos' || platform === 'windows') {
                 if (isMobileDevice()) {
                     if (window.tg && window.tg.showAlert) {
-                        window.tg.showAlert('Для установки на macOS или Windows, пожалуйста, откройте Telegram на десктопной версии (Windows, macOS или Linux).');
+                        window.tg.showAlert('Для установки на macOS или Windows, пожалуйста, откройте Telegram на десктопной версии (Windows или macOS).');
                     } else {
-                        alert('Для установки на macOS или Windows, пожалуйста, откройте Telegram на десктопной версии (Windows, macOS или Linux).');
+                        alert('Для установки на macOS или Windows, пожалуйста, откройте Telegram на десктопной версии (Windows или macOS).');
                     }
                     return;
                 }
