@@ -52,48 +52,26 @@
             align-items: center;
             justify-content: center;
             margin-bottom: 32px;
-            gap: 12px;
         }
 
         .auth-logo-icon {
-            width: 48px;
-            height: 48px;
-            background: #007AFF;
-            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .auth-logo-icon img {
-            width: 32px;
-            height: 32px;
-        }
-
-        .auth-logo-text {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .auth-logo-text-main {
-            font-size: 20px;
-            font-weight: 700;
-            color: #007AFF;
-            line-height: 1.2;
-        }
-
-        .auth-logo-text-sub {
-            font-size: 16px;
-            font-weight: 400;
-            color: #007AFF;
-            line-height: 1.2;
+            width: auto;
+            height: auto;
+            max-width: 100%;
+            max-height: 120px;
         }
 
         .auth-title {
             font-size: 28px;
             font-weight: 700;
             color: #000000;
-            text-align: center;
+            text-align: left;
             margin-bottom: 32px;
         }
 
@@ -172,11 +150,7 @@
         <div class="auth-card">
             <div class="auth-logo">
                 <div class="auth-logo-icon">
-                    <img src="/api/logo.svg" alt="Logo">
-                </div>
-                <div class="auth-logo-text">
-                    <span class="auth-logo-text-main">heavengate</span>
-                    <span class="auth-logo-text-sub">vpn</span>
+                    <img src="/api/icons/logo.svg" alt="Logo">
                 </div>
             </div>
             <div class="auth-title">Авторизация</div>
