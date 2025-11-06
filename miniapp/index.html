@@ -2119,12 +2119,21 @@
                 chartWrapper.style.overflow = 'hidden';
             }
             
-            // Удаляем все метки из section, которые могут остаться от предыдущего графика
-            if (section) {
-                const allLabels = section.querySelectorAll('.traffic-chart-labels:not(.traffic-details-loading .traffic-chart-labels)');
+            // Удаляем все метки из wrapper/chart, которые могут остаться от предыдущего графика
+            if (chartWrapper) {
+                const allLabels = chartWrapper.querySelectorAll('.traffic-chart-labels');
                 allLabels.forEach(label => {
-                    // Проверяем, что это не метки из скелетона
-                    if (!label.closest('.traffic-chart-skeleton')) {
+                    label.remove();
+                });
+            }
+            
+            // Также удаляем метки, которые могут быть напрямую в section (на всякий случай)
+            if (section) {
+                const allLabelsInSection = section.querySelectorAll('.traffic-chart-labels');
+                allLabelsInSection.forEach(label => {
+                    // Проверяем, что это не метки из скелетона внутри loading
+                    const loadingParent = label.closest('.traffic-details-loading');
+                    if (!loadingParent) {
                         label.remove();
                     }
                 });
