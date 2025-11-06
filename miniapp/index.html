@@ -712,7 +712,32 @@
             opacity: 0;
             z-index: -1;
             pointer-events: none;
-            transition: opacity 0.5s ease-in-out;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .traffic-circle.warning::before {
+            background: conic-gradient(
+                rgba(255, 149, 0, 0.5) 0deg,
+                rgba(255, 149, 0, 0.5) calc(var(--progress-angle, 0deg) - 5deg),
+                rgba(255, 149, 0, 0.8) var(--progress-angle, 0deg),
+                transparent calc(var(--progress-angle, 0deg) + 5deg),
+                transparent 360deg
+            );
+        }
+
+        .traffic-circle.danger::before {
+            background: conic-gradient(
+                rgba(255, 59, 48, 0.5) 0deg,
+                rgba(255, 59, 48, 0.5) calc(var(--progress-angle, 0deg) - 5deg),
+                rgba(255, 59, 48, 0.8) var(--progress-angle, 0deg),
+                transparent calc(var(--progress-angle, 0deg) + 5deg),
+                transparent 360deg
+            );
+        }
+
+        .traffic-circle.animate::before {
+            opacity: 0.3;
+            animation: liquidPulse 3s ease-in-out infinite;
         }
 
         .traffic-circle.warning::before {
@@ -760,35 +785,6 @@
             );
         }
 
-        .traffic-circle.warning::before {
-            background: conic-gradient(
-                rgba(255, 149, 0, 0.5) 0deg,
-                rgba(255, 149, 0, 0.5) calc(var(--progress-angle, 0deg) - 5deg),
-                rgba(255, 149, 0, 0.8) var(--progress-angle, 0deg),
-                transparent calc(var(--progress-angle, 0deg) + 5deg),
-                transparent 360deg
-            );
-        }
-
-        @keyframes fillProgressWarning {
-            0% {
-                background: conic-gradient(
-                    #ff9500 0deg,
-                    #ff9500 0deg,
-                    #e5e5ea 0deg,
-                    #e5e5ea 360deg
-                );
-            }
-            100% {
-                background: conic-gradient(
-                    #ff9500 0deg,
-                    #ff9500 var(--progress-angle, 0deg),
-                    #e5e5ea var(--progress-angle, 0deg),
-                    #e5e5ea 360deg
-                );
-            }
-        }
-
         .traffic-circle.danger {
             background: conic-gradient(
                 #ff3b30 0deg,
@@ -796,35 +792,6 @@
                 #e5e5ea var(--progress-angle, 0deg),
                 #e5e5ea 360deg
             );
-        }
-
-        .traffic-circle.danger::before {
-            background: conic-gradient(
-                rgba(255, 59, 48, 0.5) 0deg,
-                rgba(255, 59, 48, 0.5) calc(var(--progress-angle, 0deg) - 5deg),
-                rgba(255, 59, 48, 0.8) var(--progress-angle, 0deg),
-                transparent calc(var(--progress-angle, 0deg) + 5deg),
-                transparent 360deg
-            );
-        }
-
-        @keyframes fillProgressDanger {
-            0% {
-                background: conic-gradient(
-                    #ff3b30 0deg,
-                    #ff3b30 0deg,
-                    #e5e5ea 0deg,
-                    #e5e5ea 360deg
-                );
-            }
-            100% {
-                background: conic-gradient(
-                    #ff3b30 0deg,
-                    #ff3b30 var(--progress-angle, 0deg),
-                    #e5e5ea var(--progress-angle, 0deg),
-                    #e5e5ea 360deg
-                );
-            }
         }
 
         .traffic-circle-inner {
@@ -1491,8 +1458,8 @@
                 
                 element.style.setProperty('--progress-angle', currentAngle + 'deg');
                 
-                // Показываем эффект волны после 80% заполнения
-                if (progress >= 0.8 && !element.classList.contains('animate')) {
+                // Показываем эффект волны после 70% заполнения
+                if (progress >= 0.7 && !element.classList.contains('animate')) {
                     element.classList.add('animate');
                 }
                 
@@ -1886,7 +1853,7 @@
                 const trafficCircle = document.querySelector('.traffic-circle');
                 if (trafficCircle) {
                     const targetAngle = parseFloat(trafficCircle.getAttribute('data-target-angle') || '0');
-                    animateProgressCircle(trafficCircle, 0, targetAngle, 2500);
+                    animateProgressCircle(trafficCircle, 0, targetAngle, 1500);
                 }
             }, 100);
             
