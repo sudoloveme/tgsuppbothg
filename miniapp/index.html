@@ -271,6 +271,45 @@
             font-weight: 600;
             color: #000000;
             text-align: right;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.6;
+                transform: scale(1.2);
+            }
+        }
+
+        .status-indicator.active {
+            background-color: #34C759;
+        }
+
+        .status-indicator.expired {
+            background-color: #FF3B30;
+        }
+
+        .status-indicator.limited {
+            background-color: #FF9500;
+        }
+
+        .status-indicator.disabled {
+            background-color: #8E8E93;
         }
 
         .renew-button {
@@ -1310,6 +1349,14 @@
             return 'Неизвестно';
         }
 
+        function getStatusIndicatorClass(status) {
+            if (status === 'ACTIVE') return 'active';
+            if (status === 'EXPIRED') return 'expired';
+            if (status === 'LIMITED') return 'limited';
+            if (status === 'DISABLED') return 'disabled';
+            return 'disabled';
+        }
+
         // Отображение данных подписки
         function displaySubscriptionData(data) {
             const content = document.getElementById('content');
@@ -1417,7 +1464,10 @@
                     </div>
                     <div class="info-row">
                         <div class="info-label">Подписка</div>
-                        <div class="info-value">${statusText}</div>
+                        <div class="info-value">
+                            <span class="status-indicator ${getStatusIndicatorClass(status)}"></span>
+                            ${statusText}
+                        </div>
                     </div>
                     <div class="info-row">
                         <div class="info-label">Дата окончания</div>
