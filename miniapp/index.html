@@ -579,6 +579,18 @@
             position: relative;
             cursor: pointer;
             transition: opacity 0.2s;
+            height: 0;
+            animation: growBar 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            transform-origin: bottom;
+        }
+
+        @keyframes growBar {
+            from {
+                height: 0;
+            }
+            to {
+                height: var(--bar-height, 0%);
+            }
         }
 
         .traffic-chart-bar:hover {
@@ -2046,7 +2058,7 @@
                          data-chart-id="${chartId}"
                          data-index="${index}"
                          data-date="${dayData.date}"
-                         style="height: ${height}%"
+                         style="--bar-height: ${height}%; animation-delay: ${index * 0.05}s;"
                          onclick="showDayDetails(this)">
                     </div>
                 `;
