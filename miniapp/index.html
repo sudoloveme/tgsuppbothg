@@ -274,8 +274,8 @@
             color: #ffffff;
             border: none;
             padding: 16px;
-            border-radius: 12px;÷
-            font-size: 16px;
+            border-radius: 12px;
+            font-size: 20px;
             font-weight: 600;
             cursor: pointer;
             margin-top: 16px;
@@ -867,6 +867,29 @@
         .installation-app-store-btn:active {
             background: #f0f0f0;
             opacity: 0.8;
+        }
+
+        .installation-import-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #007AFF;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background 0.2s, opacity 0.2s;
+            cursor: pointer;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .installation-import-btn:active {
+            background: #0056CC;
+            opacity: 0.9;
         }
 
         /* Loading State / Splash Screen */
@@ -1496,11 +1519,11 @@
                         </div>
                         
                         <div class="installation-step">
-                            <div class="installation-step-title">2. Импортируйте подписку</div>
+                            <div class="installation-step-title">2. Импортируйте подписку в приложение</div>
                             <div class="installation-step-content">
                                 <div class="installation-links">
-                                    <a href="#" id="ios-import-link" class="installation-link" onclick="handleImportSubscription(event); return false;">
-                                        Импортировать подписку <span class="installation-link-arrow">→</span>
+                                    <a href="#" id="ios-import-link" class="installation-import-btn" onclick="handleImportSubscription(event); return false;">
+                                        Импортировать подписку
                                     </a>
                                 </div>
                             </div>
