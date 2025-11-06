@@ -1883,7 +1883,18 @@
             chartHTML += '</div>';
             labelsHTML += '</div>';
             
-            chartContainer.innerHTML = chartHTML + labelsHTML;
+            // Очищаем контейнер перед добавлением нового контента
+            chartContainer.innerHTML = '';
+            
+            // Создаем временный контейнер для вставки
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = chartHTML + labelsHTML;
+            
+            // Добавляем все элементы в контейнер
+            while (tempDiv.firstChild) {
+                chartContainer.appendChild(tempDiv.firstChild);
+            }
+            
             chartWrapper.style.display = 'block';
             
             // Прокручиваем к концу (к самым свежим данным)
@@ -2049,7 +2060,15 @@
                 if (chartContainer) {
                     chartContainer.innerHTML = '';
                 }
+                // Убеждаемся, что wrapper полностью скрыт
                 chartWrapper.style.display = 'none';
+                // Удаляем все дочерние элементы кроме .traffic-chart
+                const allChildren = Array.from(chartWrapper.children);
+                allChildren.forEach(child => {
+                    if (!child.classList.contains('traffic-chart')) {
+                        child.remove();
+                    }
+                });
             }
             
             // Показываем скелетон
