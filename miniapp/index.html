@@ -1481,13 +1481,13 @@
                             </div>
                             <div class="installation-text">Android</div>
                         </button>
-                        <button class="installation-btn" onclick="tg.showAlert('Функционал скоро появится')">
+                        <button class="installation-btn" onclick="toggleInstallationInstructions('macos')">
                             <div class="installation-icon">
                                 <img src="/api/icons/macos.svg" alt="macOS">
                             </div>
                             <div class="installation-text">MacOS (ARM)</div>
                         </button>
-                        <button class="installation-btn" onclick="tg.showAlert('Функционал скоро появится')">
+                        <button class="installation-btn" onclick="toggleInstallationInstructions('windows')">
                             <div class="installation-icon">
                                 <img src="/api/icons/windows.svg" alt="Windows">
                             </div>
@@ -1567,6 +1567,80 @@
                             <div class="installation-step-content">
                                 <div class="installation-links">
                                     <a href="#" id="android-import-link" class="installation-import-btn" onclick="handleImportSubscription(event); return false;">
+                                        Импортировать подписку
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="installation-step">
+                            <div class="installation-step-title">3. Запуск VPN</div>
+                            <div class="installation-step-content">
+                                На главной странице нажмите большую кнопку включения в центре для подключения к VPN. Если нужно, выберите другой сервер, нажав на него в списке внизу.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Блок инструкций для macOS ARM -->
+                    <div class="installation-instructions" id="macos-instructions">
+                        <div class="installation-instructions-header">
+                            <div class="installation-instructions-title">macOS (ARM)</div>
+                            <button class="installation-instructions-hide" onclick="toggleInstallationInstructions('macos')">Скрыть</button>
+                        </div>
+                        
+                        <div class="installation-step">
+                            <div class="installation-step-title">1. Скачайте и установите приложение Happ</div>
+                            <div class="installation-step-content">
+                                <div class="installation-links">
+                                    <a href="#" class="installation-app-store-btn" onclick="tg.showAlert('Функционал скоро появится'); return false;">
+                                        Скачать для macOS (ARM)
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="installation-step">
+                            <div class="installation-step-title">2. Импортируйте подписку в приложение</div>
+                            <div class="installation-step-content">
+                                <div class="installation-links">
+                                    <a href="#" id="macos-import-link" class="installation-import-btn" onclick="handleImportSubscription(event); return false;">
+                                        Импортировать подписку
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="installation-step">
+                            <div class="installation-step-title">3. Запуск VPN</div>
+                            <div class="installation-step-content">
+                                На главной странице нажмите большую кнопку включения в центре для подключения к VPN. Если нужно, выберите другой сервер, нажав на него в списке внизу.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Блок инструкций для Windows -->
+                    <div class="installation-instructions" id="windows-instructions">
+                        <div class="installation-instructions-header">
+                            <div class="installation-instructions-title">Windows</div>
+                            <button class="installation-instructions-hide" onclick="toggleInstallationInstructions('windows')">Скрыть</button>
+                        </div>
+                        
+                        <div class="installation-step">
+                            <div class="installation-step-title">1. Скачайте и установите приложение Happ</div>
+                            <div class="installation-step-content">
+                                <div class="installation-links">
+                                    <a href="#" class="installation-app-store-btn" onclick="tg.showAlert('Функционал скоро появится'); return false;">
+                                        Скачать для Windows
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="installation-step">
+                            <div class="installation-step-title">2. Импортируйте подписку в приложение</div>
+                            <div class="installation-step-content">
+                                <div class="installation-links">
+                                    <a href="#" id="windows-import-link" class="installation-import-btn" onclick="handleImportSubscription(event); return false;">
                                         Импортировать подписку
                                     </a>
                                 </div>
@@ -2127,8 +2201,30 @@
             return false;
         }
 
+        // Проверка, является ли устройство мобильным
+        function isMobileDevice() {
+            if (window.tg && window.tg.platform) {
+                return window.tg.platform === 'ios' || window.tg.platform === 'android';
+            }
+            // Fallback: проверка через user agent
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            return /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+        }
+
         // Переключение инструкций по установке
         function toggleInstallationInstructions(platform) {
+            // Проверка для macOS и Windows - требуют десктопную версию
+            if (platform === 'macos' || platform === 'windows') {
+                if (isMobileDevice()) {
+                    if (window.tg && window.tg.showAlert) {
+                        window.tg.showAlert('Для установки на macOS или Windows, пожалуйста, откройте Telegram на десктопной версии (Windows, macOS или Linux).');
+                    } else {
+                        alert('Для установки на macOS или Windows, пожалуйста, откройте Telegram на десктопной версии (Windows, macOS или Linux).');
+                    }
+                    return;
+                }
+            }
+            
             const installationCard = document.querySelector('.installation-card');
             if (!installationCard) return;
             
