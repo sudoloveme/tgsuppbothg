@@ -435,6 +435,11 @@ def create_app() -> web.Application:
                 'gmail.com',
                 'yandex.ru',
                 'yandex.com',
+                'yandex.kz',
+                'bk.ru',
+                'vk.com',
+                'inbox.ru',
+                'list.ru',
                 'mail.ru',
                 'yahoo.com',
                 'outlook.com',
@@ -449,7 +454,7 @@ def create_app() -> web.Application:
             email_domain = email.split('@')[1].lower() if '@' in email else ''
             if email_domain not in allowed_domains:
                 return web.json_response(
-                    {"error": "Разрешены только популярные почтовые сервисы (Gmail, Yandex, Mail.ru, Yahoo, Outlook и др.) или корпоративные домены heavengate.net и adacigroup.kz"},
+                    {"error": "Разрешены только популярные почтовые сервисы (Gmail, Yandex, Mail.ru, Yahoo, Outlook и др.)"},
                     status=400,
                     headers={'Access-Control-Allow-Origin': '*'}
                 )

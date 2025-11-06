@@ -294,6 +294,11 @@
                 'gmail.com',
                 'yandex.ru',
                 'yandex.com',
+                'yandex.kz',
+                'bk.ru',
+                'vk.com',
+                'inbox.ru',
+                'list.ru',
                 'mail.ru',
                 'yahoo.com',
                 'outlook.com',
@@ -307,7 +312,7 @@
             
             const emailDomain = email.split('@')[1]?.toLowerCase() || '';
             if (!allowedDomains.includes(emailDomain)) {
-                tg.showAlert('Разрешены только популярные почтовые сервисы (Gmail, Yandex, Mail.ru, Yahoo, Outlook и др.) или корпоративные домены heavengate.net и adacigroup.kz');
+                tg.showAlert('Разрешены только популярные почтовые сервисы (Gmail, Yandex, Mail.ru, Yahoo, Outlook и др.)');
                 return;
             }
             
