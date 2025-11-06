@@ -2105,11 +2105,29 @@
                     // Полностью очищаем контейнер, включая все метки
                     chartContainer.innerHTML = '';
                 }
+                // Удаляем все дочерние элементы wrapper кроме .traffic-chart
+                const wrapperChildren = Array.from(chartWrapper.children);
+                wrapperChildren.forEach(child => {
+                    if (!child.classList.contains('traffic-chart')) {
+                        child.remove();
+                    }
+                });
                 // Убеждаемся, что wrapper полностью скрыт и не занимает место
                 chartWrapper.style.display = 'none';
                 chartWrapper.style.visibility = 'hidden';
                 chartWrapper.style.height = '0';
                 chartWrapper.style.overflow = 'hidden';
+            }
+            
+            // Удаляем все метки из section, которые могут остаться от предыдущего графика
+            if (section) {
+                const allLabels = section.querySelectorAll('.traffic-chart-labels:not(.traffic-details-loading .traffic-chart-labels)');
+                allLabels.forEach(label => {
+                    // Проверяем, что это не метки из скелетона
+                    if (!label.closest('.traffic-chart-skeleton')) {
+                        label.remove();
+                    }
+                });
             }
             
             // Показываем простой спиннер при смене даты (не скелетон)
