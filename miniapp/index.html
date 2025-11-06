@@ -1470,7 +1470,8 @@
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({}));
                     if (response.status === 404) {
-                        showError(errorData.error || 'Ваш аккаунт не привязан к системе. Обратитесь в поддержку и попросите администратора привязать ваш email через команду /linkmail.');
+                        // Показываем экран авторизации если пользователь не найден
+                        showAuthScreen();
                     } else {
                         throw new Error(`HTTP ${response.status}: ${errorData.error || 'Unknown error'}`);
                     }
@@ -2058,6 +2059,71 @@
             if (loadingScreen) {
                 loadingScreen.style.display = 'none';
             }
+        }
+
+        // Отображение экрана авторизации
+        function showAuthScreen() {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div class="auth-screen">
+                    <div class="auth-card">
+                        <div class="auth-logo">
+                            <div class="auth-logo-icon">
+                                <img src="/api/logo.svg" alt="Logo">
+                            </div>
+                            <div class="auth-logo-text">
+                                <span class="auth-logo-text-main">heavengate</span>
+                                <span class="auth-logo-text-sub">vpn</span>
+                            </div>
+                        </div>
+                        <div class="auth-title">Авторизация</div>
+                        <label class="auth-label" for="authEmail">Введите ваш Email</label>
+                        <input 
+                            type="email" 
+                            id="authEmail" 
+                            class="auth-input" 
+                            placeholder="example@gmail.com"
+                            autocomplete="email"
+                        >
+                        <button class="auth-button" onclick="handleAuth()">
+                            Авторизоваться
+                        </button>
+                        <div class="auth-agreement">
+                            Авторизовываясь, вы соглашаетесь с нашей 
+                            <a href="#" class="auth-agreement-link" onclick="event.preventDefault(); tg.showAlert('Политика конфиденциальности будет добавлена позже');">Политикой конфиденциальности</a> 
+                            и 
+                            <a href="#" class="auth-agreement-link" onclick="event.preventDefault(); tg.showAlert('Пользовательское соглашение будет добавлено позже');">Пользовательским соглашением</a>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Скрываем экран загрузки
+            const loadingScreen = document.getElementById('loadingScreen');
+            if (loadingScreen) {
+                loadingScreen.style.display = 'none';
+            }
+        }
+
+        // Обработка авторизации (заглушка)
+        function handleAuth() {
+            const emailInput = document.getElementById('authEmail');
+            const email = emailInput?.value.trim();
+            
+            if (!email) {
+                tg.showAlert('Пожалуйста, введите email');
+                return;
+            }
+            
+            // Валидация email
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                tg.showAlert('Пожалуйста, введите корректный email адрес');
+                return;
+            }
+            
+            // Заглушка - показываем сообщение
+            tg.showAlert('Функционал авторизации будет реализован позже. Введенный email: ' + email);
         }
 
         // Отображение ошибки
