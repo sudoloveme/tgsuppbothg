@@ -1530,7 +1530,12 @@
             const wrapper = document.getElementById('trafficCircleWrapper');
             if (!container || !wrapper) return;
             
+            // Ищем индикаторы внутри контейнера
             const indicators = container.querySelectorAll('.traffic-circle-indicator');
+            if (!indicators || indicators.length === 0) {
+                console.warn('Индикаторы не найдены');
+                return;
+            }
             
             let startX = 0;
             let currentX = 0;
@@ -1538,6 +1543,8 @@
             let currentSlide = 0;
             
             function updateSlide(slideIndex) {
+                if (slideIndex < 0 || slideIndex > 1) return;
+                
                 currentSlide = slideIndex;
                 wrapper.style.transform = `translateX(-${slideIndex * 50}%)`;
                 
@@ -1551,23 +1558,24 @@
                 });
             }
             
-            // Инициализация начального состояния
+            // Инициализация начального состояния - устанавливаем первый слайд активным
             updateSlide(0);
             
             // Обработка начала касания
             container.addEventListener('touchstart', (e) => {
                 startX = e.touches[0].clientX;
                 isDragging = true;
-            });
+            }, { passive: true });
             
             // Обработка движения
             container.addEventListener('touchmove', (e) => {
                 if (!isDragging) return;
+                e.preventDefault();
                 currentX = e.touches[0].clientX;
                 const diff = startX - currentX;
                 const translateX = -currentSlide * 50 + (diff / container.offsetWidth) * 50;
                 wrapper.style.transform = `translateX(${Math.max(-100, Math.min(0, translateX))}%)`;
-            });
+            }, { passive: false });
             
             // Обработка окончания касания
             container.addEventListener('touchend', () => {
@@ -1588,7 +1596,7 @@
                 } else {
                     updateSlide(currentSlide);
                 }
-            });
+            }, { passive: true });
             
             // Клик по индикаторам
             indicators.forEach((indicator, index) => {
