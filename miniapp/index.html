@@ -691,6 +691,56 @@
                 #e5e5ea var(--progress-angle, 0deg),
                 #e5e5ea 360deg
             );
+            transition: background 0.1s linear;
+            animation: fillProgress 2s ease-out forwards;
+        }
+
+        .traffic-circle::before {
+            content: '';
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: conic-gradient(
+                rgba(0, 122, 255, 0.3) 0deg,
+                rgba(0, 122, 255, 0.3) var(--progress-angle, 0deg),
+                transparent var(--progress-angle, 0deg),
+                transparent 360deg
+            );
+            filter: blur(8px);
+            opacity: 0;
+            animation: liquidWave 3s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes fillProgress {
+            0% {
+                background: conic-gradient(
+                    #007AFF 0deg,
+                    #007AFF 0deg,
+                    #e5e5ea 0deg,
+                    #e5e5ea 360deg
+                );
+            }
+            100% {
+                background: conic-gradient(
+                    #007AFF 0deg,
+                    #007AFF var(--progress-angle, 0deg),
+                    #e5e5ea var(--progress-angle, 0deg),
+                    #e5e5ea 360deg
+                );
+            }
+        }
+
+        @keyframes liquidWave {
+            0%, 100% {
+                opacity: 0;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.4;
+                transform: scale(1.05);
+            }
         }
 
         .traffic-circle.warning {
@@ -700,6 +750,35 @@
                 #e5e5ea var(--progress-angle, 0deg),
                 #e5e5ea 360deg
             );
+            animation: fillProgressWarning 2s ease-out forwards;
+        }
+
+        .traffic-circle.warning::before {
+            background: conic-gradient(
+                rgba(255, 149, 0, 0.3) 0deg,
+                rgba(255, 149, 0, 0.3) var(--progress-angle, 0deg),
+                transparent var(--progress-angle, 0deg),
+                transparent 360deg
+            );
+        }
+
+        @keyframes fillProgressWarning {
+            0% {
+                background: conic-gradient(
+                    #ff9500 0deg,
+                    #ff9500 0deg,
+                    #e5e5ea 0deg,
+                    #e5e5ea 360deg
+                );
+            }
+            100% {
+                background: conic-gradient(
+                    #ff9500 0deg,
+                    #ff9500 var(--progress-angle, 0deg),
+                    #e5e5ea var(--progress-angle, 0deg),
+                    #e5e5ea 360deg
+                );
+            }
         }
 
         .traffic-circle.danger {
@@ -709,6 +788,35 @@
                 #e5e5ea var(--progress-angle, 0deg),
                 #e5e5ea 360deg
             );
+            animation: fillProgressDanger 2s ease-out forwards;
+        }
+
+        .traffic-circle.danger::before {
+            background: conic-gradient(
+                rgba(255, 59, 48, 0.3) 0deg,
+                rgba(255, 59, 48, 0.3) var(--progress-angle, 0deg),
+                transparent var(--progress-angle, 0deg),
+                transparent 360deg
+            );
+        }
+
+        @keyframes fillProgressDanger {
+            0% {
+                background: conic-gradient(
+                    #ff3b30 0deg,
+                    #ff3b30 0deg,
+                    #e5e5ea 0deg,
+                    #e5e5ea 360deg
+                );
+            }
+            100% {
+                background: conic-gradient(
+                    #ff3b30 0deg,
+                    #ff3b30 var(--progress-angle, 0deg),
+                    #e5e5ea var(--progress-angle, 0deg),
+                    #e5e5ea 360deg
+                );
+            }
         }
 
         .traffic-circle-inner {
