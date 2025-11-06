@@ -1482,7 +1482,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="traffic-chart-wrapper" style="display: none;">
+                            <div class="traffic-chart-wrapper" style="display: none; visibility: hidden; height: 0; overflow: hidden;">
                                 <div class="traffic-chart"></div>
                             </div>
                             <div class="traffic-day-details"></div>
@@ -1928,7 +1928,11 @@
                 chartContainer.appendChild(tempDiv.firstChild);
             }
             
+            // Восстанавливаем нормальные стили для wrapper
             chartWrapper.style.display = 'block';
+            chartWrapper.style.visibility = 'visible';
+            chartWrapper.style.height = 'auto';
+            chartWrapper.style.overflow = 'auto';
             
             // Прокручиваем к концу (к самым свежим данным)
             setTimeout(() => {
@@ -2101,8 +2105,11 @@
                     // Полностью очищаем контейнер, включая все метки
                     chartContainer.innerHTML = '';
                 }
-                // Убеждаемся, что wrapper полностью скрыт
+                // Убеждаемся, что wrapper полностью скрыт и не занимает место
                 chartWrapper.style.display = 'none';
+                chartWrapper.style.visibility = 'hidden';
+                chartWrapper.style.height = '0';
+                chartWrapper.style.overflow = 'hidden';
             }
             
             // Показываем простой спиннер при смене даты (не скелетон)
@@ -2181,7 +2188,11 @@
                 if (chartContainer) {
                     chartContainer.innerHTML = '';
                 }
+                // Убеждаемся, что wrapper полностью скрыт
                 chartWrapper.style.display = 'none';
+                chartWrapper.style.visibility = 'hidden';
+                chartWrapper.style.height = '0';
+                chartWrapper.style.overflow = 'hidden';
             }
             
             if (loadingEl) loadingEl.style.display = 'flex';
