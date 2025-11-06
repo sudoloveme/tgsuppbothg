@@ -1474,7 +1474,7 @@
                             </div>
                             <div class="installation-text">iPhone и iPad</div>
                         </button>
-                        <button class="installation-btn" onclick="tg.showAlert('Функционал скоро появится')">
+                        <button class="installation-btn" onclick="toggleInstallationInstructions('android')">
                             <div class="installation-icon">
                                 <img src="/api/icons/android.svg" alt="Android">
                             </div>
@@ -1523,6 +1523,49 @@
                             <div class="installation-step-content">
                                 <div class="installation-links">
                                     <a href="#" id="ios-import-link" class="installation-import-btn" onclick="handleImportSubscription(event); return false;">
+                                        Импортировать подписку
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="installation-step">
+                            <div class="installation-step-title">3. Запуск VPN</div>
+                            <div class="installation-step-content">
+                                На главной странице нажмите большую кнопку включения в центре для подключения к VPN. Если нужно, выберите другой сервер, нажав на него в списке внизу.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Блок инструкций для Android -->
+                    <div class="installation-instructions" id="android-instructions">
+                        <div class="installation-instructions-header">
+                            <div class="installation-instructions-title">Android</div>
+                            <button class="installation-instructions-hide" onclick="toggleInstallationInstructions('android')">Скрыть</button>
+                        </div>
+                        
+                        <div class="installation-step">
+                            <div class="installation-step-title">1. Скачайте и установите приложение Happ</div>
+                            <div class="installation-step-content">
+                                <div class="installation-links">
+                                    <a href="https://play.google.com/store/apps/details?id=com.happproxy" class="installation-app-store-btn" target="_blank" onclick="handleAppStoreLink(event, 'https://play.google.com/store/apps/details?id=com.happproxy'); return false;">
+                                        Скачать из Google Play
+                                    </a>
+                                    <div style="margin-top: 12px; margin-bottom: 8px; font-size: 14px; color: #000000;">
+                                        Если нужно, можете скачать .apk файл по кнопке ниже:
+                                    </div>
+                                    <a href="https://github.com/Happ-proxy/happ-android/releases/latest/download/Happ.apk" class="installation-app-store-btn" target="_blank" onclick="handleAppStoreLink(event, 'https://github.com/Happ-proxy/happ-android/releases/latest/download/Happ.apk'); return false;">
+                                        Скачать .apk
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="installation-step">
+                            <div class="installation-step-title">2. Импортируйте подписку в приложение</div>
+                            <div class="installation-step-content">
+                                <div class="installation-links">
+                                    <a href="#" id="android-import-link" class="installation-import-btn" onclick="handleImportSubscription(event); return false;">
                                         Импортировать подписку
                                     </a>
                                 </div>
@@ -2069,7 +2112,7 @@
                 return false;
             }
             
-            const importLink = `https://captiveapple.heavengateway.com/${shortUuid}`;
+            const importLink = `https://captive.heavengateway.com/${shortUuid}`;
             
             // Открываем ссылку во внешнем браузере
             if (window.tg && window.tg.openLink) {
