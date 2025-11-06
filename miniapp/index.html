@@ -1809,7 +1809,34 @@
             const section = chartWrapper.closest('.traffic-details-section');
             if (section) {
                 const loadingEl = section.querySelector('.traffic-details-loading');
-                if (loadingEl) loadingEl.style.display = 'none';
+                if (loadingEl) {
+                    loadingEl.style.display = 'none';
+                    // Восстанавливаем оригинальный HTML скелетона на случай если он был изменен при ошибке
+                    if (!loadingEl.querySelector('.traffic-chart-skeleton')) {
+                        loadingEl.innerHTML = `
+                            <div class="traffic-chart-skeleton">
+                                <div class="traffic-chart-skeleton-container">
+                                    <div class="traffic-chart-skeleton-bar" style="height: 60%;"></div>
+                                    <div class="traffic-chart-skeleton-bar" style="height: 80%;"></div>
+                                    <div class="traffic-chart-skeleton-bar" style="height: 45%;"></div>
+                                    <div class="traffic-chart-skeleton-bar" style="height: 90%;"></div>
+                                    <div class="traffic-chart-skeleton-bar" style="height: 70%;"></div>
+                                    <div class="traffic-chart-skeleton-bar" style="height: 55%;"></div>
+                                    <div class="traffic-chart-skeleton-bar" style="height: 85%;"></div>
+                                </div>
+                                <div class="traffic-chart-labels" style="justify-content: space-between; padding: 0 4px;">
+                                    <div class="traffic-chart-skeleton-label"></div>
+                                    <div class="traffic-chart-skeleton-label"></div>
+                                    <div class="traffic-chart-skeleton-label"></div>
+                                    <div class="traffic-chart-skeleton-label"></div>
+                                    <div class="traffic-chart-skeleton-label"></div>
+                                    <div class="traffic-chart-skeleton-label"></div>
+                                    <div class="traffic-chart-skeleton-label"></div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
             }
             
             if (!groupedData || groupedData.length === 0) {
