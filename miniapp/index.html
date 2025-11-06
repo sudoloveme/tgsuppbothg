@@ -1474,6 +1474,39 @@
             return 'disabled';
         }
 
+        // Анимация заполнения круговой диаграммы
+        function animateProgressCircle(element, startAngle, targetAngle, duration) {
+            const startTime = performance.now();
+            const easing = (t) => {
+                // cubic-bezier(0.4, 0, 0.2, 1) easing
+                return t < 0.5 
+                    ? 4 * t * t * t 
+                    : 1 - Math.pow(-2 * t + 2, 3) / 2;
+            };
+
+            function animate(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easedProgress = easing(progress);
+                const currentAngle = startAngle + (targetAngle - startAngle) * easedProgress;
+                
+                element.style.setProperty('--progress-angle', currentAngle + 'deg');
+                
+                // Показываем эффект волны после 80% заполнения
+                if (progress >= 0.8 && !element.classList.contains('animate')) {
+                    element.classList.add('animate');
+                }
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    element.classList.add('animate');
+                }
+            }
+            
+            requestAnimationFrame(animate);
+        }
+
         // Отображение данных подписки
         function displaySubscriptionData(data) {
             const content = document.getElementById('content');
