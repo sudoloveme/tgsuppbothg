@@ -46,6 +46,33 @@
             padding: 40px 32px;
             width: 100%;
             box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+        }
+
+        .auth-card.fade-out {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+
+        .auth-card.fade-in {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .auth-card-content {
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+        }
+
+        .auth-card-content.slide-out {
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+
+        .auth-card-content.slide-in {
+            opacity: 1;
+            transform: translateX(0);
         }
 
         .auth-title {
@@ -128,24 +155,26 @@
 </head>
 <body>
     <div class="auth-screen">
-        <div class="auth-card">
-            <div class="auth-title">Авторизация</div>
-            <label class="auth-label" for="authEmail">Введите ваш Email</label>
-            <input 
-                type="email" 
-                id="authEmail" 
-                class="auth-input" 
-                placeholder="example@gmail.com"
-                autocomplete="email"
-            >
-            <button class="auth-button" onclick="handleAuth()">
-                Авторизоваться
-            </button>
-            <div class="auth-agreement">
-                Авторизовываясь, вы соглашаетесь с нашей 
-                <a href="#" class="auth-agreement-link" onclick="event.preventDefault(); tg.showAlert('Политика конфиденциальности будет добавлена позже');">Политикой конфиденциальности</a> 
-                и 
-                <a href="#" class="auth-agreement-link" onclick="event.preventDefault(); tg.showAlert('Пользовательское соглашение будет добавлено позже');">Пользовательским соглашением</a>
+        <div class="auth-card fade-in">
+            <div class="auth-card-content">
+                <div class="auth-title">Авторизация</div>
+                <label class="auth-label" for="authEmail">Введите ваш Email</label>
+                <input 
+                    type="email" 
+                    id="authEmail" 
+                    class="auth-input" 
+                    placeholder="example@gmail.com"
+                    autocomplete="email"
+                >
+                <button class="auth-button" onclick="handleAuth()">
+                    Авторизоваться
+                </button>
+                <div class="auth-agreement">
+                    Авторизовываясь, вы соглашаетесь с нашей 
+                    <a href="#" class="auth-agreement-link" onclick="event.preventDefault(); tg.showAlert('Политика конфиденциальности будет добавлена позже');">Политикой конфиденциальности</a> 
+                    и 
+                    <a href="#" class="auth-agreement-link" onclick="event.preventDefault(); tg.showAlert('Пользовательское соглашение будет добавлено позже');">Пользовательским соглашением</a>
+                </div>
             </div>
         </div>
     </div>
@@ -254,32 +283,63 @@
             }
         }
 
-        // Показать форму ввода OTP
+        // Показать форму ввода OTP с плавной анимацией
         function showOtpForm(email, telegramId) {
-            const content = document.querySelector('.auth-card');
-            content.innerHTML = `
-                <div class="auth-title">Введите код</div>
-                <p style="font-size: 14px; color: #8e8e93; margin-bottom: 24px; text-align: center;">
-                    Мы отправили код подтверждения на<br><strong>${email}</strong>
-                </p>
-                <label class="auth-label" for="authOtp">Код подтверждения</label>
-                <input 
-                    type="text" 
-                    id="authOtp" 
-                    class="auth-input" 
-                    placeholder="000000"
-                    maxlength="6"
-                    autocomplete="one-time-code"
-                    inputmode="numeric"
-                    pattern="[0-9]*"
-                >
-                <button class="auth-button" onclick="handleVerifyOtp('${email}', ${telegramId})">
-                    Подтвердить
-                </button>
-                <button class="auth-button" style="background: #8e8e93; margin-top: 8px;" onclick="location.reload()">
-                    Отменить
-                </button>
-            `;
+            const card = document.querySelector('.auth-card');
+            const currentContent = card.querySelector('.auth-card-content') || card;
+            
+            // Добавляем класс для анимации исчезновения
+            if (currentContent.classList) {
+                currentContent.classList.add('slide-out');
+            } else {
+                card.classList.add('fade-out');
+            }
+            
+            // После завершения анимации исчезновения, меняем контент и показываем новый
+            setTimeout(() => {
+                // Создаем новый контент
+                const newContent = document.createElement('div');
+                newContent.className = 'auth-card-content slide-in';
+                newContent.innerHTML = `
+                    <div class="auth-title">Подтверждение</div>
+                    <p style="font-size: 14px; color: #8e8e93; margin-bottom: 24px; text-align: center;">
+                        Мы отправили код подтверждения на<br><strong>${email}</strong>
+                    </p>
+                    <label class="auth-label" for="authOtp">Код подтверждения</label>
+                    <input 
+                        type="text" 
+                        id="authOtp" 
+                        class="auth-input" 
+                        placeholder="000000"
+                        maxlength="6"
+                        autocomplete="one-time-code"
+                        inputmode="numeric"
+                        pattern="[0-9]*"
+                    >
+                    <button class="auth-button" onclick="handleVerifyOtp('${email}', ${telegramId})">
+                        Подтвердить
+                    </button>
+                    <button class="auth-button" style="background: #8e8e93; margin-top: 8px;" onclick="location.reload()">
+                        Отменить
+                    </button>
+                `;
+                
+                // Заменяем содержимое карточки
+                card.innerHTML = '';
+                card.appendChild(newContent);
+                
+                // Убираем класс fade-out и добавляем fade-in для плавного появления
+                card.classList.remove('fade-out');
+                card.classList.add('fade-in');
+                
+                // Фокус на поле ввода OTP
+                setTimeout(() => {
+                    const otpInput = document.getElementById('authOtp');
+                    if (otpInput) {
+                        otpInput.focus();
+                    }
+                }, 100);
+            }, 300); // Время анимации исчезновения
         }
 
         // Обработка проверки OTP
