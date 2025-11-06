@@ -1989,11 +1989,14 @@
             
             // Запускаем анимацию заполнения круговой диаграммы
             setTimeout(() => {
-                const trafficCircle = document.querySelector('.traffic-circle');
-                if (trafficCircle) {
-                    const targetAngle = parseFloat(trafficCircle.getAttribute('data-target-angle') || '0');
-                    animateProgressCircle(trafficCircle, 0, targetAngle, 1500);
-                }
+                const trafficCircles = document.querySelectorAll('.traffic-circle');
+                trafficCircles.forEach(circle => {
+                    const targetAngle = parseFloat(circle.getAttribute('data-target-angle') || '0');
+                    animateProgressCircle(circle, 0, targetAngle, 1500);
+                });
+                
+                // Инициализируем свайп для графиков
+                initTrafficCircleSwipe();
             }, 100);
             
             // Скрываем экран загрузки после отображения данных
