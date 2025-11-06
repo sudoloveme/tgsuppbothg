@@ -135,27 +135,39 @@
             cursor: not-allowed;
         }
 
-        .resend-button {
-            width: 100%;
-            background: transparent;
+        .resend-link {
             color: #007AFF;
-            border: 1px solid #007AFF;
-            padding: 12px;
-            border-radius: 12px;
             font-size: 14px;
-            font-weight: 500;
+            text-decoration: none;
             cursor: pointer;
-            transition: opacity 0.2s, background 0.2s;
+            display: inline-block;
             margin-top: 8px;
+            transition: opacity 0.2s;
         }
 
-        .resend-button:active:not(:disabled) {
-            background: rgba(0, 122, 255, 0.1);
+        .resend-link:active {
+            opacity: 0.7;
         }
 
-        .resend-button:disabled {
+        .resend-link:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .back-link {
+            color: #007AFF;
+            font-size: 14px;
+            text-decoration: none;
+            cursor: pointer;
+            display: block;
+            text-align: center;
+            margin-top: 16px;
+            transition: opacity 0.2s;
+        }
+
+        .back-link:active {
+            opacity: 0.7;
         }
 
         .auth-agreement {
@@ -329,30 +341,30 @@
                 const newContent = document.createElement('div');
                 newContent.className = 'auth-card-content slide-in';
                 newContent.innerHTML = `
-                    <div class="auth-title">Подтверждение</div>
-                    <p style="font-size: 14px; color: #8e8e93; margin-bottom: 24px; text-align: center;">
-                        Мы отправили код подтверждения на<br><strong>${email}</strong>
+                    <div class="auth-title">Подтверждение кода</div>
+                    <p style="font-size: 14px; color: #000000; margin-bottom: 24px; line-height: 1.5;">
+                        Мы отправили 6-ти значный код на<br><strong style="font-weight: 600;">${email}</strong>
                     </p>
                     <label class="auth-label" for="authOtp">Код подтверждения</label>
                     <input 
                         type="text" 
                         id="authOtp" 
                         class="auth-input" 
-                        placeholder="000000"
+                        placeholder="Введите код"
                         maxlength="6"
                         autocomplete="one-time-code"
                         inputmode="numeric"
                         pattern="[0-9]*"
                     >
-                    <button class="resend-button" id="resendButton" disabled onclick="handleResendOtp('${email}', ${telegramId})">
-                        Выслать повторно код (<span id="resendTimer">60</span>)
-                    </button>
+                    <a href="#" class="resend-link" id="resendLink" onclick="event.preventDefault(); handleResendOtp('${email}', ${telegramId}); return false;">
+                        Выслать код повторно (<span id="resendTimer">60</span>)
+                    </a>
                     <button class="auth-button" onclick="handleVerifyOtp('${email}', ${telegramId})">
                         Подтвердить
                     </button>
-                    <button class="auth-button" style="background: #8e8e93; margin-top: 8px;" onclick="location.reload()">
-                        Отменить
-                    </button>
+                    <a href="#" class="back-link" onclick="event.preventDefault(); location.reload(); return false;">
+                        Назад
+                    </a>
                 `;
                 
                 // Заменяем содержимое карточки
@@ -375,19 +387,23 @@
             }, 300); // Время анимации исчезновения
         }
 
-        // Таймер для кнопки повторной отправки
+        // Таймер для ссылки повторной отправки
         let resendTimerInterval = null;
         function startResendTimer(email, telegramId) {
             let secondsLeft = 60;
-            const resendButton = document.getElementById('resendButton');
+            const resendLink = document.getElementById('resendLink');
             const timerSpan = document.getElementById('resendTimer');
             
-            if (!resendButton || !timerSpan) return;
+            if (!resendLink || !timerSpan) return;
             
             // Очищаем предыдущий таймер если есть
             if (resendTimerInterval) {
                 clearInterval(resendTimerInterval);
             }
+            
+            // Делаем ссылку неактивной
+            resendLink.style.pointerEvents = 'none';
+            resendLink.style.opacity = '0.5';
             
             // Обновляем таймер каждую секунду
             resendTimerInterval = setInterval(() => {
@@ -399,9 +415,10 @@
                 if (secondsLeft <= 0) {
                     clearInterval(resendTimerInterval);
                     resendTimerInterval = null;
-                    if (resendButton) {
-                        resendButton.disabled = false;
-                        resendButton.innerHTML = 'Выслать повторно код';
+                    if (resendLink) {
+                        resendLink.style.pointerEvents = 'auto';
+                        resendLink.style.opacity = '1';
+                        resendLink.innerHTML = 'Выслать код повторно';
                     }
                 }
             }, 1000);
@@ -409,10 +426,11 @@
 
         // Обработка повторной отправки OTP
         async function handleResendOtp(email, telegramId) {
-            const resendButton = document.getElementById('resendButton');
-            if (resendButton) {
-                resendButton.disabled = true;
-                resendButton.textContent = 'Отправка...';
+            const resendLink = document.getElementById('resendLink');
+            if (resendLink) {
+                resendLink.style.pointerEvents = 'none';
+                resendLink.style.opacity = '0.5';
+                resendLink.textContent = 'Отправка...';
             }
             
             try {
@@ -436,17 +454,19 @@
                     startResendTimer(email, telegramId);
                 } else {
                     tg.showAlert(data.error || 'Ошибка отправки кода. Попробуйте позже.');
-                    if (resendButton) {
-                        resendButton.disabled = false;
-                        resendButton.innerHTML = 'Выслать повторно код';
+                    if (resendLink) {
+                        resendLink.style.pointerEvents = 'auto';
+                        resendLink.style.opacity = '1';
+                        resendLink.innerHTML = 'Выслать код повторно';
                     }
                 }
             } catch (error) {
                 console.error('Error resending OTP:', error);
                 tg.showAlert('Ошибка отправки кода. Попробуйте позже.');
-                if (resendButton) {
-                    resendButton.disabled = false;
-                    resendButton.innerHTML = 'Выслать повторно код';
+                if (resendLink) {
+                    resendLink.style.pointerEvents = 'auto';
+                    resendLink.style.opacity = '1';
+                    resendLink.innerHTML = 'Выслать код повторно';
                 }
             }
         }
