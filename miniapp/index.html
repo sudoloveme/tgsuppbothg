@@ -1914,8 +1914,9 @@
             // Восстанавливаем нормальные стили для wrapper
             chartWrapper.style.display = 'block';
             chartWrapper.style.visibility = 'visible';
-            chartWrapper.style.height = 'auto';
-            chartWrapper.style.overflow = 'auto';
+            chartWrapper.style.height = '250px';
+            chartWrapper.style.overflowX = 'auto';
+            chartWrapper.style.overflowY = 'hidden';
             
             // Прокручиваем к концу (к самым свежим данным)
             setTimeout(() => {
