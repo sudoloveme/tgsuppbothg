@@ -687,21 +687,13 @@
             position: relative;
             background: conic-gradient(
                 #007AFF 0deg,
-                #007AFF 0deg,
-                #e5e5ea 0deg,
-                #e5e5ea 360deg
-            );
-            transition: background 2.5s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow: visible;
-        }
-
-        .traffic-circle.animate {
-            background: conic-gradient(
-                #007AFF 0deg,
                 #007AFF var(--progress-angle, 0deg),
                 #e5e5ea var(--progress-angle, 0deg),
                 #e5e5ea 360deg
             );
+            overflow: visible;
+            --progress-angle: 0deg;
+            transition: --progress-angle 0.1s linear;
         }
 
         .traffic-circle::before {
@@ -710,15 +702,6 @@
             width: 140px;
             height: 140px;
             border-radius: 50%;
-            background: transparent;
-            filter: blur(6px);
-            opacity: 0;
-            transition: opacity 0.5s ease-in-out 2.5s, transform 0.3s ease-in-out;
-            z-index: -1;
-            pointer-events: none;
-        }
-
-        .traffic-circle.animate::before {
             background: conic-gradient(
                 rgba(0, 122, 255, 0.5) 0deg,
                 rgba(0, 122, 255, 0.5) calc(var(--progress-angle, 0deg) - 5deg),
@@ -726,11 +709,14 @@
                 transparent calc(var(--progress-angle, 0deg) + 5deg),
                 transparent 360deg
             );
-            opacity: 0.3;
-            animation: liquidPulse 3s ease-in-out infinite 3s;
+            filter: blur(6px);
+            opacity: 0;
+            z-index: -1;
+            pointer-events: none;
+            transition: opacity 0.5s ease-in-out;
         }
 
-        .traffic-circle.warning.animate::before {
+        .traffic-circle.warning::before {
             background: conic-gradient(
                 rgba(255, 149, 0, 0.5) 0deg,
                 rgba(255, 149, 0, 0.5) calc(var(--progress-angle, 0deg) - 5deg),
@@ -740,7 +726,7 @@
             );
         }
 
-        .traffic-circle.danger.animate::before {
+        .traffic-circle.danger::before {
             background: conic-gradient(
                 rgba(255, 59, 48, 0.5) 0deg,
                 rgba(255, 59, 48, 0.5) calc(var(--progress-angle, 0deg) - 5deg),
@@ -748,6 +734,11 @@
                 transparent calc(var(--progress-angle, 0deg) + 5deg),
                 transparent 360deg
             );
+        }
+
+        .traffic-circle.animate::before {
+            opacity: 0.3;
+            animation: liquidPulse 3s ease-in-out infinite;
         }
 
         @keyframes liquidPulse {
@@ -762,16 +753,6 @@
         }
 
         .traffic-circle.warning {
-            background: conic-gradient(
-                #ff9500 0deg,
-                #ff9500 0deg,
-                #e5e5ea 0deg,
-                #e5e5ea 360deg
-            );
-            transition: background 2.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .traffic-circle.warning.animate {
             background: conic-gradient(
                 #ff9500 0deg,
                 #ff9500 var(--progress-angle, 0deg),
@@ -810,16 +791,6 @@
         }
 
         .traffic-circle.danger {
-            background: conic-gradient(
-                #ff3b30 0deg,
-                #ff3b30 0deg,
-                #e5e5ea 0deg,
-                #e5e5ea 360deg
-            );
-            transition: background 2.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .traffic-circle.danger.animate {
             background: conic-gradient(
                 #ff3b30 0deg,
                 #ff3b30 var(--progress-angle, 0deg),
@@ -1638,7 +1609,7 @@
                             <button class="traffic-details-btn" onclick="toggleTrafficDetails()">Детализация</button>
                         </div>
                         <div class="traffic-circle-container">
-                            <div class="traffic-circle ${trafficCircleClass}" style="--progress-angle: ${trafficAngle}deg">
+                            <div class="traffic-circle ${trafficCircleClass}" style="--progress-angle: 0deg" data-target-angle="${trafficAngle}">
                                 <div class="traffic-circle-inner">
                                     <div class="traffic-amount">${usedTraffic}</div>
                                     <div class="traffic-label">из ${limitTraffic}</div>
@@ -1882,7 +1853,8 @@
             setTimeout(() => {
                 const trafficCircle = document.querySelector('.traffic-circle');
                 if (trafficCircle) {
-                    trafficCircle.classList.add('animate');
+                    const targetAngle = parseFloat(trafficCircle.getAttribute('data-target-angle') || '0');
+                    animateProgressCircle(trafficCircle, 0, targetAngle, 2500);
                 }
             }, 100);
             
