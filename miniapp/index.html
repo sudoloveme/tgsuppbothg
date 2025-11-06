@@ -846,6 +846,29 @@
             font-size: 12px;
         }
 
+        .installation-app-store-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #ffffff;
+            color: #007AFF;
+            border: 1px solid #007AFF;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background 0.2s, opacity 0.2s;
+            cursor: pointer;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .installation-app-store-btn:active {
+            background: #f0f0f0;
+            opacity: 0.8;
+        }
+
         /* Loading State / Splash Screen */
         .loading {
             display: flex;
@@ -1459,11 +1482,14 @@
                             <div class="installation-step-title">1. Скачайте и установите приложение Happ</div>
                             <div class="installation-step-content">
                                 <div class="installation-links">
-                                    <a href="#" class="installation-link" onclick="tg.showAlert('Функционал скоро появится'); return false;">
-                                        Открыть App Store <span class="installation-link-arrow">→</span>
+                                    <a href="https://apps.apple.com/kz/app/happ-proxy-utility/id6504287215" class="installation-app-store-btn" target="_blank" onclick="handleAppStoreLink(event, 'https://apps.apple.com/kz/app/happ-proxy-utility/id6504287215'); return false;">
+                                        Скачать из App Store
                                     </a>
-                                    <a href="#" class="installation-link" onclick="tg.showAlert('Функционал скоро появится'); return false;">
-                                        Открыть App Store Russia <span class="installation-link-arrow">→</span>
+                                    <div style="margin-top: 12px; margin-bottom: 8px; font-size: 14px; color: #000000;">
+                                        Если у вас российский App Store, вам нужно скачать приложение по кнопке ниже:
+                                    </div>
+                                    <a href="https://apps.apple.com/ru/app/happ-proxy-utility-plus/id6746188973" class="installation-app-store-btn" target="_blank" onclick="handleAppStoreLink(event, 'https://apps.apple.com/ru/app/happ-proxy-utility-plus/id6746188973'); return false;">
+                                        Скачать из App Store Russia
                                     </a>
                                 </div>
                             </div>
