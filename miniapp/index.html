@@ -1837,6 +1837,7 @@
                 if (loadingEl) {
                     loadingEl.style.display = 'none';
                     // Восстанавливаем оригинальный HTML скелетона для первого открытия
+                    // Только если там нет скелетона (т.е. был спиннер)
                     if (!loadingEl.querySelector('.traffic-chart-skeleton')) {
                         loadingEl.innerHTML = `
                             <div class="traffic-chart-skeleton">
@@ -1861,6 +1862,13 @@
                             </div>
                         `;
                     }
+                }
+                
+                // Очищаем детали дня при рендеринге нового графика
+                const dayDetails = section.querySelector('.traffic-day-details');
+                if (dayDetails) {
+                    dayDetails.classList.remove('active');
+                    dayDetails.innerHTML = '';
                 }
             }
             
@@ -2078,22 +2086,23 @@
             
             const loadingEl = section.querySelector('.traffic-details-loading');
             const chartWrapper = section.querySelector('.traffic-chart-wrapper');
+            const dayDetails = section.querySelector('.traffic-day-details');
+            
+            // Очищаем детали дня перед загрузкой новых данных
+            if (dayDetails) {
+                dayDetails.classList.remove('active');
+                dayDetails.innerHTML = '';
+            }
             
             // Очищаем предыдущий график перед загрузкой новых данных
             if (chartWrapper) {
                 const chartContainer = chartWrapper.querySelector('.traffic-chart');
                 if (chartContainer) {
+                    // Полностью очищаем контейнер, включая все метки
                     chartContainer.innerHTML = '';
                 }
                 // Убеждаемся, что wrapper полностью скрыт
                 chartWrapper.style.display = 'none';
-                // Удаляем все дочерние элементы кроме .traffic-chart
-                const allChildren = Array.from(chartWrapper.children);
-                allChildren.forEach(child => {
-                    if (!child.classList.contains('traffic-chart')) {
-                        child.remove();
-                    }
-                });
             }
             
             // Показываем простой спиннер при смене даты (не скелетон)
@@ -2156,11 +2165,26 @@
             const loadingEl = section.querySelector('.traffic-details-loading');
             const chartWrapper = section.querySelector('.traffic-chart-wrapper');
             const dateSelectorWrapper = section.querySelector('.traffic-date-selector-wrapper');
+            const dayDetails = section.querySelector('.traffic-day-details');
             const startInput = section.querySelector('#trafficStartDate');
             const endInput = section.querySelector('#trafficEndDate');
             
+            // Очищаем детали дня перед загрузкой
+            if (dayDetails) {
+                dayDetails.classList.remove('active');
+                dayDetails.innerHTML = '';
+            }
+            
+            // Очищаем предыдущий график если он был
+            if (chartWrapper) {
+                const chartContainer = chartWrapper.querySelector('.traffic-chart');
+                if (chartContainer) {
+                    chartContainer.innerHTML = '';
+                }
+                chartWrapper.style.display = 'none';
+            }
+            
             if (loadingEl) loadingEl.style.display = 'flex';
-            if (chartWrapper) chartWrapper.style.display = 'none';
             if (dateSelectorWrapper) dateSelectorWrapper.style.display = 'none';
             
             // Устанавливаем даты по умолчанию (текущий месяц)
