@@ -720,8 +720,61 @@
             transition: background 0.3s;
         }
 
-        .traffic-circle-indicator.active {
-            background: #007AFF;
+        .traffic-lifetime-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            position: relative;
+            width: 100%;
+            min-height: 200px;
+        }
+
+        .traffic-lifetime-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(0, 122, 255, 0.08) 0%, rgba(0, 122, 255, 0.03) 100%);
+            border-radius: 20px;
+            z-index: 0;
+        }
+
+        .traffic-lifetime-amount {
+            font-size: 36px;
+            font-weight: 700;
+            color: #007AFF;
+            text-align: center;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+            line-height: 1.2;
+        }
+
+        .traffic-lifetime-label {
+            font-size: 14px;
+            color: #8e8e93;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .traffic-lifetime-icon {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            opacity: 0.1;
+            z-index: 0;
+        }
+
+        .traffic-lifetime-icon svg {
+            width: 100%;
+            height: 100%;
+            fill: #007AFF;
         }
 
         .traffic-circle {
@@ -1746,11 +1799,15 @@
                                 </div>
                                 <!-- Второй график: За все время -->
                                 <div class="traffic-circle-slide">
-                                    <div class="traffic-circle" style="--progress-angle: 0deg" data-target-angle="${lifetimeAngle}">
-                                        <div class="traffic-circle-inner">
-                                            <div class="traffic-amount">${lifetimeTraffic}</div>
-                                            <div class="traffic-label">за все время</div>
+                                    <div class="traffic-lifetime-display">
+                                        <div class="traffic-lifetime-background"></div>
+                                        <div class="traffic-lifetime-icon">
+                                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z"/>
+                                            </svg>
                                         </div>
+                                        <div class="traffic-lifetime-amount">${lifetimeTraffic}</div>
+                                        <div class="traffic-lifetime-label">Всего использовано за все время</div>
                                     </div>
                                 </div>
                             </div>
