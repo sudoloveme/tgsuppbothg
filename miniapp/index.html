@@ -687,6 +687,41 @@
             justify-content: center;
             align-items: center;
             margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .traffic-circle-wrapper {
+            display: flex;
+            width: 200%;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .traffic-circle-slide {
+            width: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .traffic-circle-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .traffic-circle-indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #e5e5ea;
+            transition: background 0.3s;
+        }
+
+        .traffic-circle-indicator.active {
+            background: #007AFF;
         }
 
         .traffic-circle {
@@ -1452,6 +1487,77 @@
             return 'disabled';
         }
 
+        // Инициализация свайпа для графиков трафика
+        function initTrafficCircleSwipe() {
+            const container = document.getElementById('trafficCircleContainer');
+            const wrapper = document.getElementById('trafficCircleWrapper');
+            const indicators = container?.querySelectorAll('.traffic-circle-indicator');
+            
+            if (!container || !wrapper) return;
+            
+            let startX = 0;
+            let currentX = 0;
+            let isDragging = false;
+            let currentSlide = 0;
+            
+            function updateSlide(slideIndex) {
+                currentSlide = slideIndex;
+                wrapper.style.transform = `translateX(-${slideIndex * 50}%)`;
+                
+                // Обновляем индикаторы
+                indicators?.forEach((indicator, index) => {
+                    if (index === slideIndex) {
+                        indicator.classList.add('active');
+                    } else {
+                        indicator.classList.remove('active');
+                    }
+                });
+            }
+            
+            // Обработка начала касания
+            container.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+                isDragging = true;
+            });
+            
+            // Обработка движения
+            container.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                currentX = e.touches[0].clientX;
+                const diff = startX - currentX;
+                const translateX = -currentSlide * 50 + (diff / container.offsetWidth) * 50;
+                wrapper.style.transform = `translateX(${Math.max(-100, Math.min(0, translateX))}%)`;
+            });
+            
+            // Обработка окончания касания
+            container.addEventListener('touchend', () => {
+                if (!isDragging) return;
+                isDragging = false;
+                
+                const diff = startX - currentX;
+                const threshold = container.offsetWidth * 0.2; // 20% от ширины для переключения
+                
+                if (Math.abs(diff) > threshold) {
+                    if (diff > 0 && currentSlide < 1) {
+                        updateSlide(currentSlide + 1);
+                    } else if (diff < 0 && currentSlide > 0) {
+                        updateSlide(currentSlide - 1);
+                    } else {
+                        updateSlide(currentSlide);
+                    }
+                } else {
+                    updateSlide(currentSlide);
+                }
+            });
+            
+            // Клик по индикаторам
+            indicators?.forEach((indicator, index) => {
+                indicator.addEventListener('click', () => {
+                    updateSlide(index);
+                });
+            });
+        }
+
         // Анимация заполнения круговой диаграммы
         function animateProgressCircle(element, startAngle, targetAngle, duration) {
             const startTime = performance.now();
@@ -1529,10 +1635,13 @@
             const expireAt = formatDate(data.expireAt);
             const daysUntilExpiry = calculateDaysUntilExpiry(data.expireAt);
             const daysUntilReset = calculateDaysUntilReset();
-            const usedTraffic = formatBytes(data.usedTrafficBytes || 0);
-            const limitTraffic = formatBytes(data.trafficLimitBytes || 0);
+            const lifetimeTraffic = formatBytes(data.lifetimeUsedTrafficBytes || 0);
             const trafficPercent = getTrafficPercent(data.usedTrafficBytes || 0, data.trafficLimitBytes || 0);
             const trafficAngle = (trafficPercent / 100) * 360;
+            
+            // Для lifetime графика показываем заполнение на основе визуального представления
+            // Используем фиксированный угол для демонстрации (например, 75% для визуального эффекта)
+            const lifetimeAngle = 270; // 75% заполнения для визуального эффекта
             
             // Сохраняем shortUuid для использования в инструкциях
             window.shortUuid = data.shortUuid || '';
@@ -1619,12 +1728,30 @@
                             <div class="traffic-title">Трафик</div>
                             <button class="traffic-details-btn" onclick="toggleTrafficDetails()">Детализация</button>
                         </div>
-                        <div class="traffic-circle-container">
-                            <div class="traffic-circle ${trafficCircleClass}" style="--progress-angle: 0deg" data-target-angle="${trafficAngle}">
-                                <div class="traffic-circle-inner">
-                                    <div class="traffic-amount">${usedTraffic}</div>
-                                    <div class="traffic-label">из ${limitTraffic}</div>
+                        <div class="traffic-circle-container" id="trafficCircleContainer">
+                            <div class="traffic-circle-wrapper" id="trafficCircleWrapper">
+                                <!-- Первый график: Текущий период -->
+                                <div class="traffic-circle-slide">
+                                    <div class="traffic-circle ${trafficCircleClass}" style="--progress-angle: 0deg" data-target-angle="${trafficAngle}">
+                                        <div class="traffic-circle-inner">
+                                            <div class="traffic-amount">${usedTraffic}</div>
+                                            <div class="traffic-label">из ${limitTraffic}</div>
+                                        </div>
+                                    </div>
                                 </div>
+                                <!-- Второй график: За все время -->
+                                <div class="traffic-circle-slide">
+                                    <div class="traffic-circle" style="--progress-angle: 0deg" data-target-angle="${lifetimeAngle}">
+                                        <div class="traffic-circle-inner">
+                                            <div class="traffic-amount">${lifetimeTraffic}</div>
+                                            <div class="traffic-label">за все время</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="traffic-circle-indicators">
+                                <div class="traffic-circle-indicator active" data-slide="0"></div>
+                                <div class="traffic-circle-indicator" data-slide="1"></div>
                             </div>
                         </div>
                         <div class="traffic-info-row">
