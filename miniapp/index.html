@@ -692,7 +692,8 @@
                 #e5e5ea 360deg
             );
             transition: background 0.1s linear;
-            animation: fillProgress 2s ease-out forwards;
+            animation: fillProgress 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            overflow: visible;
         }
 
         .traffic-circle::before {
@@ -702,15 +703,17 @@
             height: 140px;
             border-radius: 50%;
             background: conic-gradient(
-                rgba(0, 122, 255, 0.3) 0deg,
-                rgba(0, 122, 255, 0.3) var(--progress-angle, 0deg),
-                transparent var(--progress-angle, 0deg),
+                rgba(0, 122, 255, 0.5) 0deg,
+                rgba(0, 122, 255, 0.5) calc(var(--progress-angle, 0deg) - 5deg),
+                rgba(0, 122, 255, 0.8) var(--progress-angle, 0deg),
+                transparent calc(var(--progress-angle, 0deg) + 5deg),
                 transparent 360deg
             );
-            filter: blur(8px);
+            filter: blur(6px);
             opacity: 0;
-            animation: liquidWave 3s ease-in-out infinite;
+            animation: liquidWave 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards, liquidPulse 3s ease-in-out infinite 2.5s;
             z-index: -1;
+            pointer-events: none;
         }
 
         @keyframes fillProgress {
@@ -733,13 +736,27 @@
         }
 
         @keyframes liquidWave {
-            0%, 100% {
+            0% {
                 opacity: 0;
-                transform: scale(1);
+                transform: rotate(0deg) scale(1);
             }
             50% {
-                opacity: 0.4;
-                transform: scale(1.05);
+                opacity: 0.6;
+            }
+            100% {
+                opacity: 0.3;
+                transform: rotate(var(--progress-angle, 0deg)) scale(1.02);
+            }
+        }
+
+        @keyframes liquidPulse {
+            0%, 100% {
+                opacity: 0.2;
+                transform: rotate(var(--progress-angle, 0deg)) scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: rotate(var(--progress-angle, 0deg)) scale(1.03);
             }
         }
 
@@ -750,14 +767,15 @@
                 #e5e5ea var(--progress-angle, 0deg),
                 #e5e5ea 360deg
             );
-            animation: fillProgressWarning 2s ease-out forwards;
+            animation: fillProgressWarning 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
 
         .traffic-circle.warning::before {
             background: conic-gradient(
-                rgba(255, 149, 0, 0.3) 0deg,
-                rgba(255, 149, 0, 0.3) var(--progress-angle, 0deg),
-                transparent var(--progress-angle, 0deg),
+                rgba(255, 149, 0, 0.5) 0deg,
+                rgba(255, 149, 0, 0.5) calc(var(--progress-angle, 0deg) - 5deg),
+                rgba(255, 149, 0, 0.8) var(--progress-angle, 0deg),
+                transparent calc(var(--progress-angle, 0deg) + 5deg),
                 transparent 360deg
             );
         }
@@ -788,14 +806,15 @@
                 #e5e5ea var(--progress-angle, 0deg),
                 #e5e5ea 360deg
             );
-            animation: fillProgressDanger 2s ease-out forwards;
+            animation: fillProgressDanger 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
 
         .traffic-circle.danger::before {
             background: conic-gradient(
-                rgba(255, 59, 48, 0.3) 0deg,
-                rgba(255, 59, 48, 0.3) var(--progress-angle, 0deg),
-                transparent var(--progress-angle, 0deg),
+                rgba(255, 59, 48, 0.5) 0deg,
+                rgba(255, 59, 48, 0.5) calc(var(--progress-angle, 0deg) - 5deg),
+                rgba(255, 59, 48, 0.8) var(--progress-angle, 0deg),
+                transparent calc(var(--progress-angle, 0deg) + 5deg),
                 transparent 360deg
             );
         }
