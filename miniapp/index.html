@@ -1548,12 +1548,13 @@
                 currentSlide = slideIndex;
                 wrapper.style.transform = `translateX(-${slideIndex * 50}%)`;
                 
-                // Обновляем индикаторы
+                // Обновляем индикаторы - явно устанавливаем активный класс
                 indicators.forEach((indicator, index) => {
+                    // Убираем класс active со всех индикаторов
+                    indicator.classList.remove('active');
+                    // Добавляем класс active только для текущего слайда
                     if (index === slideIndex) {
                         indicator.classList.add('active');
-                    } else {
-                        indicator.classList.remove('active');
                     }
                 });
             }
