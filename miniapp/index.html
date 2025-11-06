@@ -501,6 +501,9 @@
             scrollbar-color: #8e8e93 #f5f5f5;
             max-width: 100%;
             position: relative;
+            touch-action: pan-x;
+            overscroll-behavior-x: contain;
+            overscroll-behavior-y: none;
         }
 
         .traffic-chart-wrapper::-webkit-scrollbar {
@@ -525,6 +528,9 @@
             gap: 4px;
             padding: 0 4px;
             width: 100%;
+            touch-action: pan-x;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .traffic-chart-bar {
