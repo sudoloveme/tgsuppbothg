@@ -130,6 +130,34 @@
             opacity: 0.8;
         }
 
+        .auth-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .resend-button {
+            width: 100%;
+            background: transparent;
+            color: #007AFF;
+            border: 1px solid #007AFF;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.2s, background 0.2s;
+            margin-top: 8px;
+        }
+
+        .resend-button:active:not(:disabled) {
+            background: rgba(0, 122, 255, 0.1);
+        }
+
+        .resend-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .auth-agreement {
             font-size: 12px;
             color: #8e8e93;
@@ -316,6 +344,9 @@
                         inputmode="numeric"
                         pattern="[0-9]*"
                     >
+                    <button class="resend-button" id="resendButton" disabled onclick="handleResendOtp('${email}', ${telegramId})">
+                        Выслать повторно код (<span id="resendTimer">60</span>)
+                    </button>
                     <button class="auth-button" onclick="handleVerifyOtp('${email}', ${telegramId})">
                         Подтвердить
                     </button>
@@ -338,8 +369,86 @@
                     if (otpInput) {
                         otpInput.focus();
                     }
+                    // Запускаем таймер для кнопки повторной отправки
+                    startResendTimer(email, telegramId);
                 }, 100);
             }, 300); // Время анимации исчезновения
+        }
+
+        // Таймер для кнопки повторной отправки
+        let resendTimerInterval = null;
+        function startResendTimer(email, telegramId) {
+            let secondsLeft = 60;
+            const resendButton = document.getElementById('resendButton');
+            const timerSpan = document.getElementById('resendTimer');
+            
+            if (!resendButton || !timerSpan) return;
+            
+            // Очищаем предыдущий таймер если есть
+            if (resendTimerInterval) {
+                clearInterval(resendTimerInterval);
+            }
+            
+            // Обновляем таймер каждую секунду
+            resendTimerInterval = setInterval(() => {
+                secondsLeft--;
+                if (timerSpan) {
+                    timerSpan.textContent = secondsLeft;
+                }
+                
+                if (secondsLeft <= 0) {
+                    clearInterval(resendTimerInterval);
+                    resendTimerInterval = null;
+                    if (resendButton) {
+                        resendButton.disabled = false;
+                        resendButton.innerHTML = 'Выслать повторно код';
+                    }
+                }
+            }, 1000);
+        }
+
+        // Обработка повторной отправки OTP
+        async function handleResendOtp(email, telegramId) {
+            const resendButton = document.getElementById('resendButton');
+            if (resendButton) {
+                resendButton.disabled = true;
+                resendButton.textContent = 'Отправка...';
+            }
+            
+            try {
+                const baseUrl = window.location.origin;
+                const response = await fetch(`${baseUrl}/api/auth/send-otp`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        telegram_id: telegramId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    tg.showAlert('Код отправлен повторно');
+                    // Перезапускаем таймер
+                    startResendTimer(email, telegramId);
+                } else {
+                    tg.showAlert(data.error || 'Ошибка отправки кода. Попробуйте позже.');
+                    if (resendButton) {
+                        resendButton.disabled = false;
+                        resendButton.innerHTML = 'Выслать повторно код';
+                    }
+                }
+            } catch (error) {
+                console.error('Error resending OTP:', error);
+                tg.showAlert('Ошибка отправки кода. Попробуйте позже.');
+                if (resendButton) {
+                    resendButton.disabled = false;
+                    resendButton.innerHTML = 'Выслать повторно код';
+                }
+            }
         }
 
         // Обработка проверки OTP

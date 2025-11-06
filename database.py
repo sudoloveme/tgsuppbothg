@@ -471,6 +471,24 @@ def db_get_otp(email: str, telegram_id: int) -> Optional[tuple[str, str]]:
         return None
 
 
+def db_get_last_otp_time(email: str, telegram_id: int) -> Optional[str]:
+    """Get last OTP creation time for email and telegram_id. Returns created_at or None."""
+    try:
+        conn = _db_connect()
+        cur = conn.execute(
+            "SELECT created_at FROM otp_codes WHERE email=? AND telegram_id=? ORDER BY created_at DESC LIMIT 1",
+            (email, telegram_id)
+        )
+        row = cur.fetchone()
+        conn.close()
+        if row:
+            return row[0]
+        return None
+    except Exception:
+        logger.exception(f"DB read failed (get last OTP time): email={email}, telegram_id={telegram_id}")
+        return None
+
+
 def db_delete_otp(email: str, telegram_id: int) -> None:
     """Delete OTP code from database."""
     try:

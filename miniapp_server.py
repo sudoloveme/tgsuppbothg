@@ -430,6 +430,26 @@ def create_app() -> web.Application:
                     headers={'Access-Control-Allow-Origin': '*'}
                 )
             
+            # Check if OTP was sent recently (within 1 minute)
+            from datetime import datetime, timedelta
+            last_otp_time = database.db_get_last_otp_time(email, telegram_id)
+            if last_otp_time:
+                try:
+                    last_time = datetime.fromisoformat(last_otp_time.replace('Z', '+00:00'))
+                    if last_time.tzinfo is None:
+                        # If no timezone, assume local time
+                        last_time = datetime.fromisoformat(last_otp_time)
+                    time_diff = datetime.now() - last_time
+                    if time_diff < timedelta(minutes=1):
+                        remaining_seconds = int((timedelta(minutes=1) - time_diff).total_seconds())
+                        return web.json_response(
+                            {"error": f"Пожалуйста, подождите {remaining_seconds} секунд перед повторной отправкой кода"},
+                            status=429,
+                            headers={'Access-Control-Allow-Origin': '*'}
+                        )
+                except Exception as e:
+                    logger.warning(f"Error checking last OTP time: {e}")
+            
             # Generate OTP
             otp_code = otp_manager.generate_otp()
             
