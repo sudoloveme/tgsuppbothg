@@ -503,8 +503,8 @@
             overflow-x: auto;
             overflow-y: hidden;
             -webkit-overflow-scrolling: touch;
-            scrollbar-width: thin;
-            scrollbar-color: #8e8e93 #f5f5f5;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
             max-width: 100%;
             position: relative;
             touch-action: pan-x;
@@ -515,17 +515,7 @@
         }
 
         .traffic-chart-wrapper::-webkit-scrollbar {
-            height: 6px;
-        }
-
-        .traffic-chart-wrapper::-webkit-scrollbar-track {
-            background: #f5f5f5;
-            border-radius: 3px;
-        }
-
-        .traffic-chart-wrapper::-webkit-scrollbar-thumb {
-            background: #8e8e93;
-            border-radius: 3px;
+            display: none;
         }
 
         .traffic-chart-container {
