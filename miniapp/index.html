@@ -2016,8 +2016,17 @@
             const loadingEl = section.querySelector('.traffic-details-loading');
             const chartWrapper = section.querySelector('.traffic-chart-wrapper');
             
+            // Очищаем предыдущий график перед загрузкой новых данных
+            if (chartWrapper) {
+                const chartContainer = chartWrapper.querySelector('.traffic-chart');
+                if (chartContainer) {
+                    chartContainer.innerHTML = '';
+                }
+                chartWrapper.style.display = 'none';
+            }
+            
+            // Показываем скелетон
             if (loadingEl) loadingEl.style.display = 'flex';
-            if (chartWrapper) chartWrapper.style.display = 'none';
             
             try {
                 // Форматируем даты в ISO формат
@@ -2043,13 +2052,16 @@
                 // Группируем данные по дням
                 const groupedData = groupTrafficByDay(data);
                 
-                // Отображаем график
+                // Скрываем скелетон и отображаем график
                 if (loadingEl) loadingEl.style.display = 'none';
                 renderTrafficChart(groupedData, chartWrapper);
                 
             } catch (error) {
                 console.error('Error loading traffic details:', error);
-                if (loadingEl) loadingEl.textContent = 'Ошибка загрузки данных';
+                if (loadingEl) {
+                    loadingEl.style.display = 'flex';
+                    loadingEl.innerHTML = '<div style="text-align: center; color: #ff3b30;">Ошибка загрузки данных</div>';
+                }
             }
         }
 
