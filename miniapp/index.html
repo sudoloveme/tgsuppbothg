@@ -1873,7 +1873,7 @@
                         ` : ''}
                         <div class="traffic-header">
                             <div class="traffic-title">Трафик</div>
-                            <button class="traffic-details-btn" onclick="toggleTrafficDetails()">Детализация</button>
+                            ${!isNewDisabledUser ? `<button class="traffic-details-btn" onclick="toggleTrafficDetails()">Детализация</button>` : ''}
                         </div>
                         <div class="traffic-circle-container" id="trafficCircleContainer">
                             <div class="traffic-circle-wrapper" id="trafficCircleWrapper">
