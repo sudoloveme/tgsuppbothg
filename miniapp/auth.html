@@ -390,6 +390,13 @@
                 return;
             }
             
+            // Блокируем кнопку и показываем спиннер
+            const authButton = document.getElementById('authButton');
+            if (authButton) {
+                authButton.disabled = true;
+                authButton.classList.add('loading');
+            }
+            
             // Отправка OTP
             try {
                 const baseUrl = window.location.origin;
@@ -410,10 +417,20 @@
                     // Показываем форму ввода OTP
                     showOtpForm(email, telegramId);
                 } else {
+                    // Разблокируем кнопку при ошибке
+                    if (authButton) {
+                        authButton.disabled = false;
+                        authButton.classList.remove('loading');
+                    }
                     tg.showAlert(data.error || 'Ошибка отправки кода. Попробуйте позже.');
                 }
             } catch (error) {
                 console.error('Error sending OTP:', error);
+                // Разблокируем кнопку при ошибке
+                if (authButton) {
+                    authButton.disabled = false;
+                    authButton.classList.remove('loading');
+                }
                 tg.showAlert('Ошибка отправки кода. Попробуйте позже.');
             }
         }
