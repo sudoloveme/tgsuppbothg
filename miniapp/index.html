@@ -89,6 +89,13 @@
             padding-top: env(safe-area-inset-top, 30px);
         }
 
+        /* На десктопной версии добавляем отступ сверху */
+        @media (min-width: 769px) {
+            .content {
+                padding-top: 20px;
+            }
+        }
+
         /* На мобильных устройствах, если баннеры скрыты, добавляем больше отступ сверху */
         @media (max-width: 768px) {
             .content.no-banners {
