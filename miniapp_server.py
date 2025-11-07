@@ -334,16 +334,16 @@ def create_app() -> web.Application:
     
     app.router.add_get('/api/traffic/usage/{telegram_id}', get_traffic_usage_details)
     
-    # Serve icon images
+    # Serve icon images (supports subdirectories like bottombar/home.svg)
     async def serve_icon_image(request):
         """Serve icon image file."""
-        filename = request.match_info.get('filename')
-        if not filename or '..' in filename:
+        # Get path from URL (supports subdirectories)
+        path = request.match_info.get('path', '')
+        if not path or '..' in path:
             return web.Response(status=404, text="Not Found")
         
-        # Allow subdirectories (e.g., bottombar/home.svg)
         # Normalize path to prevent directory traversal
-        file_path = ICONS_DIR / filename
+        file_path = ICONS_DIR / path
         # Ensure the path is within ICONS_DIR
         try:
             file_path = file_path.resolve()
@@ -355,6 +355,9 @@ def create_app() -> web.Application:
         
         if not file_path.exists() or not file_path.is_file():
             return web.Response(status=404, text="Not Found")
+        
+        # Extract filename for cache control logic
+        filename = path.split('/')[-1] if '/' in path else path
         
         # Determine content type
         content_type = 'image/svg+xml'
@@ -383,7 +386,7 @@ def create_app() -> web.Application:
             headers=headers
         )
     
-    app.router.add_get('/api/icons/{filename}', serve_icon_image)
+    app.router.add_get('/api/icons/{path:.*}', serve_icon_image)
     
     # Serve logo
     async def serve_logo(request):
