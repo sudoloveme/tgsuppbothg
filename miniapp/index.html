@@ -90,10 +90,8 @@
         }
 
         /* На десктопной версии добавляем отступ сверху */
-        @media (min-width: 769px) {
-            .content {
-                padding-top: 20px;
-            }
+        .content.desktop {
+            padding-top: 20px;
         }
 
         /* На мобильных устройствах, если баннеры скрыты, добавляем больше отступ сверху */
@@ -1472,6 +1470,29 @@
         const isMobile = tg.platform === 'ios' || tg.platform === 'android';
         if (isMobile) {
             tg.requestFullscreen();
+        }
+        
+        // Определение десктопной версии по user agent
+        function isDesktopDevice() {
+            if (window.tg && window.tg.platform) {
+                // Десктопные платформы в Telegram WebApp
+                return window.tg.platform === 'web' || 
+                       window.tg.platform === 'macos' || 
+                       window.tg.platform === 'windows' || 
+                       window.tg.platform === 'linux';
+            }
+            // Fallback: проверка через user agent
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            const mobileRegex = /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
+            return !mobileRegex.test(userAgent.toLowerCase());
+        }
+        
+        // Применяем класс для десктопной версии
+        if (isDesktopDevice()) {
+            const content = document.getElementById('content');
+            if (content) {
+                content.classList.add('desktop');
+            }
         }
         
         // Настройка цветов
