@@ -338,10 +338,21 @@ def create_app() -> web.Application:
     async def serve_icon_image(request):
         """Serve icon image file."""
         filename = request.match_info.get('filename')
-        if not filename or '..' in filename or '/' in filename:
+        if not filename or '..' in filename:
             return web.Response(status=404, text="Not Found")
         
+        # Allow subdirectories (e.g., bottombar/home.svg)
+        # Normalize path to prevent directory traversal
         file_path = ICONS_DIR / filename
+        # Ensure the path is within ICONS_DIR
+        try:
+            file_path = file_path.resolve()
+            icons_dir_resolved = ICONS_DIR.resolve()
+            if not str(file_path).startswith(str(icons_dir_resolved)):
+                return web.Response(status=404, text="Not Found")
+        except Exception:
+            return web.Response(status=404, text="Not Found")
+        
         if not file_path.exists() or not file_path.is_file():
             return web.Response(status=404, text="Not Found")
         
