@@ -1585,6 +1585,7 @@
             display: flex;
             align-items: baseline;
             gap: 8px;
+            flex-wrap: wrap;
         }
 
         .pricing-plan-duration {
@@ -1606,6 +1607,7 @@
             display: flex;
             align-items: baseline;
             gap: 6px;
+            flex-wrap: wrap;
         }
 
         .pricing-plan-amount {
@@ -1625,6 +1627,74 @@
             font-size: 14px;
             color: #8e8e93;
             margin-left: 4px;
+        }
+
+        .pricing-plan-per-month {
+            font-size: 14px;
+            color: #8e8e93;
+            margin-left: 4px;
+        }
+
+        /* Info Block */
+        .pricing-info-block {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .pricing-info-text {
+            font-size: 14px;
+            color: #000000;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        /* Payment Button */
+        .pricing-payment-button {
+            width: 100%;
+            background: #007AFF;
+            color: #ffffff;
+            border: none;
+            padding: 18px;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .pricing-payment-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .pricing-payment-button:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .pricing-payment-button:active {
+            transform: scale(0.97);
+        }
+
+        .pricing-payment-button:disabled {
+            background: #c7c7cc;
+            cursor: not-allowed;
+            opacity: 0.6;
         }
 
         .pricing-plan-radio {
@@ -1747,6 +1817,18 @@
                 <div class="pricing-plans" id="pricingPlans">
                     <!-- Plans will be rendered by JavaScript -->
                 </div>
+
+                <!-- Info Block -->
+                <div class="pricing-info-block">
+                    <p class="pricing-info-text">
+                        Обратите внимание: ежемесячно ваша подписка включает 200 GB трафика. Сброс трафика происходит 1 числа каждого месяца. Вы также сможете приобрести сброс трафика за отдельную плату.
+                    </p>
+                </div>
+
+                <!-- Payment Button -->
+                <button class="pricing-payment-button" id="pricingPaymentButton" onclick="handlePayment()" disabled>
+                    Оплатить
+                </button>
             </div>
         </div>
     </div>
@@ -2310,6 +2392,7 @@
             selectedPaymentMethod = null;
             selectedPlanIndex = null;
             renderPricingPlans();
+            updatePaymentButton();
         }
 
         // Переключение выпадающего меню способа оплаты
@@ -2334,6 +2417,7 @@
             methodIcon.style.display = 'block';
             
             renderPricingPlans();
+            updatePaymentButton();
         }
 
         // Рендеринг тарифов
@@ -2418,6 +2502,31 @@
             const plan = pricingData[selectedPaymentMethod][index];
             const currency = currencySymbols[selectedPaymentMethod];
             console.log(`Selected plan: ${plan.days} days, ${plan.price} ${currency}`);
+        }
+
+        // Обновление состояния кнопки оплаты
+        function updatePaymentButton() {
+            const paymentButton = document.getElementById('pricingPaymentButton');
+            if (paymentButton) {
+                if (selectedPaymentMethod && selectedPlanIndex !== null) {
+                    paymentButton.disabled = false;
+                } else {
+                    paymentButton.disabled = true;
+                }
+            }
+        }
+
+        // Обработка оплаты
+        function handlePayment() {
+            if (!selectedPaymentMethod || selectedPlanIndex === null) {
+                tg.showAlert('Пожалуйста, выберите способ оплаты и тариф');
+                return;
+            }
+            
+            const plan = pricingData[selectedPaymentMethod][selectedPlanIndex];
+            const currency = currencySymbols[selectedPaymentMethod];
+            
+            tg.showAlert(`Функционал оплаты скоро появится\n\nВыбранный тариф: ${plan.days} дней\nЦена: ${formatPrice(plan.price)} ${currency}`);
         }
 
         // Закрытие выпадающего меню при клике вне его
