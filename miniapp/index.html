@@ -1406,244 +1406,256 @@
         }
 
         .pricing-header {
-            text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 24px;
             padding-top: 20px;
         }
 
         .pricing-title {
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 700;
             color: #000000;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             letter-spacing: -0.5px;
         }
 
         .pricing-subtitle {
-            font-size: 17px;
+            font-size: 15px;
             color: #8e8e93;
             margin: 0;
             line-height: 1.5;
         }
 
-        .pricing-features {
-            background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
-            border-radius: 16px;
-            padding: 24px 20px;
-            margin-bottom: 32px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-            border: 1px solid #e5e5ea;
+        /* Payment Method Dropdown */
+        .payment-method-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
-        .pricing-feature-item {
+        .payment-method-dropdown {
+            position: relative;
+        }
+
+        .payment-method-select {
+            width: 100%;
+            padding: 16px;
+            border: 1.5px solid #007AFF;
+            border-radius: 12px;
+            background: #ffffff;
+            font-size: 16px;
+            font-weight: 500;
+            color: #000000;
+            cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 16px;
-            padding: 16px 0;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            justify-content: space-between;
+            transition: all 0.2s;
         }
 
-        .pricing-feature-item:last-child {
-            border-bottom: none;
-            padding-bottom: 0;
+        .payment-method-select:active {
+            opacity: 0.8;
         }
 
-        .pricing-feature-item:first-child {
-            padding-top: 0;
-        }
-
-        .pricing-feature-icon {
-            font-size: 28px;
-            width: 40px;
-            height: 40px;
+        .payment-method-select-placeholder {
             display: flex;
             align-items: center;
-            justify-content: center;
-            background: rgba(0, 122, 255, 0.1);
-            border-radius: 10px;
+            gap: 12px;
+        }
+
+        .payment-method-select-icon {
+            width: 24px;
+            height: 24px;
             flex-shrink: 0;
         }
 
-        .pricing-feature-text {
-            font-size: 16px;
-            color: #000000;
+        .payment-method-select-text {
             flex: 1;
-            font-weight: 500;
-            line-height: 1.4;
+            text-align: left;
         }
 
+        .payment-method-chevron {
+            width: 20px;
+            height: 20px;
+            transition: transform 0.3s;
+            flex-shrink: 0;
+        }
+
+        .payment-method-dropdown.open .payment-method-chevron {
+            transform: rotate(180deg);
+        }
+
+        .payment-method-options {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out, padding 0.3s ease-out;
+            z-index: 1000;
+            border: 1px solid #e5e5ea;
+        }
+
+        .payment-method-dropdown.open .payment-method-options {
+            max-height: 400px;
+            opacity: 1;
+            padding: 8px 0;
+        }
+
+        .payment-method-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .payment-method-option:hover {
+            background: #f5f5f5;
+        }
+
+        .payment-method-option:active {
+            background: #e5e5ea;
+        }
+
+        .payment-method-option-icon {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        .payment-method-option-text {
+            flex: 1;
+            font-size: 16px;
+            font-weight: 500;
+            color: #000000;
+            text-align: left;
+        }
+
+        /* Pricing Plans */
         .pricing-plans {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 12px;
         }
 
         .pricing-plan {
             background: #ffffff;
-            border-radius: 20px;
-            padding: 24px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             position: relative;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             border: 2px solid transparent;
-            overflow: hidden;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            cursor: pointer;
         }
 
-        .pricing-plan::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #e5e5ea 0%, #e5e5ea 100%);
-            opacity: 0;
-            transition: opacity 0.3s;
+        .pricing-plan.disabled {
+            opacity: 0.5;
+            pointer-events: none;
         }
 
-        .pricing-plan:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        .pricing-plan.selected {
+            border-color: #007AFF;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%);
         }
 
-        .pricing-plan:active {
-            transform: translateY(-2px);
+        .pricing-plan:active:not(.disabled) {
+            transform: scale(0.98);
         }
 
-        .pricing-plan-featured {
-            border: 2px solid #007AFF;
-            background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 50%, #ffffff 100%);
-            box-shadow: 0 8px 32px rgba(0, 122, 255, 0.15);
-            transform: scale(1.02);
+        .pricing-plan-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
-        .pricing-plan-featured::before {
-            opacity: 1;
-            background: linear-gradient(90deg, #007AFF 0%, #0051D5 100%);
+        .pricing-plan-header-row {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
         }
 
-        .pricing-plan-featured:hover {
-            transform: scale(1.03) translateY(-4px);
-            box-shadow: 0 12px 40px rgba(0, 122, 255, 0.2);
-        }
-
-        .pricing-plan-badge {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
-            color: #ffffff;
-            font-size: 11px;
-            font-weight: 700;
-            padding: 6px 14px;
-            border-radius: 20px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
-            z-index: 1;
-        }
-
-        .pricing-plan-header {
-            margin-bottom: 24px;
-            padding-right: 80px;
-        }
-
-        .pricing-plan-title {
-            font-size: 24px;
+        .pricing-plan-duration {
+            font-size: 18px;
             font-weight: 700;
             color: #000000;
-            margin-bottom: 8px;
-            letter-spacing: -0.3px;
         }
 
         .pricing-plan-bonus {
-            font-size: 14px;
+            font-size: 13px;
             color: #007AFF;
             font-weight: 600;
-            margin-bottom: 16px;
-            display: inline-block;
             background: rgba(0, 122, 255, 0.1);
-            padding: 4px 10px;
-            border-radius: 8px;
+            padding: 2px 8px;
+            border-radius: 6px;
         }
 
-        .pricing-plan-price {
+        .pricing-plan-price-row {
             display: flex;
             align-items: baseline;
             gap: 6px;
-            margin-top: 8px;
         }
 
         .pricing-plan-amount {
-            font-size: 40px;
+            font-size: 24px;
             font-weight: 700;
             color: #000000;
-            letter-spacing: -1px;
-            line-height: 1;
+            letter-spacing: -0.5px;
         }
 
         .pricing-plan-currency {
-            font-size: 22px;
+            font-size: 18px;
             font-weight: 600;
             color: #8e8e93;
-            margin-left: 2px;
         }
 
-        .pricing-plan-period {
+        .pricing-plan-per-day {
             font-size: 14px;
             color: #8e8e93;
             margin-left: 4px;
-            font-weight: 500;
         }
 
-        .pricing-plan-button {
-            width: 100%;
-            background: #007AFF;
-            color: #ffffff;
-            border: none;
-            padding: 18px;
-            border-radius: 14px;
-            font-size: 17px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        .pricing-plan-radio {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #c7c7cc;
+            border-radius: 50%;
             position: relative;
-            overflow: hidden;
+            flex-shrink: 0;
+            transition: all 0.2s;
         }
 
-        .pricing-plan-button::before {
+        .pricing-plan.selected .pricing-plan-radio {
+            border-color: #007AFF;
+        }
+
+        .pricing-plan-radio::after {
             content: '';
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 0;
-            height: 0;
+            transform: translate(-50%, -50%) scale(0);
+            width: 12px;
+            height: 12px;
+            background: #007AFF;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
+            transition: transform 0.2s;
         }
 
-        .pricing-plan-button:active::before {
-            width: 300px;
-            height: 300px;
-        }
-
-        .pricing-plan-button:active {
-            transform: scale(0.97);
-        }
-
-        .pricing-plan-button-featured {
-            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
-            box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
-        }
-
-        .pricing-plan-button-featured:hover {
-            box-shadow: 0 8px 24px rgba(0, 122, 255, 0.5);
-        }
-
-        .pricing-plan-button-featured:active {
-            box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
+        .pricing-plan.selected .pricing-plan-radio::after {
+            transform: translate(-50%, -50%) scale(1);
         }
     </style>
 </head>
@@ -1687,86 +1699,53 @@
             <div class="pricing-container">
                 <div class="pricing-header">
                     <h1 class="pricing-title">Тарифные планы</h1>
-                    <p class="pricing-subtitle">Выберите подходящий план для вас</p>
+                    <p class="pricing-subtitle">Информация о вашей подписке</p>
                 </div>
 
-                <div class="pricing-features">
-                    <div class="pricing-feature-item">
-                        <span class="pricing-feature-icon">📱</span>
-                        <span class="pricing-feature-text">До 3-х личных устройств</span>
-                    </div>
-                    <div class="pricing-feature-item">
-                        <span class="pricing-feature-icon">📊</span>
-                        <span class="pricing-feature-text">200GB ежемесячно</span>
-                    </div>
-                    <div class="pricing-feature-item">
-                        <span class="pricing-feature-icon">⚡</span>
-                        <span class="pricing-feature-text">Премиальные сервера</span>
-                    </div>
-                    <div class="pricing-feature-item">
-                        <span class="pricing-feature-icon">🌏</span>
-                        <span class="pricing-feature-text">Доступ к VPN со всего Китая</span>
+                <!-- Payment Method Dropdown -->
+                <div class="payment-method-card">
+                    <div class="payment-method-dropdown" id="paymentMethodDropdown">
+                        <div class="payment-method-select" onclick="togglePaymentMethod()">
+                            <div class="payment-method-select-placeholder">
+                                <img src="/api/icons/waytopay/placeholder.svg" alt="" class="payment-method-select-icon" id="paymentMethodIcon" style="display: none;">
+                                <span class="payment-method-select-text" id="paymentMethodText">Выберите способ оплаты</span>
+                            </div>
+                            <svg class="payment-method-chevron" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <path d="M5 7.5L10 12.5L15 7.5" stroke="#007AFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="payment-method-options" id="paymentMethodOptions">
+                            <div class="payment-method-option" onclick="selectPaymentMethod('kzt', 'KZT - Тенге', 'kzt.svg')">
+                                <img src="/api/icons/waytopay/kzt.svg" alt="KZT" class="payment-method-option-icon">
+                                <span class="payment-method-option-text">KZT - Тенге</span>
+                            </div>
+                            <div class="payment-method-option" onclick="selectPaymentMethod('kgz', 'KGZ - Кыргызский сом', 'kgz.svg')">
+                                <img src="/api/icons/waytopay/kgz.svg" alt="KGZ" class="payment-method-option-icon">
+                                <span class="payment-method-option-text">KGZ - Кыргызский сом</span>
+                            </div>
+                            <div class="payment-method-option" onclick="selectPaymentMethod('rub', 'RUB - Российский рубль', 'rub.svg')">
+                                <img src="/api/icons/waytopay/rub.svg" alt="RUB" class="payment-method-option-icon">
+                                <span class="payment-method-option-text">RUB - Российский рубль</span>
+                            </div>
+                            <div class="payment-method-option" onclick="selectPaymentMethod('stars', 'Telegram Stars', 'stars.svg')">
+                                <img src="/api/icons/waytopay/stars.svg" alt="Stars" class="payment-method-option-icon">
+                                <span class="payment-method-option-text">Telegram Stars</span>
+                            </div>
+                            <div class="payment-method-option" onclick="selectPaymentMethod('crypto', 'USDT, TON, ETH, BTC', 'crypto.svg')">
+                                <img src="/api/icons/waytopay/crypto.svg" alt="Crypto" class="payment-method-option-icon">
+                                <span class="payment-method-option-text">USDT, TON, ETH, BTC</span>
+                            </div>
+                            <div class="payment-method-option" onclick="selectPaymentMethod('cny', 'CNY - Alipay', 'alipay.svg')">
+                                <img src="/api/icons/waytopay/alipay.svg" alt="Alipay" class="payment-method-option-icon">
+                                <span class="payment-method-option-text">CNY - Alipay</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="pricing-plans">
-                    <div class="pricing-plan">
-                        <div class="pricing-plan-header">
-                            <div class="pricing-plan-title">14 дней</div>
-                            <div class="pricing-plan-price">
-                                <span class="pricing-plan-amount">2 190</span>
-                                <span class="pricing-plan-currency">₸</span>
-                                <span class="pricing-plan-period">/ 14 дней</span>
-                            </div>
-                        </div>
-                        <button class="pricing-plan-button" onclick="tg.showAlert('Функционал оплаты скоро появится')">
-                            Выбрать план
-                        </button>
-                    </div>
-
-                    <div class="pricing-plan">
-                        <div class="pricing-plan-header">
-                            <div class="pricing-plan-title">30 дней</div>
-                            <div class="pricing-plan-price">
-                                <span class="pricing-plan-amount">2 990</span>
-                                <span class="pricing-plan-currency">₸</span>
-                                <span class="pricing-plan-period">/ 30 дней</span>
-                            </div>
-                        </div>
-                        <button class="pricing-plan-button" onclick="tg.showAlert('Функционал оплаты скоро появится')">
-                            Выбрать план
-                        </button>
-                    </div>
-
-                    <div class="pricing-plan">
-                        <div class="pricing-plan-header">
-                            <div class="pricing-plan-title">90 дней</div>
-                            <div class="pricing-plan-price">
-                                <span class="pricing-plan-amount">7 990</span>
-                                <span class="pricing-plan-currency">₸</span>
-                                <span class="pricing-plan-period">/ 90 дней</span>
-                            </div>
-                        </div>
-                        <button class="pricing-plan-button" onclick="tg.showAlert('Функционал оплаты скоро появится')">
-                            Выбрать план
-                        </button>
-                    </div>
-
-                    <div class="pricing-plan pricing-plan-featured">
-                        <div class="pricing-plan-badge">Выгодно</div>
-                        <div class="pricing-plan-header">
-                            <div class="pricing-plan-title">180 дней</div>
-                            <div class="pricing-plan-bonus">+30 дней в подарок</div>
-                            <div class="pricing-plan-price">
-                                <span class="pricing-plan-amount">15 290</span>
-                                <span class="pricing-plan-currency">₸</span>
-                                <span class="pricing-plan-period">/ 210 дней</span>
-                            </div>
-                        </div>
-                        <button class="pricing-plan-button pricing-plan-button-featured" onclick="tg.showAlert('Функционал оплаты скоро появится')">
-                            Выбрать план
-                        </button>
-                    </div>
+                <!-- Pricing Plans -->
+                <div class="pricing-plans" id="pricingPlans">
+                    <!-- Plans will be rendered by JavaScript -->
                 </div>
             </div>
         </div>
@@ -2271,7 +2250,183 @@
         // Функция для открытия страницы тарифов
         function openPricingPage() {
             switchPage('pricing');
+            initPricingPage();
         }
+
+        // Данные тарифов (в разных валютах)
+        const pricingData = {
+            kzt: [
+                { days: 14, price: 2190, bonus: null },
+                { days: 30, price: 2990, bonus: null },
+                { days: 90, price: 7990, bonus: null },
+                { days: 180, price: 15290, bonus: 30 }
+            ],
+            kgz: [
+                { days: 14, price: 1950, bonus: null },
+                { days: 30, price: 2650, bonus: null },
+                { days: 90, price: 7100, bonus: null },
+                { days: 180, price: 13600, bonus: 30 }
+            ],
+            rub: [
+                { days: 14, price: 450, bonus: null },
+                { days: 30, price: 600, bonus: null },
+                { days: 90, price: 1500, bonus: null },
+                { days: 180, price: 2800, bonus: 30 }
+            ],
+            stars: [
+                { days: 14, price: 500, bonus: null },
+                { days: 30, price: 700, bonus: null },
+                { days: 90, price: 1800, bonus: null },
+                { days: 180, price: 3200, bonus: 30 }
+            ],
+            crypto: [
+                { days: 14, price: 5.5, bonus: null },
+                { days: 30, price: 7.5, bonus: null },
+                { days: 90, price: 18.5, bonus: null },
+                { days: 180, price: 32.0, bonus: 30 }
+            ],
+            cny: [
+                { days: 14, price: 35, bonus: null },
+                { days: 30, price: 48, bonus: null },
+                { days: 90, price: 120, bonus: null },
+                { days: 180, price: 220, bonus: 30 }
+            ]
+        };
+
+        const currencySymbols = {
+            kzt: '₸',
+            kgz: 'сом',
+            rub: '₽',
+            stars: '⭐',
+            crypto: '$',
+            cny: '¥'
+        };
+
+        let selectedPaymentMethod = null;
+        let selectedPlanIndex = null;
+
+        // Инициализация страницы тарифов
+        function initPricingPage() {
+            selectedPaymentMethod = null;
+            selectedPlanIndex = null;
+            renderPricingPlans();
+        }
+
+        // Переключение выпадающего меню способа оплаты
+        function togglePaymentMethod() {
+            const dropdown = document.getElementById('paymentMethodDropdown');
+            dropdown.classList.toggle('open');
+        }
+
+        // Выбор способа оплаты
+        function selectPaymentMethod(method, text, iconFile) {
+            selectedPaymentMethod = method;
+            selectedPlanIndex = null;
+            
+            const dropdown = document.getElementById('paymentMethodDropdown');
+            dropdown.classList.remove('open');
+            
+            const methodText = document.getElementById('paymentMethodText');
+            const methodIcon = document.getElementById('paymentMethodIcon');
+            
+            methodText.textContent = text;
+            methodIcon.src = `/api/icons/waytopay/${iconFile}`;
+            methodIcon.style.display = 'block';
+            
+            renderPricingPlans();
+        }
+
+        // Рендеринг тарифов
+        function renderPricingPlans() {
+            const plansContainer = document.getElementById('pricingPlans');
+            
+            if (!selectedPaymentMethod) {
+                // Показываем заблокированные тарифы
+                const defaultPlans = [
+                    { days: 14, bonus: null },
+                    { days: 30, bonus: null },
+                    { days: 90, bonus: null },
+                    { days: 180, bonus: 30 }
+                ];
+                
+                plansContainer.innerHTML = defaultPlans.map((plan, index) => `
+                    <div class="pricing-plan disabled" data-plan-index="${index}">
+                        <div class="pricing-plan-content">
+                            <div class="pricing-plan-header-row">
+                                <span class="pricing-plan-duration">${plan.days} дней</span>
+                                ${plan.bonus ? `<span class="pricing-plan-bonus">+${plan.bonus} дней в подарок</span>` : ''}
+                            </div>
+                            <div class="pricing-plan-price-row">
+                                <span class="pricing-plan-amount">—</span>
+                                <span class="pricing-plan-currency">—</span>
+                            </div>
+                        </div>
+                        <div class="pricing-plan-radio"></div>
+                    </div>
+                `).join('');
+                return;
+            }
+            
+            const plans = pricingData[selectedPaymentMethod];
+            const currency = currencySymbols[selectedPaymentMethod];
+            
+            plansContainer.innerHTML = plans.map((plan, index) => {
+                const totalDays = plan.days + (plan.bonus || 0);
+                const pricePerDay = (plan.price / totalDays).toFixed(2);
+                
+                return `
+                    <div class="pricing-plan ${selectedPlanIndex === index ? 'selected' : ''}" 
+                         data-plan-index="${index}" 
+                         onclick="selectPlan(${index})">
+                        <div class="pricing-plan-content">
+                            <div class="pricing-plan-header-row">
+                                <span class="pricing-plan-duration">${plan.days} дней</span>
+                                ${plan.bonus ? `<span class="pricing-plan-bonus">+${plan.bonus} дней в подарок</span>` : ''}
+                            </div>
+                            <div class="pricing-plan-price-row">
+                                <span class="pricing-plan-amount">${formatPrice(plan.price)}</span>
+                                <span class="pricing-plan-currency">${currency}</span>
+                                <span class="pricing-plan-per-day">/ ${pricePerDay} ${currency} в день</span>
+                            </div>
+                        </div>
+                        <div class="pricing-plan-radio"></div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Форматирование цены
+        function formatPrice(price) {
+            if (price >= 1000) {
+                return price.toLocaleString('ru-RU');
+            }
+            // Для дробных чисел (криптовалюта) показываем до 2 знаков после запятой
+            if (price % 1 !== 0) {
+                return price.toFixed(2);
+            }
+            return price.toString();
+        }
+
+        // Выбор тарифа
+        function selectPlan(index) {
+            if (!selectedPaymentMethod) return;
+            
+            selectedPlanIndex = index;
+            renderPricingPlans();
+            
+            // Здесь можно добавить логику для перехода к оплате
+            const plan = pricingData[selectedPaymentMethod][index];
+            const currency = currencySymbols[selectedPaymentMethod];
+            console.log(`Selected plan: ${plan.days} days, ${plan.price} ${currency}`);
+        }
+
+        // Закрытие выпадающего меню при клике вне его
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('paymentMethodDropdown');
+            if (dropdown && !dropdown.contains(e.target)) {
+                dropdown.classList.remove('open');
+            }
+        });
 
         // Отображение данных подписки
         function displaySubscriptionData(data) {
