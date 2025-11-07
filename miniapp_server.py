@@ -569,9 +569,34 @@ def create_app() -> web.Application:
                     database.db_save_user_backend_data(telegram_id, uuid, email)
                     logger.info(f"Created user and saved to local DB: email={email}, telegram_id={telegram_id}, uuid={uuid}")
             else:
-                # User exists, update telegram_id
+                # User exists, check if telegram_id is already set
+                existing_telegram_id = user_data.get('telegramId')
                 uuid = user_data.get('uuid')
-                if uuid:
+                
+                if not uuid:
+                    return web.json_response(
+                        {"error": "User data is invalid"},
+                        status=500,
+                        headers={'Access-Control-Allow-Origin': '*'}
+                    )
+                
+                # If user already has a telegram_id
+                if existing_telegram_id is not None and existing_telegram_id != 0:
+                    # Check if it's the same telegram_id (user is already authorized)
+                    if existing_telegram_id == telegram_id:
+                        # User is already authorized with this telegram_id, just save to local DB
+                        database.db_save_user_backend_data(telegram_id, uuid, email)
+                        logger.info(f"User already authorized: email={email}, telegram_id={telegram_id}, uuid={uuid}")
+                    else:
+                        # User has different telegram_id, forbid registration
+                        logger.warning(f"Attempt to register email {email} with telegram_id {telegram_id}, but user already has telegram_id {existing_telegram_id}")
+                        return web.json_response(
+                            {"error": "Этот email уже привязан к другому аккаунту Telegram. Пожалуйста, используйте другой email или обратитесь в поддержку."},
+                            status=403,
+                            headers={'Access-Control-Allow-Origin': '*'}
+                        )
+                else:
+                    # User exists but has no telegram_id, update it
                     logger.info(f"Updating telegram_id for existing user: email={email}, telegram_id={telegram_id}, uuid={uuid}")
                     updated_user = await update_user_telegram_id(uuid, telegram_id)
                     
@@ -585,12 +610,6 @@ def create_app() -> web.Application:
                             status=500,
                             headers={'Access-Control-Allow-Origin': '*'}
                         )
-                else:
-                    return web.json_response(
-                        {"error": "User data is invalid"},
-                        status=500,
-                        headers={'Access-Control-Allow-Origin': '*'}
-                    )
             
             return web.json_response(
                 {"success": True, "message": "Authentication successful"},
