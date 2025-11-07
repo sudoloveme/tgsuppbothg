@@ -2456,7 +2456,17 @@
             
             plansContainer.innerHTML = plans.map((plan, index) => {
                 const totalDays = plan.days + (plan.bonus || 0);
-                const pricePerDay = (plan.price / totalDays).toFixed(2);
+                let priceInfo = '';
+                
+                // Для тарифов 30 дней и больше показываем цену за месяц, для меньших - за день
+                if (plan.days >= 30) {
+                    const months = totalDays / 30;
+                    const pricePerMonth = Math.round(plan.price / months);
+                    priceInfo = `/ ${formatPrice(pricePerMonth)} ${currency} в месяц`;
+                } else {
+                    const pricePerDay = Math.round(plan.price / totalDays);
+                    priceInfo = `/ ${formatPrice(pricePerDay)} ${currency} в день`;
+                }
                 
                 return `
                     <div class="pricing-plan ${selectedPlanIndex === index ? 'selected' : ''}" 
@@ -2470,13 +2480,16 @@
                             <div class="pricing-plan-price-row">
                                 <span class="pricing-plan-amount">${formatPrice(plan.price)}</span>
                                 <span class="pricing-plan-currency">${currency}</span>
-                                <span class="pricing-plan-per-day">/ ${pricePerDay} ${currency} в день</span>
+                                <span class="pricing-plan-per-day">${priceInfo}</span>
                             </div>
                         </div>
                         <div class="pricing-plan-radio"></div>
                     </div>
                 `;
             }).join('');
+            
+            // Обновляем состояние кнопки оплаты
+            updatePaymentButton();
         }
 
         // Форматирование цены
@@ -2497,6 +2510,7 @@
             
             selectedPlanIndex = index;
             renderPricingPlans();
+            updatePaymentButton();
             
             // Здесь можно добавить логику для перехода к оплате
             const plan = pricingData[selectedPaymentMethod][index];
