@@ -1435,6 +1435,20 @@
         /* Payment Method Dropdown */
         .payment-method-card {
             margin-bottom: 16px;
+            transition: all 0.3s ease-out;
+        }
+
+        .payment-method-card.centered {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: calc(100% - 32px);
+            margin: 0;
+        }
+
+        #pricingPage.initial-state .payment-method-card.centered {
+            position: fixed;
         }
 
         .payment-method-dropdown {
@@ -1660,6 +1674,17 @@
             margin-top: 16px;
             margin-bottom: 16px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: opacity 0.3s ease-out, max-height 0.3s ease-out, margin 0.3s ease-out;
+        }
+
+        .pricing-info-block.visible {
+            opacity: 1;
+            max-height: 500px;
+            margin-top: 16px;
+            margin-bottom: 16px;
         }
 
         .pricing-info-text {
@@ -1782,14 +1807,14 @@
         </div>
 
         <!-- Тарифы страница -->
-        <div class="page-container" id="pricingPage">
+        <div class="page-container initial-state" id="pricingPage">
             <div class="pricing-header">
                 <h1 class="pricing-title">Тарифные планы</h1>
                 <p class="pricing-subtitle">Информация о вашей подписке</p>
             </div>
 
             <!-- Payment Method Dropdown -->
-            <div class="payment-method-card">
+            <div class="payment-method-card centered">
                 <div class="payment-method-dropdown" id="paymentMethodDropdown">
                     <div class="payment-method-select" onclick="togglePaymentMethod()">
                         <div class="payment-method-select-placeholder">
