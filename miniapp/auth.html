@@ -441,10 +441,32 @@
                 card.classList.remove('fade-out');
                 card.classList.add('fade-in');
                 
-                // Фокус на поле ввода OTP
+                // Фокус на поле ввода OTP и настройка обработчиков
                 setTimeout(() => {
                     const otpInput = document.getElementById('authOtp');
                     if (otpInput) {
+                        // Добавляем обработчик для автоматической отправки при вводе 6 цифр
+                        otpInput.addEventListener('input', function() {
+                            if (this.value.length === 6) {
+                                // Небольшая задержка перед автоматической отправкой
+                                setTimeout(() => {
+                                    this.blur();
+                                    if (document.activeElement && document.activeElement !== document.body) {
+                                        document.activeElement.blur();
+                                    }
+                                    handleVerifyOtp(email, telegramId);
+                                }, 300);
+                            }
+                        });
+                        
+                        // Обработчик для скрытия клавиатуры при потере фокуса
+                        otpInput.addEventListener('blur', function() {
+                            this.blur();
+                            if (document.activeElement && document.activeElement !== document.body) {
+                                document.activeElement.blur();
+                            }
+                        });
+                        
                         otpInput.focus();
                     }
                     // Запускаем таймер для кнопки повторной отправки
