@@ -23,7 +23,7 @@
             color: #000000;
             min-height: 100vh;
             padding: 0;
-            padding-bottom: 20px;
+            padding-bottom: 80px; /* Отступ для bottom navigation bar */
         }
 
         /* Promo Banners */
@@ -1294,6 +1294,106 @@
                 font-size: 28px;
             }
         }
+
+        /* Bottom Navigation Bar */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border-top: 1px solid #e5e5ea;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 8px 0;
+            padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+            z-index: 1000;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            flex: 1;
+            max-width: 120px;
+        }
+
+        .bottom-nav-item:active {
+            opacity: 0.6;
+        }
+
+        .bottom-nav-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .bottom-nav-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .bottom-nav-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .bottom-nav-item.active .bottom-nav-icon svg path,
+        .bottom-nav-item.active .bottom-nav-icon svg circle,
+        .bottom-nav-item.active .bottom-nav-icon svg rect,
+        .bottom-nav-item.active .bottom-nav-icon svg {
+            fill: #007AFF;
+            color: #007AFF;
+        }
+
+        .bottom-nav-item.active .bottom-nav-icon img {
+            filter: brightness(0) saturate(100%) invert(37%) sepia(96%) saturate(2476%) hue-rotate(200deg) brightness(100%) contrast(101%);
+        }
+
+        .bottom-nav-item:not(.active) .bottom-nav-icon svg path,
+        .bottom-nav-item:not(.active) .bottom-nav-icon svg circle,
+        .bottom-nav-item:not(.active) .bottom-nav-icon svg rect,
+        .bottom-nav-item:not(.active) .bottom-nav-icon svg {
+            fill: #8e8e93;
+            color: #8e8e93;
+        }
+
+        .bottom-nav-item:not(.active) .bottom-nav-icon img {
+            filter: brightness(0) saturate(100%) invert(60%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(90%) contrast(90%);
+        }
+
+        .bottom-nav-text {
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: 2px;
+        }
+
+        .bottom-nav-item.active .bottom-nav-text {
+            color: #007AFF;
+        }
+
+        .bottom-nav-item:not(.active) .bottom-nav-text {
+            color: #8e8e93;
+        }
+
+        /* Page containers */
+        .page-container {
+            display: none;
+        }
+
+        .page-container.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -1307,11 +1407,50 @@
 
     <!-- Main Content -->
     <div class="content" id="content">
-        <div class="loading" id="loadingScreen">
-            <div class="loading-text">
-                Загрузка
-                <div class="loading-spinner"></div>
+        <!-- Главная страница -->
+        <div class="page-container active" id="homePage">
+            <div class="loading" id="loadingScreen">
+                <div class="loading-text">
+                    Загрузка
+                    <div class="loading-spinner"></div>
+                </div>
             </div>
+        </div>
+
+        <!-- Профиль страница -->
+        <div class="page-container" id="profilePage">
+            <div style="padding: 20px; text-align: center; color: #8e8e93;">
+                <p>Страница профиля будет добавлена позже</p>
+            </div>
+        </div>
+
+        <!-- Помощь страница -->
+        <div class="page-container" id="helpPage">
+            <div style="padding: 20px; text-align: center; color: #8e8e93;">
+                <p>Страница помощи будет добавлена позже</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <div class="bottom-nav">
+        <div class="bottom-nav-item active" data-page="home" onclick="switchPage('home')">
+            <div class="bottom-nav-icon">
+                <img src="/api/icons/bottombar/home.svg" alt="Главная">
+            </div>
+            <div class="bottom-nav-text">Главная</div>
+        </div>
+        <div class="bottom-nav-item" data-page="profile" onclick="switchPage('profile')">
+            <div class="bottom-nav-icon">
+                <img src="/api/icons/bottombar/profile.svg" alt="Профиль">
+            </div>
+            <div class="bottom-nav-text">Профиль</div>
+        </div>
+        <div class="bottom-nav-item" data-page="help" onclick="switchPage('help')">
+            <div class="bottom-nav-icon">
+                <img src="/api/icons/bottombar/help.svg" alt="Помощь">
+            </div>
+            <div class="bottom-nav-text">Помощь</div>
         </div>
     </div>
 
@@ -1722,9 +1861,32 @@
             requestAnimationFrame(animate);
         }
 
+        // Переключение страниц
+        function switchPage(page) {
+            // Убираем активный класс со всех страниц
+            const pages = document.querySelectorAll('.page-container');
+            pages.forEach(p => p.classList.remove('active'));
+
+            // Убираем активный класс со всех элементов навбара
+            const navItems = document.querySelectorAll('.bottom-nav-item');
+            navItems.forEach(item => item.classList.remove('active'));
+
+            // Активируем выбранную страницу
+            const targetPage = document.getElementById(page + 'Page');
+            if (targetPage) {
+                targetPage.classList.add('active');
+            }
+
+            // Активируем выбранный элемент навбара
+            const targetNavItem = document.querySelector(`[data-page="${page}"]`);
+            if (targetNavItem) {
+                targetNavItem.classList.add('active');
+            }
+        }
+
         // Отображение данных подписки
         function displaySubscriptionData(data) {
-            const content = document.getElementById('content');
+            const homePage = document.getElementById('homePage');
             
             // Статус подписки
             const status = data.status || 'UNKNOWN';
@@ -2145,7 +2307,7 @@
                 </div>
             `;
 
-            content.innerHTML = html;
+            homePage.innerHTML = html;
             
             // Запускаем анимацию заполнения круговой диаграммы
             setTimeout(() => {
@@ -2168,8 +2330,8 @@
 
         // Отображение ошибки
         function showError(message) {
-            const content = document.getElementById('content');
-            content.innerHTML = `
+            const homePage = document.getElementById('homePage');
+            homePage.innerHTML = `
                 <div class="error">
                     <div class="error-icon">⚠️</div>
                     <div class="error-title">Ошибка</div>
