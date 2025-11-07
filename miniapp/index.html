@@ -1406,31 +1406,32 @@
         }
 
         .pricing-header {
-            margin-bottom: 24px;
-            padding-top: 20px;
+            margin-bottom: 20px;
+            padding-top: 16px;
+            text-align: center;
         }
 
         .pricing-title {
-            font-size: 28px;
+            font-size: 22px;
             font-weight: 700;
             color: #000000;
-            margin-bottom: 8px;
-            letter-spacing: -0.5px;
+            margin-bottom: 6px;
+            letter-spacing: -0.3px;
         }
 
         .pricing-subtitle {
-            font-size: 15px;
+            font-size: 14px;
             color: #8e8e93;
             margin: 0;
-            line-height: 1.5;
+            line-height: 1.4;
         }
 
         /* Payment Method Dropdown */
         .payment-method-card {
             background: #ffffff;
             border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 24px;
+            padding: 16px;
+            margin-bottom: 16px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
@@ -1440,11 +1441,11 @@
 
         .payment-method-select {
             width: 100%;
-            padding: 16px;
+            padding: 12px 14px;
             border: 1.5px solid #007AFF;
-            border-radius: 12px;
+            border-radius: 10px;
             background: #ffffff;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 500;
             color: #000000;
             cursor: pointer;
@@ -1557,14 +1558,14 @@
         .pricing-plan {
             background: #ffffff;
             border-radius: 0;
-            padding: 20px;
+            padding: 16px 20px;
             position: relative;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             border: 2px solid transparent;
             border-bottom: 1px solid #e5e5ea;
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 14px;
             cursor: pointer;
         }
 
@@ -1590,7 +1591,7 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
         }
 
         .pricing-plan-header-row {
@@ -1601,45 +1602,45 @@
         }
 
         .pricing-plan-duration {
-            font-size: 18px;
-            font-weight: 700;
+            font-size: 16px;
+            font-weight: 600;
             color: #000000;
         }
 
         .pricing-plan-bonus {
-            font-size: 13px;
+            font-size: 12px;
             color: #007AFF;
             font-weight: 600;
             background: rgba(0, 122, 255, 0.1);
-            padding: 4px 10px;
-            border-radius: 8px;
+            padding: 3px 8px;
+            border-radius: 6px;
             white-space: nowrap;
         }
 
         .pricing-plan-price-row {
             display: flex;
             align-items: baseline;
-            gap: 6px;
+            gap: 4px;
             flex-wrap: wrap;
         }
 
         .pricing-plan-amount {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 700;
             color: #000000;
-            letter-spacing: -0.5px;
+            letter-spacing: -0.3px;
         }
 
         .pricing-plan-currency {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 600;
             color: #8e8e93;
         }
 
         .pricing-plan-per-day {
-            font-size: 14px;
+            font-size: 13px;
             color: #8e8e93;
-            margin-left: 4px;
+            margin-left: 2px;
         }
 
         .pricing-plan-per-month {
@@ -1652,14 +1653,14 @@
         .pricing-info-block {
             background: #ffffff;
             border-radius: 12px;
-            padding: 20px;
-            margin-top: 24px;
-            margin-bottom: 20px;
+            padding: 16px;
+            margin-top: 16px;
+            margin-bottom: 16px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
         .pricing-info-text {
-            font-size: 14px;
+            font-size: 13px;
             color: #000000;
             line-height: 1.5;
             margin: 0;
@@ -1671,15 +1672,15 @@
             background: #007AFF;
             color: #ffffff;
             border: none;
-            padding: 18px;
+            padding: 14px;
             border-radius: 12px;
-            font-size: 17px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
-            margin-top: 8px;
+            margin-top: 0;
         }
 
         .pricing-payment-button::before {
@@ -1711,8 +1712,8 @@
         }
 
         .pricing-plan-radio {
-            width: 24px;
-            height: 24px;
+            width: 22px;
+            height: 22px;
             border: 2px solid #c7c7cc;
             border-radius: 50%;
             position: relative;
@@ -1730,8 +1731,8 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) scale(0);
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             background: #007AFF;
             border-radius: 50%;
             transition: transform 0.2s;
@@ -2350,43 +2351,43 @@
             initPricingPage();
         }
 
-        // Данные тарифов (в разных валютах)
+        // Данные тарифов (в разных валютах) - порядок от дорогого к дешевому
         const pricingData = {
             kzt: [
-                { days: 14, price: 2190, bonus: null },
-                { days: 30, price: 2990, bonus: null },
+                { days: 180, price: 15290, bonus: 30 },
                 { days: 90, price: 7990, bonus: null },
-                { days: 180, price: 15290, bonus: 30 }
+                { days: 30, price: 2990, bonus: null },
+                { days: 14, price: 2190, bonus: null }
             ],
             kgz: [
-                { days: 14, price: 1950, bonus: null },
-                { days: 30, price: 2650, bonus: null },
+                { days: 180, price: 13600, bonus: 30 },
                 { days: 90, price: 7100, bonus: null },
-                { days: 180, price: 13600, bonus: 30 }
+                { days: 30, price: 2650, bonus: null },
+                { days: 14, price: 1950, bonus: null }
             ],
             rub: [
-                { days: 14, price: 450, bonus: null },
-                { days: 30, price: 600, bonus: null },
+                { days: 180, price: 2800, bonus: 30 },
                 { days: 90, price: 1500, bonus: null },
-                { days: 180, price: 2800, bonus: 30 }
+                { days: 30, price: 600, bonus: null },
+                { days: 14, price: 450, bonus: null }
             ],
             stars: [
-                { days: 14, price: 500, bonus: null },
-                { days: 30, price: 700, bonus: null },
+                { days: 180, price: 3200, bonus: 30 },
                 { days: 90, price: 1800, bonus: null },
-                { days: 180, price: 3200, bonus: 30 }
+                { days: 30, price: 700, bonus: null },
+                { days: 14, price: 500, bonus: null }
             ],
             crypto: [
-                { days: 14, price: 5.5, bonus: null },
-                { days: 30, price: 7.5, bonus: null },
+                { days: 180, price: 32.0, bonus: 30 },
                 { days: 90, price: 18.5, bonus: null },
-                { days: 180, price: 32.0, bonus: 30 }
+                { days: 30, price: 7.5, bonus: null },
+                { days: 14, price: 5.5, bonus: null }
             ],
             cny: [
-                { days: 14, price: 35, bonus: null },
-                { days: 30, price: 48, bonus: null },
+                { days: 180, price: 220, bonus: 30 },
                 { days: 90, price: 120, bonus: null },
-                { days: 180, price: 220, bonus: 30 }
+                { days: 30, price: 48, bonus: null },
+                { days: 14, price: 35, bonus: null }
             ]
         };
 
@@ -2442,10 +2443,10 @@
             if (!selectedPaymentMethod) {
                 // Показываем заблокированные тарифы
                 const defaultPlans = [
-                    { days: 14, bonus: null },
-                    { days: 30, bonus: null },
+                    { days: 180, bonus: 30 },
                     { days: 90, bonus: null },
-                    { days: 180, bonus: 30 }
+                    { days: 30, bonus: null },
+                    { days: 14, bonus: null }
                 ];
                 
                 plansContainer.innerHTML = defaultPlans.map((plan, index) => `
