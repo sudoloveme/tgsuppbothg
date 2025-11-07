@@ -1400,7 +1400,8 @@
 
         /* Pricing Page */
         .pricing-container {
-            padding: 0 16px 100px;
+            padding: 0;
+            padding-bottom: 100px;
             max-width: 600px;
             margin: 0 auto;
         }
@@ -1766,13 +1767,13 @@
         <!-- Тарифы страница -->
         <div class="page-container" id="pricingPage">
             <div class="pricing-container">
-                <div class="pricing-header">
+                <div class="pricing-header" style="padding: 0 16px;">
                     <h1 class="pricing-title">Тарифные планы</h1>
                     <p class="pricing-subtitle">Информация о вашей подписке</p>
                 </div>
 
                 <!-- Payment Method Dropdown -->
-                <div class="payment-method-card">
+                <div class="payment-method-card" style="padding: 0 16px;">
                     <div class="payment-method-dropdown" id="paymentMethodDropdown">
                         <div class="payment-method-select" onclick="togglePaymentMethod()">
                             <div class="payment-method-select-placeholder">
@@ -1813,21 +1814,23 @@
                 </div>
 
                 <!-- Pricing Plans -->
-                <div class="pricing-plans" id="pricingPlans">
+                <div class="pricing-plans" id="pricingPlans" style="padding: 0 16px;">
                     <!-- Plans will be rendered by JavaScript -->
                 </div>
 
                 <!-- Info Block -->
-                <div class="pricing-info-block">
+                <div class="pricing-info-block" style="margin-left: 16px; margin-right: 16px;">
                     <p class="pricing-info-text">
                         Обратите внимание: ежемесячно ваша подписка включает 200 GB трафика. Сброс трафика происходит 1 числа каждого месяца. Вы также сможете приобрести сброс трафика за отдельную плату.
                     </p>
                 </div>
 
                 <!-- Payment Button -->
-                <button class="pricing-payment-button" id="pricingPaymentButton" onclick="handlePayment()" disabled>
-                    Оплатить
-                </button>
+                <div style="padding: 0 16px;">
+                    <button class="pricing-payment-button" id="pricingPaymentButton" onclick="handlePayment()" disabled>
+                        Оплатить
+                    </button>
+                </div>
             </div>
         </div>
     </div>
