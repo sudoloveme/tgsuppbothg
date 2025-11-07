@@ -136,6 +136,78 @@
             opacity: 0.8;
         }
 
+        /* Welcome Card for new users */
+        .welcome-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .welcome-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #000000;
+            margin-bottom: 12px;
+        }
+
+        .welcome-text {
+            font-size: 14px;
+            color: #000000;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .welcome-button {
+            width: 100%;
+            background: #007AFF;
+            color: #ffffff;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .welcome-button:active {
+            opacity: 0.8;
+        }
+
+        /* Blurred card overlay */
+        .card-blurred {
+            position: relative;
+            filter: blur(4px);
+            pointer-events: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .card-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            border-radius: 12px;
+        }
+
+        .card-overlay-text {
+            font-size: 14px;
+            color: #000000;
+            text-align: center;
+            padding: 20px;
+            line-height: 1.5;
+            font-weight: 500;
+        }
+
         /* Traffic Limit Exceeded Card */
         .traffic-limit-card {
             background: #ffffff;
@@ -1710,8 +1782,20 @@
                 trafficCircleClass = 'warning';
             }
 
+            // Проверяем условие: DISABLED и subLastOpenedAt === null
+            const isNewDisabledUser = status === 'DISABLED' && (data.subLastOpenedAt === null || data.subLastOpenedAt === undefined);
+
             const html = `
-                ${status === 'DISABLED' ? `
+                ${isNewDisabledUser ? `
+                <!-- Приветственная карточка для новых пользователей -->
+                <div class="welcome-card">
+                    <div class="welcome-title">Привет!</div>
+                    <div class="welcome-text">Чтобы начать использовать наш сервис, вам нужно приобрести подписку. Ознакомиться с тарифными планами можно ниже по кнопке -</div>
+                    <button class="welcome-button" onclick="tg.showAlert('Функционал скоро появится')">
+                        К тарифам
+                    </button>
+                </div>
+                ` : status === 'DISABLED' ? `
                 <!-- Блокированный аккаунт -->
                 <div class="blocked-card">
                     <div class="blocked-title">Ваш аккаунт заблокирован</div>
@@ -1762,6 +1846,7 @@
                             ${statusText}
                         </div>
                     </div>
+                    ${!isNewDisabledUser ? `
                     <div class="info-row">
                         <div class="info-label">Дата окончания</div>
                         <div class="info-value">${expireAt}</div>
@@ -1772,14 +1857,20 @@
                         <div class="info-value">${daysUntilExpiry} ${daysUntilExpiry === 1 ? 'день' : daysUntilExpiry < 5 ? 'дня' : 'дней'}</div>
                     </div>
                     ` : ''}
-                    <button class="renew-button" onclick="alert('Функция будет добавлена позже')">
+                    ` : ''}
+                    <button class="renew-button" onclick="tg.showAlert('Функционал скоро появится')">
                         Продлить подписку
                     </button>
                 </div>
 
                 <!-- Трафик -->
                 ${data.trafficLimitBytes ? `
-                    <div class="traffic-card">
+                    <div class="traffic-card ${isNewDisabledUser ? 'card-blurred' : ''}" style="position: relative;">
+                        ${isNewDisabledUser ? `
+                        <div class="card-overlay">
+                            <div class="card-overlay-text">Оформите подписку, чтобы получить доступ к разделу детализации трафика</div>
+                        </div>
+                        ` : ''}
                         <div class="traffic-header">
                             <div class="traffic-title">Трафик</div>
                             <button class="traffic-details-btn" onclick="toggleTrafficDetails()">Детализация</button>
@@ -1843,7 +1934,12 @@
                 ` : ''}
 
                 <!-- Установка -->
-                <div class="installation-card">
+                <div class="installation-card ${isNewDisabledUser ? 'card-blurred' : ''}" style="position: relative;">
+                    ${isNewDisabledUser ? `
+                    <div class="card-overlay">
+                        <div class="card-overlay-text">Оформите подписку, чтобы получить доступ к разделу установки</div>
+                    </div>
+                    ` : ''}
                     <div class="installation-title">Установка</div>
                     <div class="installation-grid">
                         <button class="installation-btn" onclick="toggleInstallationInstructions('ios')">
