@@ -1400,7 +1400,7 @@
 
         /* Pricing Page */
         .pricing-container {
-            padding: 20px 16px 100px;
+            padding: 0 16px 100px;
             max-width: 600px;
             margin: 0 auto;
         }
@@ -1428,11 +1428,7 @@
 
         /* Payment Method Dropdown */
         .payment-method-card {
-            background: #ffffff;
-            border-radius: 12px;
-            padding: 16px;
             margin-bottom: 16px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
         .payment-method-dropdown {
@@ -1544,33 +1540,28 @@
         .pricing-plans-wrapper {
             background: #ffffff;
             border-radius: 12px;
-            padding: 0;
+            padding: 12px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            overflow: hidden;
         }
 
         .pricing-plans {
             display: flex;
             flex-direction: column;
-            gap: 0;
+            gap: 12px;
         }
 
         .pricing-plan {
             background: #ffffff;
-            border-radius: 0;
+            border-radius: 12px;
             padding: 16px 20px;
             position: relative;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             border: 2px solid transparent;
-            border-bottom: 1px solid #e5e5ea;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             display: flex;
             align-items: center;
             gap: 14px;
             cursor: pointer;
-        }
-
-        .pricing-plan:last-child {
-            border-bottom: none;
         }
 
         .pricing-plan.disabled {
@@ -1581,6 +1572,7 @@
         .pricing-plan.selected {
             border-color: #007AFF;
             background: #ffffff;
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.15);
         }
 
         .pricing-plan:active:not(.disabled) {
