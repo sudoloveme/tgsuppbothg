@@ -1399,7 +1399,7 @@
         }
 
         /* Pricing Page */
-        .pricing-container {
+        #pricingPage {
             padding-bottom: 100px;
         }
 
@@ -1765,70 +1765,68 @@
 
         <!-- Тарифы страница -->
         <div class="page-container" id="pricingPage">
-            <div class="content pricing-container">
-                <div class="pricing-header">
-                    <h1 class="pricing-title">Тарифные планы</h1>
-                    <p class="pricing-subtitle">Информация о вашей подписке</p>
-                </div>
+            <div class="pricing-header">
+                <h1 class="pricing-title">Тарифные планы</h1>
+                <p class="pricing-subtitle">Информация о вашей подписке</p>
+            </div>
 
-                <!-- Payment Method Dropdown -->
-                <div class="payment-method-card">
-                    <div class="payment-method-dropdown" id="paymentMethodDropdown">
-                        <div class="payment-method-select" onclick="togglePaymentMethod()">
-                            <div class="payment-method-select-placeholder">
-                                <img src="/api/icons/waytopay/placeholder.svg" alt="" class="payment-method-select-icon" id="paymentMethodIcon" style="display: none;">
-                                <span class="payment-method-select-text" id="paymentMethodText">Выберите способ оплаты</span>
-                            </div>
-                            <svg class="payment-method-chevron" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                                <path d="M5 7.5L10 12.5L15 7.5" stroke="#007AFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
+            <!-- Payment Method Dropdown -->
+            <div class="payment-method-card">
+                <div class="payment-method-dropdown" id="paymentMethodDropdown">
+                    <div class="payment-method-select" onclick="togglePaymentMethod()">
+                        <div class="payment-method-select-placeholder">
+                            <img src="/api/icons/waytopay/placeholder.svg" alt="" class="payment-method-select-icon" id="paymentMethodIcon" style="display: none;">
+                            <span class="payment-method-select-text" id="paymentMethodText">Выберите способ оплаты</span>
                         </div>
-                        <div class="payment-method-options" id="paymentMethodOptions">
-                            <div class="payment-method-option" onclick="selectPaymentMethod('kzt', 'KZT - Тенге', 'kzt.png')">
-                                <img src="/api/icons/waytopay/kzt.png" alt="KZT" class="payment-method-option-icon">
-                                <span class="payment-method-option-text">KZT - Тенге</span>
-                            </div>
-                            <div class="payment-method-option" onclick="selectPaymentMethod('kgz', 'KGZ - Кыргызский сом', 'kgz.png')">
-                                <img src="/api/icons/waytopay/kgz.png" alt="KGZ" class="payment-method-option-icon">
-                                <span class="payment-method-option-text">KGZ - Кыргызский сом</span>
-                            </div>
-                            <div class="payment-method-option" onclick="selectPaymentMethod('rub', 'RUB - Российский рубль', 'rub.png')">
-                                <img src="/api/icons/waytopay/rub.png" alt="RUB" class="payment-method-option-icon">
-                                <span class="payment-method-option-text">RUB - Российский рубль</span>
-                            </div>
-                            <div class="payment-method-option" onclick="selectPaymentMethod('stars', 'Telegram Stars', 'stars.svg')">
-                                <img src="/api/icons/waytopay/stars.svg" alt="Stars" class="payment-method-option-icon">
-                                <span class="payment-method-option-text">Telegram Stars</span>
-                            </div>
-                            <div class="payment-method-option" onclick="selectPaymentMethod('crypto', 'USDT, TON, ETH, BTC', 'crypto.svg')">
-                                <img src="/api/icons/waytopay/crypto.svg" alt="Crypto" class="payment-method-option-icon">
-                                <span class="payment-method-option-text">USDT, TON, ETH, BTC</span>
-                            </div>
-                            <div class="payment-method-option" onclick="selectPaymentMethod('cny', 'CNY - Alipay', 'alipay.svg')">
-                                <img src="/api/icons/waytopay/alipay.svg" alt="Alipay" class="payment-method-option-icon">
-                                <span class="payment-method-option-text">CNY - Alipay</span>
-                            </div>
+                        <svg class="payment-method-chevron" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M5 7.5L10 12.5L15 7.5" stroke="#007AFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="payment-method-options" id="paymentMethodOptions">
+                        <div class="payment-method-option" onclick="selectPaymentMethod('kzt', 'KZT - Тенге', 'kzt.png')">
+                            <img src="/api/icons/waytopay/kzt.png" alt="KZT" class="payment-method-option-icon">
+                            <span class="payment-method-option-text">KZT - Тенге</span>
+                        </div>
+                        <div class="payment-method-option" onclick="selectPaymentMethod('kgz', 'KGZ - Кыргызский сом', 'kgz.png')">
+                            <img src="/api/icons/waytopay/kgz.png" alt="KGZ" class="payment-method-option-icon">
+                            <span class="payment-method-option-text">KGZ - Кыргызский сом</span>
+                        </div>
+                        <div class="payment-method-option" onclick="selectPaymentMethod('rub', 'RUB - Российский рубль', 'rub.png')">
+                            <img src="/api/icons/waytopay/rub.png" alt="RUB" class="payment-method-option-icon">
+                            <span class="payment-method-option-text">RUB - Российский рубль</span>
+                        </div>
+                        <div class="payment-method-option" onclick="selectPaymentMethod('stars', 'Telegram Stars', 'stars.svg')">
+                            <img src="/api/icons/waytopay/stars.svg" alt="Stars" class="payment-method-option-icon">
+                            <span class="payment-method-option-text">Telegram Stars</span>
+                        </div>
+                        <div class="payment-method-option" onclick="selectPaymentMethod('crypto', 'USDT, TON, ETH, BTC', 'crypto.svg')">
+                            <img src="/api/icons/waytopay/crypto.svg" alt="Crypto" class="payment-method-option-icon">
+                            <span class="payment-method-option-text">USDT, TON, ETH, BTC</span>
+                        </div>
+                        <div class="payment-method-option" onclick="selectPaymentMethod('cny', 'CNY - Alipay', 'alipay.svg')">
+                            <img src="/api/icons/waytopay/alipay.svg" alt="Alipay" class="payment-method-option-icon">
+                            <span class="payment-method-option-text">CNY - Alipay</span>
                         </div>
                     </div>
                 </div>
-
-                <!-- Pricing Plans -->
-                <div class="pricing-plans" id="pricingPlans">
-                    <!-- Plans will be rendered by JavaScript -->
-                </div>
-
-                <!-- Info Block -->
-                <div class="pricing-info-block">
-                    <p class="pricing-info-text">
-                        Обратите внимание: ежемесячно ваша подписка включает 200 GB трафика. Сброс трафика происходит 1 числа каждого месяца. Вы также сможете приобрести сброс трафика за отдельную плату.
-                    </p>
-                </div>
-
-                <!-- Payment Button -->
-                <button class="pricing-payment-button" id="pricingPaymentButton" onclick="handlePayment()" disabled>
-                    Оплатить
-                </button>
             </div>
+
+            <!-- Pricing Plans -->
+            <div class="pricing-plans" id="pricingPlans">
+                <!-- Plans will be rendered by JavaScript -->
+            </div>
+
+            <!-- Info Block -->
+            <div class="pricing-info-block">
+                <p class="pricing-info-text">
+                    Обратите внимание: ежемесячно ваша подписка включает 200 GB трафика. Сброс трафика происходит 1 числа каждого месяца. Вы также сможете приобрести сброс трафика за отдельную плату.
+                </p>
+            </div>
+
+            <!-- Payment Button -->
+            <button class="pricing-payment-button" id="pricingPaymentButton" onclick="handlePayment()" disabled>
+                Оплатить
+            </button>
         </div>
     </div>
 
