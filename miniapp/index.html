@@ -89,9 +89,9 @@
             padding-top: env(safe-area-inset-top, 30px);
         }
 
-        /* На десктопной версии добавляем отступ сверху */
+        /* На десктопной версии добавляем отступ сверху и убираем safe-area */
         .content.desktop {
-            padding-top: 20px;
+            padding-top: 20px !important;
         }
 
         /* На мобильных устройствах, если баннеры скрыты, добавляем больше отступ сверху */
@@ -1487,12 +1487,26 @@
             return !mobileRegex.test(userAgent.toLowerCase());
         }
         
-        // Применяем класс для десктопной версии
-        if (isDesktopDevice()) {
-            const content = document.getElementById('content');
-            if (content) {
-                content.classList.add('desktop');
+        // Применяем класс для десктопной версии после загрузки DOM
+        function applyDesktopStyles() {
+            if (isDesktopDevice()) {
+                const content = document.getElementById('content');
+                if (content) {
+                    content.classList.add('desktop');
+                    console.log('Desktop device detected, added desktop class');
+                } else {
+                    console.log('Content element not found');
+                }
+            } else {
+                console.log('Not a desktop device');
             }
+        }
+        
+        // Применяем сразу и после загрузки DOM
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', applyDesktopStyles);
+        } else {
+            applyDesktopStyles();
         }
         
         // Настройка цветов
