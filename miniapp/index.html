@@ -1400,131 +1400,200 @@
 
         /* Pricing Page */
         .pricing-container {
-            padding: 20px 16px;
+            padding: 20px 16px 100px;
             max-width: 600px;
             margin: 0 auto;
         }
 
         .pricing-header {
             text-align: center;
-            margin-bottom: 32px;
+            margin-bottom: 40px;
+            padding-top: 20px;
         }
 
         .pricing-title {
-            font-size: 28px;
+            font-size: 32px;
             font-weight: 700;
             color: #000000;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
         }
 
         .pricing-subtitle {
-            font-size: 16px;
+            font-size: 17px;
             color: #8e8e93;
             margin: 0;
+            line-height: 1.5;
         }
 
         .pricing-features {
-            background: #ffffff;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 24px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+            border-radius: 16px;
+            padding: 24px 20px;
+            margin-bottom: 32px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e5e5ea;
         }
 
         .pricing-feature-item {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 12px 0;
-            border-bottom: 1px solid #e5e5ea;
+            gap: 16px;
+            padding: 16px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         }
 
         .pricing-feature-item:last-child {
             border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .pricing-feature-item:first-child {
+            padding-top: 0;
         }
 
         .pricing-feature-icon {
-            font-size: 24px;
-            width: 32px;
-            text-align: center;
+            font-size: 28px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 122, 255, 0.1);
+            border-radius: 10px;
+            flex-shrink: 0;
         }
 
         .pricing-feature-text {
             font-size: 16px;
             color: #000000;
             flex: 1;
+            font-weight: 500;
+            line-height: 1.4;
         }
 
         .pricing-plans {
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 20px;
         }
 
         .pricing-plan {
             background: #ffffff;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
             position: relative;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+            overflow: hidden;
+        }
+
+        .pricing-plan::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #e5e5ea 0%, #e5e5ea 100%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .pricing-plan:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
         }
 
         .pricing-plan:active {
-            transform: scale(0.98);
+            transform: translateY(-2px);
         }
 
         .pricing-plan-featured {
             border: 2px solid #007AFF;
-            background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+            background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 50%, #ffffff 100%);
+            box-shadow: 0 8px 32px rgba(0, 122, 255, 0.15);
+            transform: scale(1.02);
+        }
+
+        .pricing-plan-featured::before {
+            opacity: 1;
+            background: linear-gradient(90deg, #007AFF 0%, #0051D5 100%);
+        }
+
+        .pricing-plan-featured:hover {
+            transform: scale(1.03) translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 122, 255, 0.2);
         }
 
         .pricing-plan-badge {
             position: absolute;
-            top: -10px;
-            right: 20px;
-            background: #007AFF;
+            top: 16px;
+            right: 16px;
+            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
             color: #ffffff;
-            font-size: 12px;
-            font-weight: 600;
-            padding: 4px 12px;
-            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+            z-index: 1;
         }
 
         .pricing-plan-header {
-            margin-bottom: 20px;
+            margin-bottom: 24px;
+            padding-right: 80px;
         }
 
         .pricing-plan-title {
-            font-size: 20px;
-            font-weight: 600;
+            font-size: 24px;
+            font-weight: 700;
             color: #000000;
             margin-bottom: 8px;
+            letter-spacing: -0.3px;
         }
 
         .pricing-plan-bonus {
             font-size: 14px;
             color: #007AFF;
-            font-weight: 500;
-            margin-bottom: 12px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: inline-block;
+            background: rgba(0, 122, 255, 0.1);
+            padding: 4px 10px;
+            border-radius: 8px;
         }
 
         .pricing-plan-price {
             display: flex;
             align-items: baseline;
-            gap: 4px;
+            gap: 6px;
+            margin-top: 8px;
         }
 
         .pricing-plan-amount {
-            font-size: 32px;
+            font-size: 40px;
             font-weight: 700;
             color: #000000;
+            letter-spacing: -1px;
+            line-height: 1;
         }
 
         .pricing-plan-currency {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 600;
             color: #8e8e93;
+            margin-left: 2px;
+        }
+
+        .pricing-plan-period {
+            font-size: 14px;
+            color: #8e8e93;
+            margin-left: 4px;
+            font-weight: 500;
         }
 
         .pricing-plan-button {
@@ -1532,25 +1601,49 @@
             background: #007AFF;
             color: #ffffff;
             border: none;
-            padding: 16px;
-            border-radius: 12px;
-            font-size: 16px;
+            padding: 18px;
+            border-radius: 14px;
+            font-size: 17px;
             font-weight: 600;
             cursor: pointer;
-            transition: opacity 0.2s, background 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pricing-plan-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .pricing-plan-button:active::before {
+            width: 300px;
+            height: 300px;
         }
 
         .pricing-plan-button:active {
-            opacity: 0.8;
+            transform: scale(0.97);
         }
 
         .pricing-plan-button-featured {
-            background: #007AFF;
-            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
+        }
+
+        .pricing-plan-button-featured:hover {
+            box-shadow: 0 8px 24px rgba(0, 122, 255, 0.5);
         }
 
         .pricing-plan-button-featured:active {
-            opacity: 0.9;
+            box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
         }
     </style>
 </head>
@@ -1623,6 +1716,7 @@
                             <div class="pricing-plan-price">
                                 <span class="pricing-plan-amount">2 190</span>
                                 <span class="pricing-plan-currency">₸</span>
+                                <span class="pricing-plan-period">/ 14 дней</span>
                             </div>
                         </div>
                         <button class="pricing-plan-button" onclick="tg.showAlert('Функционал оплаты скоро появится')">
@@ -1636,6 +1730,7 @@
                             <div class="pricing-plan-price">
                                 <span class="pricing-plan-amount">2 990</span>
                                 <span class="pricing-plan-currency">₸</span>
+                                <span class="pricing-plan-period">/ 30 дней</span>
                             </div>
                         </div>
                         <button class="pricing-plan-button" onclick="tg.showAlert('Функционал оплаты скоро появится')">
@@ -1649,6 +1744,7 @@
                             <div class="pricing-plan-price">
                                 <span class="pricing-plan-amount">7 990</span>
                                 <span class="pricing-plan-currency">₸</span>
+                                <span class="pricing-plan-period">/ 90 дней</span>
                             </div>
                         </div>
                         <button class="pricing-plan-button" onclick="tg.showAlert('Функционал оплаты скоро появится')">
@@ -1664,6 +1760,7 @@
                             <div class="pricing-plan-price">
                                 <span class="pricing-plan-amount">15 290</span>
                                 <span class="pricing-plan-currency">₸</span>
+                                <span class="pricing-plan-period">/ 210 дней</span>
                             </div>
                         </div>
                         <button class="pricing-plan-button pricing-plan-button-featured" onclick="tg.showAlert('Функционал оплаты скоро появится')">
