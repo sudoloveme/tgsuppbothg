@@ -1397,6 +1397,161 @@
         .page-container.active {
             display: block;
         }
+
+        /* Pricing Page */
+        .pricing-container {
+            padding: 20px 16px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .pricing-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .pricing-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #000000;
+            margin-bottom: 8px;
+        }
+
+        .pricing-subtitle {
+            font-size: 16px;
+            color: #8e8e93;
+            margin: 0;
+        }
+
+        .pricing-features {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .pricing-feature-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #e5e5ea;
+        }
+
+        .pricing-feature-item:last-child {
+            border-bottom: none;
+        }
+
+        .pricing-feature-icon {
+            font-size: 24px;
+            width: 32px;
+            text-align: center;
+        }
+
+        .pricing-feature-text {
+            font-size: 16px;
+            color: #000000;
+            flex: 1;
+        }
+
+        .pricing-plans {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .pricing-plan {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .pricing-plan:active {
+            transform: scale(0.98);
+        }
+
+        .pricing-plan-featured {
+            border: 2px solid #007AFF;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+        }
+
+        .pricing-plan-badge {
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            background: #007AFF;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 12px;
+        }
+
+        .pricing-plan-header {
+            margin-bottom: 20px;
+        }
+
+        .pricing-plan-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #000000;
+            margin-bottom: 8px;
+        }
+
+        .pricing-plan-bonus {
+            font-size: 14px;
+            color: #007AFF;
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+
+        .pricing-plan-price {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+
+        .pricing-plan-amount {
+            font-size: 32px;
+            font-weight: 700;
+            color: #000000;
+        }
+
+        .pricing-plan-currency {
+            font-size: 20px;
+            font-weight: 600;
+            color: #8e8e93;
+        }
+
+        .pricing-plan-button {
+            width: 100%;
+            background: #007AFF;
+            color: #ffffff;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s, background 0.2s;
+        }
+
+        .pricing-plan-button:active {
+            opacity: 0.8;
+        }
+
+        .pricing-plan-button-featured {
+            background: #007AFF;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+        }
+
+        .pricing-plan-button-featured:active {
+            opacity: 0.9;
+        }
     </style>
 </head>
 <body>
@@ -1431,6 +1586,91 @@
         <div class="page-container" id="helpPage">
             <div style="padding: 20px; text-align: center; color: #8e8e93;">
                 <p>Страница помощи будет добавлена позже</p>
+            </div>
+        </div>
+
+        <!-- Тарифы страница -->
+        <div class="page-container" id="pricingPage">
+            <div class="pricing-container">
+                <div class="pricing-header">
+                    <h1 class="pricing-title">Тарифные планы</h1>
+                    <p class="pricing-subtitle">Выберите подходящий план для вас</p>
+                </div>
+
+                <div class="pricing-features">
+                    <div class="pricing-feature-item">
+                        <span class="pricing-feature-icon">📱</span>
+                        <span class="pricing-feature-text">До 3-х личных устройств</span>
+                    </div>
+                    <div class="pricing-feature-item">
+                        <span class="pricing-feature-icon">📊</span>
+                        <span class="pricing-feature-text">200GB ежемесячно</span>
+                    </div>
+                    <div class="pricing-feature-item">
+                        <span class="pricing-feature-icon">⚡</span>
+                        <span class="pricing-feature-text">Премиальные сервера</span>
+                    </div>
+                    <div class="pricing-feature-item">
+                        <span class="pricing-feature-icon">🌏</span>
+                        <span class="pricing-feature-text">Доступ к VPN со всего Китая</span>
+                    </div>
+                </div>
+
+                <div class="pricing-plans">
+                    <div class="pricing-plan">
+                        <div class="pricing-plan-header">
+                            <div class="pricing-plan-title">14 дней</div>
+                            <div class="pricing-plan-price">
+                                <span class="pricing-plan-amount">2 190</span>
+                                <span class="pricing-plan-currency">₸</span>
+                            </div>
+                        </div>
+                        <button class="pricing-plan-button" onclick="tg.showAlert('Функционал оплаты скоро появится')">
+                            Выбрать план
+                        </button>
+                    </div>
+
+                    <div class="pricing-plan">
+                        <div class="pricing-plan-header">
+                            <div class="pricing-plan-title">30 дней</div>
+                            <div class="pricing-plan-price">
+                                <span class="pricing-plan-amount">2 990</span>
+                                <span class="pricing-plan-currency">₸</span>
+                            </div>
+                        </div>
+                        <button class="pricing-plan-button" onclick="tg.showAlert('Функционал оплаты скоро появится')">
+                            Выбрать план
+                        </button>
+                    </div>
+
+                    <div class="pricing-plan">
+                        <div class="pricing-plan-header">
+                            <div class="pricing-plan-title">90 дней</div>
+                            <div class="pricing-plan-price">
+                                <span class="pricing-plan-amount">7 990</span>
+                                <span class="pricing-plan-currency">₸</span>
+                            </div>
+                        </div>
+                        <button class="pricing-plan-button" onclick="tg.showAlert('Функционал оплаты скоро появится')">
+                            Выбрать план
+                        </button>
+                    </div>
+
+                    <div class="pricing-plan pricing-plan-featured">
+                        <div class="pricing-plan-badge">Выгодно</div>
+                        <div class="pricing-plan-header">
+                            <div class="pricing-plan-title">180 дней</div>
+                            <div class="pricing-plan-bonus">+30 дней в подарок</div>
+                            <div class="pricing-plan-price">
+                                <span class="pricing-plan-amount">15 290</span>
+                                <span class="pricing-plan-currency">₸</span>
+                            </div>
+                        </div>
+                        <button class="pricing-plan-button pricing-plan-button-featured" onclick="tg.showAlert('Функционал оплаты скоро появится')">
+                            Выбрать план
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1912,21 +2152,28 @@
             const pages = document.querySelectorAll('.page-container');
             pages.forEach(p => p.classList.remove('active'));
 
-            // Убираем активный класс со всех элементов навбара
-            const navItems = document.querySelectorAll('.bottom-nav-item');
-            navItems.forEach(item => item.classList.remove('active'));
+            // Убираем активный класс со всех элементов навбара (только если это не страница тарифов)
+            if (page !== 'pricing') {
+                const navItems = document.querySelectorAll('.bottom-nav-item');
+                navItems.forEach(item => item.classList.remove('active'));
+
+                // Активируем выбранный элемент навбара
+                const targetNavItem = document.querySelector(`[data-page="${page}"]`);
+                if (targetNavItem) {
+                    targetNavItem.classList.add('active');
+                }
+            }
 
             // Активируем выбранную страницу
             const targetPage = document.getElementById(page + 'Page');
             if (targetPage) {
                 targetPage.classList.add('active');
             }
-
-            // Активируем выбранный элемент навбара
-            const targetNavItem = document.querySelector(`[data-page="${page}"]`);
-            if (targetNavItem) {
-                targetNavItem.classList.add('active');
-            }
+        }
+        
+        // Функция для открытия страницы тарифов
+        function openPricingPage() {
+            switchPage('pricing');
         }
 
         // Отображение данных подписки
@@ -2003,7 +2250,7 @@
                 <div class="welcome-card">
                     <div class="welcome-title">Привет!</div>
                     <div class="welcome-text">Чтобы начать использовать наш сервис, вам нужно приобрести подписку.</div>
-                    <button class="welcome-button" onclick="tg.showAlert('Функционал скоро появится')">
+                    <button class="welcome-button" onclick="openPricingPage()">
                         К тарифам
                     </button>
                 </div>
@@ -2037,7 +2284,7 @@
                     <div class="expired-text">Ваша подписка закончилась <span class="expired-date">${expireAt}</span>.</div>
                     <div class="expired-text">Вы можете оформить подписку прямо сейчас по кнопке ниже -</div>
                     <div class="expired-divider"></div>
-                    <button class="expired-button" onclick="tg.showAlert('Функционал скоро появится')">
+                    <button class="expired-button" onclick="openPricingPage()">
                         Оформить подписку
                     </button>
                 </div>
@@ -2070,7 +2317,7 @@
                     </div>
                     ` : ''}
                     ` : ''}
-                    <button class="renew-button" onclick="tg.showAlert('Функционал скоро появится')">
+                    <button class="renew-button" onclick="openPricingPage()">
                         Продлить подписку
                     </button>
                 </div>
