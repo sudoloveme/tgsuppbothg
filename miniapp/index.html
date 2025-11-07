@@ -1493,12 +1493,14 @@
                 const content = document.getElementById('content');
                 if (content) {
                     content.classList.add('desktop');
-                    console.log('Desktop device detected, added desktop class');
+                    // Также устанавливаем padding-top напрямую для гарантии
+                    content.style.paddingTop = '20px';
+                    console.log('Desktop device detected, added desktop class and set padding-top to 20px');
                 } else {
                     console.log('Content element not found');
                 }
             } else {
-                console.log('Not a desktop device');
+                console.log('Not a desktop device, platform:', window.tg?.platform || 'unknown');
             }
         }
         
@@ -1508,6 +1510,9 @@
         } else {
             applyDesktopStyles();
         }
+        
+        // Также применяем после небольшой задержки на случай, если элемент еще не готов
+        setTimeout(applyDesktopStyles, 100);
         
         // Настройка цветов
         tg.setHeaderColor('#ffffff');
