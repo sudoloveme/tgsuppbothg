@@ -1401,6 +1401,14 @@
         /* Pricing Page */
         #pricingPage {
             padding-bottom: 100px;
+            position: relative;
+            min-height: calc(100vh - 80px);
+        }
+
+        #pricingPage.initial-state {
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .pricing-header {
@@ -1541,6 +1549,16 @@
             gap: 12px;
             padding: 0;
             margin: 0;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: opacity 0.3s ease-out, max-height 0.3s ease-out, margin 0.3s ease-out;
+        }
+
+        .pricing-plans.visible {
+            opacity: 1;
+            max-height: 2000px;
+            margin-bottom: 0;
         }
 
         .pricing-plan {
@@ -2388,6 +2406,30 @@
         function initPricingPage() {
             selectedPaymentMethod = null;
             selectedPlanIndex = null;
+            
+            // Скрываем тарифы и инфо-блок, центрируем выбор способа оплаты
+            const pricingPage = document.getElementById('pricingPage');
+            const pricingPlans = document.getElementById('pricingPlans');
+            const infoBlock = document.querySelector('.pricing-info-block');
+            const paymentCard = document.querySelector('.payment-method-card');
+            const pricingHeader = document.querySelector('.pricing-header');
+            
+            if (pricingPage) {
+                pricingPage.classList.add('initial-state');
+            }
+            if (pricingPlans) {
+                pricingPlans.classList.remove('visible');
+            }
+            if (infoBlock) {
+                infoBlock.classList.remove('visible');
+            }
+            if (paymentCard) {
+                paymentCard.classList.add('centered');
+            }
+            if (pricingHeader) {
+                pricingHeader.style.display = 'none';
+            }
+            
             renderPricingPlans();
             updatePaymentButton();
         }
@@ -2412,6 +2454,33 @@
             methodText.textContent = text;
             methodIcon.src = `/api/icons/waytopay/${iconFile}`;
             methodIcon.style.display = 'block';
+            
+            // Показываем тарифы и инфо-блок, убираем центрирование
+            const pricingPage = document.getElementById('pricingPage');
+            const pricingPlans = document.getElementById('pricingPlans');
+            const infoBlock = document.querySelector('.pricing-info-block');
+            const paymentCard = document.querySelector('.payment-method-card');
+            const pricingHeader = document.querySelector('.pricing-header');
+            
+            if (pricingPage) {
+                pricingPage.classList.remove('initial-state');
+            }
+            if (pricingPlans) {
+                setTimeout(() => {
+                    pricingPlans.classList.add('visible');
+                }, 50);
+            }
+            if (infoBlock) {
+                setTimeout(() => {
+                    infoBlock.classList.add('visible');
+                }, 100);
+            }
+            if (paymentCard) {
+                paymentCard.classList.remove('centered');
+            }
+            if (pricingHeader) {
+                pricingHeader.style.display = 'block';
+            }
             
             renderPricingPlans();
             updatePaymentButton();
