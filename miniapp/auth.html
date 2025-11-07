@@ -205,6 +205,9 @@
                     class="auth-input" 
                     placeholder="example@gmail.com"
                     autocomplete="email"
+                    enterkeyhint="done"
+                    onkeydown="if(event.key === 'Enter') { event.preventDefault(); handleAuth(); }"
+                    onblur="this.blur(); document.activeElement?.blur();"
                 >
                 <button class="auth-button" onclick="handleAuth()">
                     Авторизоваться
@@ -247,6 +250,29 @@
         if (tg.disableVerticalSwipes) {
             tg.disableVerticalSwipes();
         }
+
+        // Обработчик для скрытия клавиатуры при клике вне полей ввода
+        document.addEventListener('click', function(event) {
+            if (event.target.tagName !== 'INPUT' && event.target.tagName !== 'TEXTAREA') {
+                const activeElement = document.activeElement;
+                if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+                    activeElement.blur();
+                }
+            }
+        }, true);
+
+        // Обработчик для email поля
+        document.addEventListener('DOMContentLoaded', function() {
+            const emailInput = document.getElementById('authEmail');
+            if (emailInput) {
+                emailInput.addEventListener('blur', function() {
+                    this.blur();
+                    if (document.activeElement && document.activeElement !== document.body) {
+                        document.activeElement.blur();
+                    }
+                });
+            }
+        });
 
         // Получение Telegram ID
         function getTelegramId() {
@@ -382,6 +408,10 @@
                         autocomplete="one-time-code"
                         inputmode="numeric"
                         pattern="[0-9]*"
+                        enterkeyhint="done"
+                        onkeydown="if(event.key === 'Enter') { event.preventDefault(); handleVerifyOtp('${email}', ${telegramId}); }"
+                        oninput="if(this.value.length === 6) { setTimeout(() => { this.blur(); document.activeElement?.blur(); }, 100); }"
+                        onblur="this.blur(); document.activeElement?.blur();"
                     >
                     <a href="#" class="resend-link" id="resendLink" onclick="event.preventDefault(); handleResendOtp('${email}', ${telegramId}); return false;">
                         Выслать код повторно (<span id="resendTimer">60</span>)
