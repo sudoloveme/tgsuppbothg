@@ -1405,11 +1405,6 @@
             min-height: calc(100vh - 80px);
         }
 
-        #pricingPage.initial-state {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
 
         .pricing-header {
             margin-bottom: 20px;
@@ -1436,19 +1431,6 @@
         .payment-method-card {
             margin-bottom: 16px;
             transition: all 0.3s ease-out;
-        }
-
-        .payment-method-card.centered {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: calc(100% - 32px);
-            margin: 0;
-        }
-
-        #pricingPage.initial-state .payment-method-card.centered {
-            position: fixed;
         }
 
         .payment-method-dropdown {
@@ -1709,6 +1691,17 @@
             position: relative;
             overflow: hidden;
             margin-top: 0;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: opacity 0.3s ease-out, max-height 0.3s ease-out, margin 0.3s ease-out, padding 0.3s ease-out;
+        }
+
+        .pricing-payment-button.visible {
+            opacity: 1;
+            max-height: 100px;
+            margin-top: 0;
+            padding: 14px;
         }
 
         .pricing-payment-button::before {
@@ -1814,7 +1807,7 @@
             </div>
 
             <!-- Payment Method Dropdown -->
-            <div class="payment-method-card centered">
+            <div class="payment-method-card">
                 <div class="payment-method-dropdown" id="paymentMethodDropdown">
                     <div class="payment-method-select" onclick="togglePaymentMethod()">
                         <div class="payment-method-select-placeholder">
@@ -2432,12 +2425,11 @@
             selectedPaymentMethod = null;
             selectedPlanIndex = null;
             
-            // Скрываем тарифы и инфо-блок, центрируем выбор способа оплаты
+            // Скрываем тарифы, инфо-блок и кнопку оплаты
             const pricingPage = document.getElementById('pricingPage');
             const pricingPlans = document.getElementById('pricingPlans');
             const infoBlock = document.querySelector('.pricing-info-block');
-            const paymentCard = document.querySelector('.payment-method-card');
-            const pricingHeader = document.querySelector('.pricing-header');
+            const paymentButton = document.getElementById('pricingPaymentButton');
             
             if (pricingPage) {
                 pricingPage.classList.add('initial-state');
@@ -2448,11 +2440,8 @@
             if (infoBlock) {
                 infoBlock.classList.remove('visible');
             }
-            if (paymentCard) {
-                paymentCard.classList.add('centered');
-            }
-            if (pricingHeader) {
-                pricingHeader.style.display = 'none';
+            if (paymentButton) {
+                paymentButton.classList.remove('visible');
             }
             
             renderPricingPlans();
@@ -2480,12 +2469,11 @@
             methodIcon.src = `/api/icons/waytopay/${iconFile}`;
             methodIcon.style.display = 'block';
             
-            // Показываем тарифы и инфо-блок, убираем центрирование
+            // Показываем тарифы, инфо-блок и кнопку оплаты
             const pricingPage = document.getElementById('pricingPage');
             const pricingPlans = document.getElementById('pricingPlans');
             const infoBlock = document.querySelector('.pricing-info-block');
-            const paymentCard = document.querySelector('.payment-method-card');
-            const pricingHeader = document.querySelector('.pricing-header');
+            const paymentButton = document.getElementById('pricingPaymentButton');
             
             if (pricingPage) {
                 pricingPage.classList.remove('initial-state');
@@ -2500,11 +2488,10 @@
                     infoBlock.classList.add('visible');
                 }, 100);
             }
-            if (paymentCard) {
-                paymentCard.classList.remove('centered');
-            }
-            if (pricingHeader) {
-                pricingHeader.style.display = 'block';
+            if (paymentButton) {
+                setTimeout(() => {
+                    paymentButton.classList.add('visible');
+                }, 150);
             }
             
             renderPricingPlans();
