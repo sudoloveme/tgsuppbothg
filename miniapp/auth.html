@@ -101,11 +101,20 @@
             box-sizing: border-box;
             margin-bottom: 24px;
             transition: border-color 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
         }
 
         .auth-input:focus {
             outline: none;
             border-color: #007AFF;
+        }
+
+        /* Оптимизация для мобильных клавиатур */
+        @media (max-width: 768px) {
+            .auth-input {
+                font-size: 16px; /* Предотвращает зум на iOS */
+            }
         }
 
         .auth-input::placeholder {
