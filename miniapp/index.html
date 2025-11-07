@@ -179,6 +179,10 @@
         /* Blurred card overlay */
         .card-blurred {
             position: relative;
+            overflow: hidden;
+        }
+
+        .card-blurred-content {
             filter: blur(4px);
             pointer-events: none;
             user-select: none;
@@ -191,12 +195,13 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 10;
+            z-index: 100;
             border-radius: 12px;
+            pointer-events: auto;
         }
 
         .card-overlay-text {
@@ -1790,7 +1795,7 @@
                 <!-- Приветственная карточка для новых пользователей -->
                 <div class="welcome-card">
                     <div class="welcome-title">Привет!</div>
-                    <div class="welcome-text">Чтобы начать использовать наш сервис, вам нужно приобрести подписку. Ознакомиться с тарифными планами можно ниже по кнопке -</div>
+                    <div class="welcome-text">Чтобы начать использовать наш сервис, вам нужно приобрести подписку.<br>Ознакомиться с тарифными планами можно ниже по кнопке -</div>
                     <button class="welcome-button" onclick="tg.showAlert('Функционал скоро появится')">
                         К тарифам
                     </button>
@@ -1871,6 +1876,7 @@
                             <div class="card-overlay-text">Оформите подписку, чтобы получить доступ к разделу детализации трафика</div>
                         </div>
                         ` : ''}
+                        <div class="${isNewDisabledUser ? 'card-blurred-content' : ''}">
                         <div class="traffic-header">
                             <div class="traffic-title">Трафик</div>
                             ${!isNewDisabledUser ? `<button class="traffic-details-btn" onclick="toggleTrafficDetails()">Детализация</button>` : ''}
@@ -1940,6 +1946,7 @@
                         <div class="card-overlay-text">Оформите подписку, чтобы получить доступ к разделу установки</div>
                     </div>
                     ` : ''}
+                    <div class="${isNewDisabledUser ? 'card-blurred-content' : ''}">
                     <div class="installation-title">Установка</div>
                     <div class="installation-grid">
                         <button class="installation-btn" onclick="toggleInstallationInstructions('ios')">
@@ -2132,6 +2139,7 @@
                                 На главной странице нажмите большую кнопку включения в центре для подключения к VPN. Если нужно, выберите другой сервер, нажав на него в списке внизу.
                             </div>
                         </div>
+                    </div>
                     </div>
                 </div>
             `;
