@@ -378,7 +378,7 @@ def create_app() -> web.Application:
             content_type = 'image/webp'
         
         # Для логотипа и иконок способов оплаты отключаем кеш, чтобы всегда загружалась актуальная версия
-        no_cache_files = ['logo.svg', 'crypto.svg', 'stars.svg']
+        no_cache_files = ['logo.svg', 'crypto.svg', 'stars.png']
         cache_control = 'no-cache, no-store, must-revalidate' if filename in no_cache_files else 'public, max-age=3600'
         headers = {
             'Access-Control-Allow-Origin': '*',
