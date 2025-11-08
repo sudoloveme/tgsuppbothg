@@ -2768,19 +2768,35 @@
             const plan = pricingData[selectedPaymentMethod][selectedPlanIndex];
             const currency = currencySymbols[selectedPaymentMethod];
             
+            // Проверяем доступность Telegram WebApp API
+            if (typeof tg === 'undefined' || !tg) {
+                console.error('Telegram WebApp API not available');
+                alert('Ошибка: Telegram WebApp API недоступен');
+                return;
+            }
+            
             // Получаем Telegram ID
             const telegramId = tg.initDataUnsafe?.user?.id;
             if (!telegramId) {
+                console.error('Telegram ID not found');
                 tg.showAlert('Ошибка: не удалось получить ID пользователя');
                 return;
             }
             
+            console.log('Telegram ID:', telegramId);
+            
             // Показываем индикатор загрузки
-            tg.showPopup({
-                title: 'Создание платежа',
-                message: 'Пожалуйста, подождите...',
-                buttons: []
-            });
+            try {
+                if (tg.showPopup) {
+                    tg.showPopup({
+                        title: 'Создание платежа',
+                        message: 'Пожалуйста, подождите...',
+                        buttons: []
+                    });
+                }
+            } catch (e) {
+                console.warn('Could not show popup:', e);
+            }
             
             try {
                 console.log('Creating payment:', {
