@@ -748,6 +748,8 @@ def create_app() -> web.Application:
             amount_minor = int(float(amount))
             currency_code = payment_gateway.CURRENCY_KZT
             
+            logger.info(f"Creating payment: telegram_id={telegram_id}, currency={currency}, amount_minor={amount_minor}, currency_code={currency_code}, plan_days={plan_days}")
+            
             # Формируем returnUrl (orderId будет подставлен платежным шлюзом)
             from config import MINIAPP_URL
             return_url = f"{MINIAPP_URL}/payment/return?telegram_id={telegram_id}"
@@ -759,6 +761,8 @@ def create_app() -> web.Application:
             import uuid as uuid_module
             order_number = uuid_module.uuid4().hex[:32]  # 32 символа без дефисов
             
+            logger.info(f"Registering order in payment gateway: amount={amount_minor}, currency={currency_code}, order_number={order_number}, description={description}")
+            
             # Регистрируем заказ в платежном шлюзе
             order_data = await payment_gateway.register_order(
                 amount=amount_minor,
@@ -768,6 +772,11 @@ def create_app() -> web.Application:
                 order_number=order_number,
                 language="ru"
             )
+            
+            if order_data:
+                logger.info(f"Order registered successfully: orderId={order_data.get('orderId')}, formUrl={order_data.get('formUrl')}")
+            else:
+                logger.error(f"Failed to register order in payment gateway")
             
             if not order_data:
                 return web.json_response(
