@@ -2498,6 +2498,38 @@
 
         // Переключение страниц
         function switchPage(page) {
+            // Если выходим со страницы тарифов, сбрасываем выбранный способ оплаты
+            const currentPricingPage = document.getElementById('pricingPage');
+            if (currentPricingPage && currentPricingPage.classList.contains('active') && page !== 'pricing') {
+                selectedPaymentMethod = null;
+                selectedPlanIndex = null;
+                // Обновляем UI
+                updatePaymentButton();
+                // Сбрасываем выпадающее меню способа оплаты
+                const dropdown = document.getElementById('paymentMethodDropdown');
+                if (dropdown) {
+                    dropdown.classList.remove('open');
+                    const selectText = dropdown.querySelector('.payment-method-select-text');
+                    const selectIcon = dropdown.querySelector('.payment-method-select-icon');
+                    if (selectText) {
+                        selectText.textContent = 'Выберите способ оплаты';
+                    }
+                    if (selectIcon) {
+                        selectIcon.src = '/api/icons/waytopay/placeholder.svg';
+                        selectIcon.alt = 'Выберите способ оплаты';
+                    }
+                }
+                // Скрываем тарифы и инфо-блок
+                const pricingPlans = document.getElementById('pricingPlans');
+                const infoBlock = document.querySelector('.pricing-info-block');
+                if (pricingPlans) {
+                    pricingPlans.classList.remove('visible');
+                }
+                if (infoBlock) {
+                    infoBlock.classList.remove('visible');
+                }
+            }
+            
             // Скрываем все страницы явно через display
             const allPages = document.querySelectorAll('.page-container');
             allPages.forEach(p => {
