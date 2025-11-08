@@ -2789,48 +2789,22 @@
         let paymentStatusInterval = null;
 
         // Обработка оплаты
+        // Флаг для предотвращения множественных вызовов
+        let isPaymentProcessing = false;
+        
         async function handlePayment() {
+            // Предотвращаем множественные вызовы
+            if (isPaymentProcessing) {
+                console.log('Payment already processing, ignoring duplicate call');
+                return;
+            }
+            
             console.log('handlePayment called', {
                 selectedPaymentMethod,
                 selectedPlanIndex
             });
             
-            if (!selectedPaymentMethod || selectedPlanIndex === null) {
-                console.log('Missing payment method or plan');
-                tg.showAlert('Пожалуйста, выберите способ оплаты и тариф');
-                return;
-            }
-            
-            // СТРОГАЯ ПРОВЕРКА: только KZT и KGZ
-            if (selectedPaymentMethod !== 'kzt' && selectedPaymentMethod !== 'kgz') {
-                console.log('Invalid currency:', selectedPaymentMethod);
-                tg.showAlert('Оплата через банк доступна только для тенге (KZT) и кыргызских сомов (KGZ)');
-                return;
-            }
-            
-            console.log('Payment method check passed:', selectedPaymentMethod);
-            
-            const plan = pricingData[selectedPaymentMethod][selectedPlanIndex];
-            const currency = currencySymbols[selectedPaymentMethod];
-            
-            // Проверяем доступность Telegram WebApp API
-            if (typeof tg === 'undefined' || !tg) {
-                console.error('Telegram WebApp API not available');
-                alert('Ошибка: Telegram WebApp API недоступен');
-                return;
-            }
-            
-            // Получаем Telegram ID
-            const telegramId = tg.initDataUnsafe?.user?.id;
-            if (!telegramId) {
-                console.error('Telegram ID not found');
-                tg.showAlert('Ошибка: не удалось получить ID пользователя');
-                return;
-            }
-            
-            console.log('Telegram ID:', telegramId);
-            
-            // Делаем кнопку неактивной и показываем загрузку
+            // Блокируем кнопку и устанавливаем флаг СРАЗУ
             const paymentButton = document.getElementById('pricingPaymentButton');
             if (paymentButton) {
                 const paymentButtonText = paymentButton.querySelector('.pricing-payment-button-text');
@@ -2841,8 +2815,44 @@
                     paymentButtonText.textContent = 'Загрузка';
                 }
             }
+            isPaymentProcessing = true;
             
             try {
+                if (!selectedPaymentMethod || selectedPlanIndex === null) {
+                    console.log('Missing payment method or plan');
+                    tg.showAlert('Пожалуйста, выберите способ оплаты и тариф');
+                    return;
+                }
+                
+                // СТРОГАЯ ПРОВЕРКА: только KZT и KGZ
+                if (selectedPaymentMethod !== 'kzt' && selectedPaymentMethod !== 'kgz') {
+                    console.log('Invalid currency:', selectedPaymentMethod);
+                    tg.showAlert('Оплата через банк доступна только для тенге (KZT) и кыргызских сомов (KGZ)');
+                    return;
+                }
+                
+                console.log('Payment method check passed:', selectedPaymentMethod);
+                
+                const plan = pricingData[selectedPaymentMethod][selectedPlanIndex];
+                const currency = currencySymbols[selectedPaymentMethod];
+                
+                // Проверяем доступность Telegram WebApp API
+                if (typeof tg === 'undefined' || !tg) {
+                    console.error('Telegram WebApp API not available');
+                    alert('Ошибка: Telegram WebApp API недоступен');
+                    return;
+                }
+                
+                // Получаем Telegram ID
+                const telegramId = tg.initDataUnsafe?.user?.id;
+                if (!telegramId) {
+                    console.error('Telegram ID not found');
+                    tg.showAlert('Ошибка: не удалось получить ID пользователя');
+                    return;
+                }
+                
+                console.log('Telegram ID:', telegramId);
+            
                 console.log('Creating payment:', {
                     telegram_id: telegramId,
                     amount: plan.price,
@@ -2893,16 +2903,6 @@
                 
                 if (!response.ok) {
                     console.error('Payment creation failed:', result);
-                    // Восстанавливаем кнопку при ошибке
-                    if (paymentButton) {
-                        const paymentButtonText = paymentButton.querySelector('.pricing-payment-button-text');
-                        paymentButton.disabled = false;
-                        paymentButton.classList.remove('loading');
-                        // Возвращаем текст "Оплатить"
-                        if (paymentButtonText) {
-                            paymentButtonText.textContent = 'Оплатить';
-                        }
-                    }
                     tg.showAlert(`Ошибка: ${result.error || 'Не удалось создать платеж'}`);
                     return;
                 }
@@ -2911,17 +2911,6 @@
                 currentPaymentOrderId = result.orderId;
                 
                 console.log('Payment created:', result);
-                
-                // Восстанавливаем кнопку сразу после получения ответа
-                if (paymentButton) {
-                    const paymentButtonText = paymentButton.querySelector('.pricing-payment-button-text');
-                    paymentButton.disabled = false;
-                    paymentButton.classList.remove('loading');
-                    // Возвращаем текст "Оплатить"
-                    if (paymentButtonText) {
-                        paymentButtonText.textContent = 'Оплатить';
-                    }
-                }
                 
                 // Открываем форму оплаты в браузере
                 if (result.formUrl) {
@@ -2948,20 +2937,22 @@
                 
             } catch (error) {
                 console.error('Payment error:', error);
-                
-                // Восстанавливаем кнопку
-                const paymentButton = document.getElementById('pricingPaymentButton');
-                if (paymentButton) {
-                    const paymentButtonText = paymentButton.querySelector('.pricing-payment-button-text');
-                    paymentButton.disabled = false;
-                    paymentButton.classList.remove('loading');
-                    // Возвращаем текст "Оплатить"
-                    if (paymentButtonText) {
-                        paymentButtonText.textContent = 'Оплатить';
+                tg.showAlert(`Ошибка: ${error.message || 'Не удалось обработать платеж'}`);
+            } finally {
+                // Восстанавливаем кнопку и сбрасываем флаг в любом случае
+                // НО только если мы не переключились на страницу ожидания
+                if (currentPaymentOrderId === null) {
+                    if (paymentButton) {
+                        const paymentButtonText = paymentButton.querySelector('.pricing-payment-button-text');
+                        paymentButton.disabled = false;
+                        paymentButton.classList.remove('loading');
+                        // Возвращаем текст "Оплатить"
+                        if (paymentButtonText) {
+                            paymentButtonText.textContent = 'Оплатить';
+                        }
                     }
                 }
-                
-                tg.showAlert('Ошибка при создании платежа. Пожалуйста, попробуйте позже.');
+                isPaymentProcessing = false;
             }
         }
 
