@@ -756,8 +756,8 @@ def create_app() -> web.Application:
             description = f"VPN подписка на {plan_days} дней"
             
             # Генерируем orderNumber для платежного шлюза
-            import uuid
-            order_number = uuid.uuid4().hex[:32]  # 32 символа без дефисов
+            import uuid as uuid_module
+            order_number = uuid_module.uuid4().hex[:32]  # 32 символа без дефисов
             
             # Регистрируем заказ в платежном шлюзе
             order_data = await payment_gateway.register_order(
