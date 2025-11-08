@@ -2527,8 +2527,28 @@
                 targetPage.classList.add('active');
             }
             
-            // Если открывается страница тарифов, прокручиваем вверх
+            // Если открывается страница тарифов, сбрасываем все состояния платежа
             if (page === 'pricing') {
+                // КРИТИЧНО: Сбрасываем флаг обработки платежа
+                isPaymentProcessing = false;
+                
+                // Останавливаем проверку статуса (если была запущена)
+                stopPaymentStatusCheck();
+                currentPaymentOrderId = null;
+                
+                // Сбрасываем состояние кнопки оплаты
+                const paymentButton = document.getElementById('pricingPaymentButton');
+                if (paymentButton) {
+                    const paymentButtonText = paymentButton.querySelector('.pricing-payment-button-text');
+                    paymentButton.disabled = true;
+                    paymentButton.classList.remove('loading');
+                    // Возвращаем текст "Оплатить"
+                    if (paymentButtonText) {
+                        paymentButtonText.textContent = 'Оплатить';
+                    }
+                }
+                
+                // Прокручиваем вверх
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
