@@ -2536,6 +2536,34 @@
                 stopPaymentStatusCheck();
                 currentPaymentOrderId = null;
                 
+                // КРИТИЧНО: Сбрасываем выбранный способ оплаты и тариф
+                selectedPaymentMethod = null;
+                selectedPlanIndex = null;
+                
+                // Сбрасываем выпадающее меню способа оплаты
+                const dropdown = document.getElementById('paymentMethodDropdown');
+                if (dropdown) {
+                    dropdown.classList.remove('open');
+                    const selectText = document.getElementById('paymentMethodText');
+                    const selectIcon = document.getElementById('paymentMethodIcon');
+                    if (selectText) {
+                        selectText.textContent = 'Выберите способ оплаты';
+                    }
+                    if (selectIcon) {
+                        selectIcon.style.display = 'none';
+                    }
+                }
+                
+                // Скрываем тарифы и инфо-блок
+                const pricingPlans = document.getElementById('pricingPlans');
+                const infoBlock = document.querySelector('.pricing-info-block');
+                if (pricingPlans) {
+                    pricingPlans.classList.remove('visible');
+                }
+                if (infoBlock) {
+                    infoBlock.classList.remove('visible');
+                }
+                
                 // Сбрасываем состояние кнопки оплаты
                 const paymentButton = document.getElementById('pricingPaymentButton');
                 if (paymentButton) {
@@ -2547,6 +2575,10 @@
                         paymentButtonText.textContent = 'Оплатить';
                     }
                 }
+                
+                // Обновляем UI (перерисовываем тарифы в заблокированном состоянии)
+                renderPricingPlans();
+                updatePaymentButton();
                 
                 // Прокручиваем вверх
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -3029,6 +3061,34 @@
             // КРИТИЧНО: Сбрасываем флаг обработки платежа
             isPaymentProcessing = false;
             
+            // КРИТИЧНО: Сбрасываем выбранный способ оплаты и тариф
+            selectedPaymentMethod = null;
+            selectedPlanIndex = null;
+            
+            // Сбрасываем выпадающее меню способа оплаты
+            const dropdown = document.getElementById('paymentMethodDropdown');
+            if (dropdown) {
+                dropdown.classList.remove('open');
+                const selectText = document.getElementById('paymentMethodText');
+                const selectIcon = document.getElementById('paymentMethodIcon');
+                if (selectText) {
+                    selectText.textContent = 'Выберите способ оплаты';
+                }
+                if (selectIcon) {
+                    selectIcon.style.display = 'none';
+                }
+            }
+            
+            // Скрываем тарифы и инфо-блок
+            const pricingPlans = document.getElementById('pricingPlans');
+            const infoBlock = document.querySelector('.pricing-info-block');
+            if (pricingPlans) {
+                pricingPlans.classList.remove('visible');
+            }
+            if (infoBlock) {
+                infoBlock.classList.remove('visible');
+            }
+            
             // Сбрасываем состояние кнопки оплаты
             const paymentButton = document.getElementById('pricingPaymentButton');
             if (paymentButton) {
@@ -3040,6 +3100,10 @@
                     paymentButtonText.textContent = 'Оплатить';
                 }
             }
+            
+            // Обновляем UI (перерисовываем тарифы в заблокированном состоянии)
+            renderPricingPlans();
+            updatePaymentButton();
         }
 
         // Начать проверку статуса платежа
