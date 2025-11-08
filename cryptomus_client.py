@@ -5,6 +5,7 @@ import logging
 import httpx
 import hashlib
 import json
+import base64
 from typing import Optional, Dict, Any
 from config import CRYPTOMUS_MERCHANT, CRYPTOMUS_API_KEY, CRYPTOMUS_API_URL
 
@@ -28,14 +29,23 @@ def generate_sign(data: dict) -> str:
     """
     Generate sign for Cryptomus API request.
     
+    According to Cryptomus documentation:
+    sign = md5(base64_encode(json_encode(data)) . API_KEY)
+    
     Args:
         data: Request payload as dictionary
     
     Returns:
-        MD5 hash of payload + API key
+        MD5 hash of base64-encoded JSON payload + API key
     """
+    # 1. json_encode(data) - convert dict to JSON string
     payload_str = json.dumps(data, separators=(',', ':'))
-    sign_string = payload_str + CRYPTOMUS_API_KEY
+    
+    # 2. base64_encode(json_encode(data))
+    payload_base64 = base64.b64encode(payload_str.encode('utf-8')).decode('utf-8')
+    
+    # 3. md5(base64_encode(...) . API_KEY)
+    sign_string = payload_base64 + CRYPTOMUS_API_KEY
     return hashlib.md5(sign_string.encode('utf-8')).hexdigest()
 
 
