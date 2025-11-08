@@ -1841,6 +1841,14 @@
             opacity: 0.7;
         }
 
+        .pricing-payment-button.loading .pricing-payment-button-text::after {
+            content: 'Загрузка';
+        }
+
+        .pricing-payment-button.loading .pricing-payment-button-text {
+            content: '';
+        }
+
         .pricing-plan-radio {
             width: 22px;
             height: 22px;
@@ -1970,8 +1978,8 @@
 
             <!-- Payment Button -->
             <button class="pricing-payment-button" id="pricingPaymentButton" onclick="handlePayment()" disabled>
-                <span class="pricing-payment-button-spinner"></span>
                 <span class="pricing-payment-button-text">Оплатить</span>
+                <span class="pricing-payment-button-spinner"></span>
             </button>
         </div>
     </div>
