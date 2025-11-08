@@ -2748,12 +2748,21 @@
                     { days: 14, bonus: null }
                 ];
                 
-                plansContainer.innerHTML = defaultPlans.map((plan, index) => `
+                plansContainer.innerHTML = defaultPlans.map((plan, index) => {
+                    // Для бонуса используем иконку stars.png
+                    const bonusDisplay = plan.bonus 
+                        ? `<span class="pricing-plan-bonus">
+                            <img src="/api/icons/waytopay/stars.png?v=2" alt="Stars" class="pricing-plan-bonus-icon">
+                            +${plan.bonus} дней в подарок
+                           </span>`
+                        : '';
+                    
+                    return `
                     <div class="pricing-plan disabled" data-plan-index="${index}">
                         <div class="pricing-plan-content">
                             <div class="pricing-plan-header-row">
                                 <span class="pricing-plan-duration">${plan.days} дней</span>
-                                ${plan.bonus ? `<span class="pricing-plan-bonus">+${plan.bonus} дней в подарок</span>` : ''}
+                                ${bonusDisplay}
                             </div>
                             <div class="pricing-plan-price-row">
                                 <span class="pricing-plan-amount">—</span>
@@ -2762,7 +2771,8 @@
                         </div>
                         <div class="pricing-plan-radio"></div>
                     </div>
-                `).join('');
+                    `;
+                }).join('');
                 return;
             }
             
