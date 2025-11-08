@@ -53,31 +53,38 @@ async def register_order(
             # Используем UUID без дефисов и ограничиваем длину до 32 символов
             order_number = uuid.uuid4().hex[:32]
         
+        request_data = {
+            "amount": amount,
+            "currency": currency,
+            "userName": PAYMENT_GATEWAY_USERNAME,
+            "password": PAYMENT_GATEWAY_PASSWORD,
+            "returnUrl": return_url,
+            "description": description,
+            "orderNumber": order_number,
+            "language": language
+        }
+        
+        logger.info(f"Payment gateway register request: amount={amount}, currency={currency}, orderNumber={order_number}, description={description}")
+        
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
                 REGISTER_URL,
-                data={
-                    "amount": amount,
-                    "currency": currency,
-                    "userName": PAYMENT_GATEWAY_USERNAME,
-                    "password": PAYMENT_GATEWAY_PASSWORD,
-                    "returnUrl": return_url,
-                    "description": description,
-                    "orderNumber": order_number,
-                    "language": language
-                },
+                data=request_data,
                 headers={"Content-Type": "application/x-www-form-urlencoded"}
             )
             
             response.raise_for_status()
             result = response.json()
             
+            logger.info(f"Payment gateway response: errorCode={result.get('errorCode')}, orderId={result.get('orderId')}, formUrl={result.get('formUrl')}")
+            
             # Проверяем errorCode: "0" означает успех, другие значения - ошибки
             if "errorCode" in result and result.get("errorCode") != "0":
-                logger.error(f"Payment gateway error: {result.get('errorMessage', 'Unknown error')}")
+                error_message = result.get('errorMessage', 'Unknown error')
+                logger.error(f"Payment gateway error: errorCode={result.get('errorCode')}, errorMessage={error_message}, full_response={result}")
                 return None
             
-            logger.info(f"Order registered successfully: {result.get('orderId')}")
+            logger.info(f"Order registered successfully: orderId={result.get('orderId')}, formUrl={result.get('formUrl')}")
             return result
             
     except httpx.HTTPError as e:
