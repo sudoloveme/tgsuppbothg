@@ -915,12 +915,27 @@ def create_app() -> web.Application:
                     logger.warning(f"Failed to deposit order {order_id}, but status is PRE_AUTH")
             
             # Обновляем статус в БД
-            from database import db_update_payment_order_status
+            from database import db_update_payment_order_status, db_get_payment_order
             db_update_payment_order_status(
                 order_id=order_id,
                 status='PAID' if is_paid else 'FAILED',
                 status_data=order_status
             )
+            
+            # Если платеж успешен, обновляем подписку на бэкенде
+            if is_paid:
+                try:
+                    # Получаем информацию о заказе из БД
+                    payment_order = db_get_payment_order(order_id)
+                    if payment_order and payment_order.get('uuid') and payment_order.get('plan_days'):
+                        uuid = payment_order['uuid']
+                        plan_days = payment_order['plan_days']
+                        
+                        # Вызываем функцию обновления подписки
+                        await update_user_subscription_after_payment(uuid, plan_days)
+                except Exception as e:
+                    logger.exception(f"Error updating subscription after payment: {e}")
+                    # Не прерываем ответ, просто логируем ошибку
             
             # Возвращаем HTML страницу с результатом
             if is_paid:
