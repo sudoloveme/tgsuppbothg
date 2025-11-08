@@ -72,7 +72,8 @@ async def register_order(
             response.raise_for_status()
             result = response.json()
             
-            if "errorCode" in result:
+            # Проверяем errorCode: "0" означает успех, другие значения - ошибки
+            if "errorCode" in result and result.get("errorCode") != "0":
                 logger.error(f"Payment gateway error: {result.get('errorMessage', 'Unknown error')}")
                 return None
             
