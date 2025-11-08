@@ -2980,6 +2980,13 @@
             // Останавливаем проверку статуса
             stopPaymentStatusCheck();
             currentPaymentOrderId = null;
+            
+            // Сбрасываем состояние кнопки оплаты
+            const paymentButton = document.getElementById('pricingPaymentButton');
+            if (paymentButton) {
+                paymentButton.disabled = true;
+                paymentButton.classList.remove('loading');
+            }
         }
 
         // Начать проверку статуса платежа
