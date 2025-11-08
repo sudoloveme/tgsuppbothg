@@ -449,13 +449,18 @@ async def update_user_subscription(
     }
     
     try:
+        logger.info(f"Updating user subscription: uuid={uuid}, status={status}, expire_at={expire_at}, traffic_limit_bytes={traffic_limit_bytes}")
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.post(url, json=payload, headers=_get_headers())
+            logger.info(f"Backend API response status: {response.status_code}")
             response.raise_for_status()
             data = response.json()
+            logger.info(f"Backend API response data keys: {list(data.keys()) if isinstance(data, dict) else 'not a dict'}")
             
             if "response" in data:
+                logger.info(f"Successfully updated subscription for UUID {uuid}")
                 return data["response"]
+            logger.warning(f"No 'response' field in API response for UUID {uuid}, full response: {data}")
             return None
     except httpx.HTTPStatusError as e:
         logger.error(f"HTTP error updating user subscription: {e.response.status_code}")
