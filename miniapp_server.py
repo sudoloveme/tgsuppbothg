@@ -6,7 +6,11 @@ import asyncio
 from pathlib import Path
 from typing import Optional
 from datetime import datetime, timedelta
-from dateutil import parser
+try:
+    from dateutil import parser
+except ImportError:
+    # Fallback: use datetime.fromisoformat if dateutil is not available
+    parser = None
 
 from aiohttp import web
 from aiohttp.web_request import Request
@@ -655,7 +659,15 @@ def create_app() -> web.Application:
                 # Сценарий 2: Продление активной подписки
                 # Добавляем дни к существующей дате окончания
                 try:
-                    expire_date = parser.isoparse(current_expire_at)
+                    if parser:
+                        expire_date = parser.isoparse(current_expire_at)
+                    else:
+                        # Fallback: use datetime.fromisoformat (Python 3.7+)
+                        expire_date_str = current_expire_at.replace('Z', '+00:00')
+                        expire_date = datetime.fromisoformat(expire_date_str)
+                        # Remove timezone info for calculation
+                        if expire_date.tzinfo:
+                            expire_date = expire_date.replace(tzinfo=None)
                     new_expire_at = expire_date + timedelta(days=plan_days)
                 except Exception as e:
                     logger.warning(f"Error parsing expireAt {current_expire_at}, using current date: {e}")
