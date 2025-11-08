@@ -856,15 +856,21 @@ def create_app() -> web.Application:
             
             # Если платеж успешен, обновляем подписку на бэкенде
             if is_paid:
+                logger.info(f"Payment successful for order {order_id}, attempting to update subscription...")
                 try:
                     # Получаем информацию о заказе из БД
                     payment_order = db_get_payment_order(order_id)
+                    logger.info(f"Payment order data: {payment_order}")
                     if payment_order and payment_order.get('uuid') and payment_order.get('plan_days'):
                         uuid = payment_order['uuid']
                         plan_days = payment_order['plan_days']
+                        logger.info(f"Updating subscription for UUID {uuid} with {plan_days} days")
                         
                         # Вызываем функцию обновления подписки
                         await update_user_subscription_after_payment(uuid, plan_days)
+                        logger.info(f"Subscription update completed for UUID {uuid}")
+                    else:
+                        logger.warning(f"Payment order missing required data: uuid={payment_order.get('uuid') if payment_order else None}, plan_days={payment_order.get('plan_days') if payment_order else None}")
                 except Exception as e:
                     logger.exception(f"Error updating subscription after payment: {e}")
                     # Не прерываем ответ, просто логируем ошибку
