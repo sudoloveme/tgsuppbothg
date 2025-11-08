@@ -2498,9 +2498,12 @@
 
         // Переключение страниц
         function switchPage(page) {
-            // Убираем активный класс со всех страниц
-            const pages = document.querySelectorAll('.page-container');
-            pages.forEach(p => p.classList.remove('active'));
+            // Скрываем все страницы явно через display
+            const allPages = document.querySelectorAll('.page-container');
+            allPages.forEach(p => {
+                p.style.display = 'none';
+                p.classList.remove('active');
+            });
 
             // Убираем активный класс со всех элементов навбара (только если это не страница тарифов)
             if (page !== 'pricing') {
@@ -2517,6 +2520,7 @@
             // Активируем выбранную страницу
             const targetPage = document.getElementById(page + 'Page');
             if (targetPage) {
+                targetPage.style.display = 'block';
                 targetPage.classList.add('active');
             }
             
@@ -2939,14 +2943,17 @@
 
         // Переключение обратно на страницу тарифов
         function switchToPricingPage() {
-            const pricingPage = document.getElementById('pricingPage');
-            const waitingPage = document.getElementById('paymentWaitingPage');
+            // Скрываем все страницы
+            const allPages = document.querySelectorAll('.page-container');
+            allPages.forEach(p => {
+                p.style.display = 'none';
+                p.classList.remove('active');
+            });
             
-            if (waitingPage) {
-                waitingPage.style.display = 'none';
-            }
+            const pricingPage = document.getElementById('pricingPage');
             if (pricingPage) {
                 pricingPage.style.display = 'block';
+                pricingPage.classList.add('active');
             }
             
             // Останавливаем проверку статуса
