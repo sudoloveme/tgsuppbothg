@@ -1411,7 +1411,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: calc(100vh - 80px);
+            min-height: 100vh;
+            position: relative;
         }
 
         .payment-waiting-container {
@@ -1986,12 +1987,9 @@
             <div class="payment-waiting-icon">
                 <div class="payment-waiting-spinner"></div>
             </div>
-            <h1 class="payment-waiting-title">Ожидание оплаты</h1>
-            <p class="payment-waiting-text">Пожалуйста, завершите оплату в открытом окне браузера</p>
-            <p class="payment-waiting-status" id="paymentWaitingStatus">Проверка статуса...</p>
-            <button class="payment-waiting-button" onclick="checkPaymentStatus()" id="paymentCheckButton">
-                Проверить оплату
-            </button>
+            <h1 class="payment-waiting-title" id="paymentWaitingTitle">Ожидание оплаты</h1>
+            <p class="payment-waiting-text" id="paymentWaitingText">Пожалуйста, завершите оплату в открытом окне браузера</p>
+            <p class="payment-waiting-status" id="paymentWaitingStatus" style="display: none;"></p>
             <button class="payment-waiting-back" onclick="switchToPricingPage()">
                 Вернуться к тарифам
             </button>
@@ -2988,6 +2986,9 @@
             // Показываем страницу ожидания
             waitingPage.style.display = 'block';
             waitingPage.classList.add('active');
+            
+            // Прокручиваем экран в самый верх
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             
             console.log('Payment waiting page displayed');
             
