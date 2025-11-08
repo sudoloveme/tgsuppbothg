@@ -2839,6 +2839,9 @@
                 });
                 
                 // Создаем платеж
+                // Умножаем сумму на 100 для конвертации в тиыны
+                const amountInMinorUnits = Math.round(plan.price * 100);
+                
                 const response = await fetch('/api/payment/create', {
                     method: 'POST',
                     headers: {
@@ -2846,7 +2849,7 @@
                     },
                     body: JSON.stringify({
                         telegram_id: telegramId,
-                        amount: plan.price,
+                        amount: amountInMinorUnits,
                         currency: selectedPaymentMethod,
                         plan_days: plan.days
                     })

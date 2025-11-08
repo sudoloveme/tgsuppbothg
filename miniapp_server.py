@@ -14,6 +14,7 @@ from api_client import get_user_by_uuid, get_traffic_usage_range, get_user_by_em
 import database
 import otp_manager
 import smtp_client
+import payment_gateway
 
 logger = logging.getLogger("support-bot")
 
@@ -634,7 +635,7 @@ def create_app() -> web.Application:
         try:
             data = await request.json()
             telegram_id = data.get('telegram_id')
-            amount = data.get('amount')  # Сумма в основных единицах (тенге)
+            amount = data.get('amount')  # Сумма в основных единицах (тенге) - уже умножена на 100 на фронтенде
             currency = data.get('currency', 'kzt')  # Валюта
             plan_days = data.get('plan_days')  # Количество дней подписки
             
