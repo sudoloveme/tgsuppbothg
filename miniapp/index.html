@@ -2834,8 +2834,8 @@
             
             // Делаем кнопку неактивной и показываем загрузку
             const paymentButton = document.getElementById('pricingPaymentButton');
-            const paymentButtonText = paymentButton?.querySelector('.pricing-payment-button-text');
             if (paymentButton) {
+                const paymentButtonText = paymentButton.querySelector('.pricing-payment-button-text');
                 paymentButton.disabled = true;
                 paymentButton.classList.add('loading');
                 // Заменяем текст на "Загрузка"
