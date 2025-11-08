@@ -2509,14 +2509,14 @@
                 const dropdown = document.getElementById('paymentMethodDropdown');
                 if (dropdown) {
                     dropdown.classList.remove('open');
-                    const selectText = dropdown.querySelector('.payment-method-select-text');
-                    const selectIcon = dropdown.querySelector('.payment-method-select-icon');
+                    const selectText = document.getElementById('paymentMethodText');
+                    const selectIcon = document.getElementById('paymentMethodIcon');
                     if (selectText) {
                         selectText.textContent = 'Выберите способ оплаты';
                     }
                     if (selectIcon) {
-                        selectIcon.src = '/api/icons/waytopay/placeholder.svg';
-                        selectIcon.alt = 'Выберите способ оплаты';
+                        // Убираем иконку или устанавливаем пустую
+                        selectIcon.style.display = 'none';
                     }
                 }
                 // Скрываем тарифы и инфо-блок
