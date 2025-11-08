@@ -2774,6 +2774,13 @@
             });
             
             try {
+                console.log('Creating payment:', {
+                    telegram_id: telegramId,
+                    amount: plan.price,
+                    currency: selectedPaymentMethod,
+                    plan_days: plan.days
+                });
+                
                 // Создаем платеж
                 const response = await fetch('/api/payment/create', {
                     method: 'POST',
@@ -2788,12 +2795,18 @@
                     })
                 });
                 
+                console.log('Payment response status:', response.status);
+                
                 const result = await response.json();
+                console.log('Payment response:', result);
                 
                 // Закрываем popup
-                tg.closePopup();
+                if (tg && tg.closePopup) {
+                    tg.closePopup();
+                }
                 
                 if (!response.ok) {
+                    console.error('Payment creation failed:', result);
                     tg.showAlert(`Ошибка: ${result.error || 'Не удалось создать платеж'}`);
                     return;
                 }
@@ -2801,14 +2814,28 @@
                 // Сохраняем orderId для проверки статуса
                 currentPaymentOrderId = result.orderId;
                 
+                console.log('Payment created:', result);
+                
                 // Открываем форму оплаты в браузере
                 if (result.formUrl) {
-                    // Открываем в браузере
-                    window.open(result.formUrl, '_blank');
+                    console.log('Opening payment URL:', result.formUrl);
+                    
+                    // Пытаемся открыть через Telegram API, если доступно
+                    if (tg && tg.openLink) {
+                        tg.openLink(result.formUrl, {try_instant_view: false});
+                    } else {
+                        // Fallback на window.open
+                        const newWindow = window.open(result.formUrl, '_blank');
+                        if (!newWindow) {
+                            tg.showAlert('Пожалуйста, разрешите открытие всплывающих окон в настройках браузера');
+                            return;
+                        }
+                    }
                     
                     // Переключаемся на страницу ожидания
                     switchToPaymentWaitingPage();
                 } else {
+                    console.error('No formUrl in response:', result);
                     tg.showAlert('Ошибка: не получен URL для оплаты');
                 }
                 
