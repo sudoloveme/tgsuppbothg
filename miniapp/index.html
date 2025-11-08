@@ -3006,6 +3006,9 @@
             stopPaymentStatusCheck();
             currentPaymentOrderId = null;
             
+            // КРИТИЧНО: Сбрасываем флаг обработки платежа
+            isPaymentProcessing = false;
+            
             // Сбрасываем состояние кнопки оплаты
             const paymentButton = document.getElementById('pricingPaymentButton');
             if (paymentButton) {
