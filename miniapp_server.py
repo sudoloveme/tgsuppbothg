@@ -774,8 +774,153 @@ def create_app() -> web.Application:
                 headers={'Access-Control-Allow-Origin': '*'}
             )
     
+    async def payment_return(request: Request) -> Response:
+        """Handle payment return from gateway. GET /payment/return"""
+        try:
+            telegram_id_str = request.query.get('telegram_id')
+            order_id = request.query.get('orderId')  # Параметр от платежного шлюза
+            
+            if not telegram_id_str or not order_id:
+                return web.Response(
+                    text="Ошибка: отсутствуют необходимые параметры",
+                    status=400
+                )
+            
+            telegram_id = int(telegram_id_str)
+            
+            # Проверяем статус заказа
+            order_status = await payment_gateway.get_order_status(order_id)
+            
+            if not order_status:
+                return web.Response(
+                    text="Ошибка: не удалось проверить статус заказа",
+                    status=500
+                )
+            
+            # Проверяем статус
+            status_code = order_status.get('orderStatus')
+            is_paid = (status_code == payment_gateway.ORDER_STATUS_SUCCESS)
+            
+            # Обновляем статус в БД
+            from database import db_update_payment_order_status
+            db_update_payment_order_status(
+                order_id=order_id,
+                status='PAID' if is_paid else 'FAILED',
+                status_data=order_status
+            )
+            
+            # Возвращаем HTML страницу с результатом
+            if is_paid:
+                html = """
+                <!DOCTYPE html>
+                <html lang="ru">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Оплата успешна</title>
+                    <style>
+                        body {
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            min-height: 100vh;
+                            margin: 0;
+                            background: #f5f5f5;
+                        }
+                        .container {
+                            background: white;
+                            padding: 40px;
+                            border-radius: 12px;
+                            text-align: center;
+                            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                        }
+                        .success {
+                            color: #34C759;
+                            font-size: 48px;
+                            margin-bottom: 20px;
+                        }
+                        h1 {
+                            color: #000;
+                            margin: 0 0 10px 0;
+                        }
+                        p {
+                            color: #666;
+                            margin: 0;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="success">✓</div>
+                        <h1>Оплата успешна!</h1>
+                        <p>Ваша подписка активирована</p>
+                    </div>
+                </body>
+                </html>
+                """
+            else:
+                html = """
+                <!DOCTYPE html>
+                <html lang="ru">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Ошибка оплаты</title>
+                    <style>
+                        body {
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            min-height: 100vh;
+                            margin: 0;
+                            background: #f5f5f5;
+                        }
+                        .container {
+                            background: white;
+                            padding: 40px;
+                            border-radius: 12px;
+                            text-align: center;
+                            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                        }
+                        .error {
+                            color: #FF3B30;
+                            font-size: 48px;
+                            margin-bottom: 20px;
+                        }
+                        h1 {
+                            color: #000;
+                            margin: 0 0 10px 0;
+                        }
+                        p {
+                            color: #666;
+                            margin: 0;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="error">✗</div>
+                        <h1>Оплата не прошла</h1>
+                        <p>Пожалуйста, попробуйте еще раз</p>
+                    </div>
+                </body>
+                </html>
+                """
+            
+            return web.Response(text=html, content_type='text/html')
+            
+        except Exception as e:
+            logger.exception(f"Error handling payment return: {e}")
+            return web.Response(
+                text="Ошибка обработки платежа",
+                status=500
+            )
+    
     app.router.add_post('/api/payment/create', create_payment)
     app.router.add_get('/api/payment/status/{order_id}', check_payment_status)
+    app.router.add_get('/payment/return', payment_return)
     
     # Static files (catch-all, must be last)
     logger.info("Registering static files route...")
@@ -792,6 +937,9 @@ def create_app() -> web.Application:
     logger.info("  GET /api/health")
     logger.info("  POST /api/auth/send-otp")
     logger.info("  POST /api/auth/verify-otp")
+    logger.info("  POST /api/payment/create")
+    logger.info("  GET /api/payment/status/{order_id}")
+    logger.info("  GET /payment/return")
     
     return app
 
