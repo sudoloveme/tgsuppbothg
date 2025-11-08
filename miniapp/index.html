@@ -2366,12 +2366,19 @@
             if (targetPage) {
                 targetPage.classList.add('active');
             }
+            
+            // Если открывается страница тарифов, прокручиваем вверх
+            if (page === 'pricing') {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         }
         
         // Функция для открытия страницы тарифов
         function openPricingPage() {
             switchPage('pricing');
             initPricingPage();
+            // Прокручиваем экран вверх
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         // Данные тарифов (в разных валютах) - порядок от дорогого к дешевому
