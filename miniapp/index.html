@@ -1715,6 +1715,15 @@
             font-weight: 600;
             background: rgba(0, 122, 255, 0.1);
             padding: 3px 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .pricing-plan-bonus-icon {
+            width: 12px;
+            height: 12px;
+            object-fit: contain;
             border-radius: 6px;
             white-space: nowrap;
         }
@@ -2760,6 +2769,11 @@
             const plans = pricingData[selectedPaymentMethod];
             const currency = currencySymbols[selectedPaymentMethod];
             
+            // Для stars используем иконку вместо эмодзи
+            const currencyDisplay = selectedPaymentMethod === 'stars' 
+                ? `<img src="/api/icons/waytopay/stars.png?v=2" alt="Stars" style="width: 16px; height: 16px; object-fit: contain; vertical-align: middle;">`
+                : currency;
+            
             plansContainer.innerHTML = plans.map((plan, index) => {
                 const totalDays = plan.days + (plan.bonus || 0);
                 let priceInfo = '';
@@ -2768,11 +2782,27 @@
                 if (plan.days >= 30) {
                     const months = totalDays / 30;
                     const pricePerMonth = Math.round(plan.price / months);
-                    priceInfo = `/ ${formatPrice(pricePerMonth)} ${currency} в месяц`;
+                    const currencyForPrice = selectedPaymentMethod === 'stars' 
+                        ? `<img src="/api/icons/waytopay/stars.png?v=2" alt="Stars" style="width: 14px; height: 14px; object-fit: contain; vertical-align: middle;">`
+                        : currency;
+                    priceInfo = `/ ${formatPrice(pricePerMonth)} ${currencyForPrice} в месяц`;
                 } else {
                     const pricePerDay = Math.round(plan.price / totalDays);
-                    priceInfo = `/ ${formatPrice(pricePerDay)} ${currency} в день`;
+                    const currencyForPrice = selectedPaymentMethod === 'stars' 
+                        ? `<img src="/api/icons/waytopay/stars.png?v=2" alt="Stars" style="width: 14px; height: 14px; object-fit: contain; vertical-align: middle;">`
+                        : currency;
+                    priceInfo = `/ ${formatPrice(pricePerDay)} ${currencyForPrice} в день`;
                 }
+                
+                // Для бонуса используем иконку stars.png вместо эмодзи
+                const bonusDisplay = plan.bonus 
+                    ? `<span class="pricing-plan-bonus">
+                        ${selectedPaymentMethod === 'stars' 
+                            ? `<img src="/api/icons/waytopay/stars.png?v=2" alt="Stars" class="pricing-plan-bonus-icon">`
+                            : ''}
+                        +${plan.bonus} дней в подарок
+                       </span>`
+                    : '';
                 
                 return `
                     <div class="pricing-plan ${selectedPlanIndex === index ? 'selected' : ''}" 
@@ -2781,11 +2811,11 @@
                         <div class="pricing-plan-content">
                             <div class="pricing-plan-header-row">
                                 <span class="pricing-plan-duration">${plan.days} дней</span>
-                                ${plan.bonus ? `<span class="pricing-plan-bonus">+${plan.bonus} дней в подарок</span>` : ''}
+                                ${bonusDisplay}
                             </div>
                             <div class="pricing-plan-price-row">
                                 <span class="pricing-plan-amount">${formatPrice(plan.price)}</span>
-                                <span class="pricing-plan-currency">${currency}</span>
+                                <span class="pricing-plan-currency">${currencyDisplay}</span>
                                 <span class="pricing-plan-per-day">${priceInfo}</span>
                             </div>
                         </div>
