@@ -87,6 +87,21 @@ def _db_connect() -> sqlite3.Connection:
         "  PRIMARY KEY (email, telegram_id)\n"
         ")"
     )
+    # Payment orders table
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS payment_orders (\n"
+        "  order_id TEXT PRIMARY KEY,\n"
+        "  telegram_id INTEGER NOT NULL,\n"
+        "  uuid TEXT,\n"
+        "  amount REAL NOT NULL,\n"
+        "  currency TEXT NOT NULL,\n"
+        "  plan_days INTEGER NOT NULL,\n"
+        "  status TEXT NOT NULL DEFAULT 'PENDING',\n"
+        "  status_data TEXT,\n"
+        "  created_at TEXT DEFAULT CURRENT_TIMESTAMP,\n"
+        "  updated_at TEXT DEFAULT CURRENT_TIMESTAMP\n"
+        ")"
+    )
     # Migrate from legacy table if present
     try:
         conn.execute(
@@ -517,4 +532,66 @@ def db_cleanup_expired_otps(expiry_minutes: int) -> None:
         logger.info(f"Cleaned up expired OTP codes (expiry: {expiry_minutes} minutes)")
     except Exception:
         logger.exception("DB write failed (cleanup expired OTPs)")
+
+
+def db_save_payment_order(
+    order_id: str,
+    telegram_id: int,
+    uuid: str,
+    amount: float,
+    currency: str,
+    plan_days: int,
+    status: str = 'PENDING'
+) -> None:
+    """Save payment order to database."""
+    try:
+        conn = _db_connect()
+        conn.execute(
+            "INSERT INTO payment_orders (order_id, telegram_id, uuid, amount, currency, plan_days, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (order_id, telegram_id, uuid, amount, currency, plan_days, status)
+        )
+        conn.commit()
+        conn.close()
+        logger.info(f"Payment order saved: order_id={order_id}, telegram_id={telegram_id}")
+    except Exception as e:
+        logger.exception(f"Error saving payment order: {e}")
+
+
+def db_update_payment_order_status(order_id: str, status: str, status_data: Optional[dict] = None) -> None:
+    """Update payment order status in database."""
+    try:
+        import json
+        conn = _db_connect()
+        status_data_json = json.dumps(status_data) if status_data else None
+        conn.execute(
+            "UPDATE payment_orders SET status=?, status_data=?, updated_at=CURRENT_TIMESTAMP WHERE order_id=?",
+            (status, status_data_json, order_id)
+        )
+        conn.commit()
+        conn.close()
+        logger.info(f"Payment order status updated: order_id={order_id}, status={status}")
+    except Exception as e:
+        logger.exception(f"Error updating payment order status: {e}")
+
+
+def db_get_payment_order(order_id: str) -> Optional[dict]:
+    """Get payment order from database."""
+    try:
+        import json
+        conn = _db_connect()
+        cur = conn.execute(
+            "SELECT order_id, telegram_id, uuid, amount, currency, plan_days, status, status_data, created_at, updated_at FROM payment_orders WHERE order_id=?",
+            (order_id,)
+        )
+        row = cur.fetchone()
+        conn.close()
+        if row:
+            result = dict(row)
+            if result.get('status_data'):
+                result['status_data'] = json.loads(result['status_data'])
+            return result
+        return None
+    except Exception as e:
+        logger.exception(f"Error getting payment order: {e}")
+        return None
 

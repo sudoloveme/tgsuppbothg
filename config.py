@@ -18,6 +18,11 @@ RATINGS_NOTIFICATIONS_THREAD_ID = int(os.getenv("RATINGS_NOTIFICATIONS_THREAD_ID
 MINIAPP_URL = os.getenv("MINIAPP_URL", "").strip() or None  # URL to mini-app (e.g., https://app.heavengate.net)
 MINIAPP_PORT = int(os.getenv("MINIAPP_PORT", "8080").strip() or 8080)
 
+# Payment Gateway configuration (Berekebank.kz)
+PAYMENT_GATEWAY_URL = os.getenv("PAYMENT_GATEWAY_URL", "https://3dsec.berekebank.kz").strip()
+PAYMENT_GATEWAY_USERNAME = os.getenv("PAYMENT_GATEWAY_USERNAME", "").strip()
+PAYMENT_GATEWAY_PASSWORD = os.getenv("PAYMENT_GATEWAY_PASSWORD", "").strip()
+
 if not TELEGRAM_BOT_TOKEN:
     raise RuntimeError("TELEGRAM_BOT_TOKEN is not set. Put it in your environment or a .env file.")
 

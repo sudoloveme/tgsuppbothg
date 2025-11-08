@@ -2625,7 +2625,7 @@
         }
 
         // Обработка оплаты
-        function handlePayment() {
+        async function handlePayment() {
             if (!selectedPaymentMethod || selectedPlanIndex === null) {
                 tg.showAlert('Пожалуйста, выберите способ оплаты и тариф');
                 return;
@@ -2634,7 +2634,53 @@
             const plan = pricingData[selectedPaymentMethod][selectedPlanIndex];
             const currency = currencySymbols[selectedPaymentMethod];
             
-            tg.showAlert(`Функционал оплаты скоро появится\n\nВыбранный тариф: ${plan.days} дней\nЦена: ${formatPrice(plan.price)} ${currency}`);
+            // Получаем Telegram ID
+            const telegramId = tg.initDataUnsafe?.user?.id;
+            if (!telegramId) {
+                tg.showAlert('Ошибка: не удалось получить ID пользователя');
+                return;
+            }
+            
+            // Показываем индикатор загрузки
+            tg.showPopup({
+                title: 'Создание платежа',
+                message: 'Пожалуйста, подождите...',
+                buttons: []
+            });
+            
+            try {
+                // Создаем платеж
+                const response = await fetch('/api/payment/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        telegram_id: telegramId,
+                        amount: plan.price,
+                        currency: selectedPaymentMethod,
+                        plan_days: plan.days
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    tg.showAlert(`Ошибка: ${result.error || 'Не удалось создать платеж'}`);
+                    return;
+                }
+                
+                // Открываем форму оплаты
+                if (result.formUrl) {
+                    tg.openLink(result.formUrl, {try_instant_view: false});
+                } else {
+                    tg.showAlert('Ошибка: не получен URL для оплаты');
+                }
+                
+            } catch (error) {
+                console.error('Payment error:', error);
+                tg.showAlert('Ошибка при создании платежа. Пожалуйста, попробуйте позже.');
+            }
         }
 
         // Закрытие выпадающего меню при клике вне его

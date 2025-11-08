@@ -628,6 +628,155 @@ def create_app() -> web.Application:
     app.router.add_post('/api/auth/send-otp', send_otp)
     app.router.add_post('/api/auth/verify-otp', verify_otp)
     
+    # Payment endpoints
+    async def create_payment(request: Request) -> Response:
+        """Create payment order. POST /api/payment/create"""
+        try:
+            data = await request.json()
+            telegram_id = data.get('telegram_id')
+            amount = data.get('amount')  # Сумма в основных единицах (тенге)
+            currency = data.get('currency', 'kzt')  # Валюта
+            plan_days = data.get('plan_days')  # Количество дней подписки
+            
+            if not telegram_id or not amount or not plan_days:
+                return web.json_response(
+                    {"error": "telegram_id, amount, and plan_days are required"},
+                    status=400,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            # Получаем UUID пользователя из локальной БД
+            from database import db_get_user_backend_data
+            backend_data = db_get_user_backend_data(telegram_id)
+            
+            if not backend_data or not backend_data[0]:
+                return web.json_response(
+                    {"error": "User not found or not linked"},
+                    status=404,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            uuid = backend_data[0]
+            
+            # Определяем код валюты
+            currency_codes = {
+                'kzt': payment_gateway.CURRENCY_KZT,
+                'kgz': payment_gateway.CURRENCY_KGZ,
+                'rub': payment_gateway.CURRENCY_RUB,
+                'cny': payment_gateway.CURRENCY_CNY
+            }
+            currency_code = currency_codes.get(currency.lower(), payment_gateway.CURRENCY_KZT)
+            
+            # Конвертируем сумму в минимальные единицы
+            amount_minor = payment_gateway.convert_amount_to_minor_units(float(amount), currency_code)
+            
+            # Формируем returnUrl (orderId будет подставлен платежным шлюзом)
+            from config import MINIAPP_URL
+            return_url = f"{MINIAPP_URL}/payment/return?telegram_id={telegram_id}"
+            
+            # Описание заказа
+            description = f"VPN подписка на {plan_days} дней"
+            
+            # Регистрируем заказ в платежном шлюзе
+            order_data = await payment_gateway.register_order(
+                amount=amount_minor,
+                currency=currency_code,
+                return_url=return_url,
+                description=description,
+                language="ru"
+            )
+            
+            if not order_data:
+                return web.json_response(
+                    {"error": "Failed to create payment order"},
+                    status=500,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            # Сохраняем информацию о заказе в БД
+            from database import db_save_payment_order
+            db_save_payment_order(
+                order_id=order_data['orderId'],
+                telegram_id=telegram_id,
+                uuid=uuid,
+                amount=float(amount),
+                currency=currency,
+                plan_days=plan_days,
+                status='PENDING'
+            )
+            
+            return web.json_response(
+                {
+                    "orderId": order_data['orderId'],
+                    "formUrl": order_data['formUrl']
+                },
+                headers={'Access-Control-Allow-Origin': '*'}
+            )
+            
+        except Exception as e:
+            logger.exception(f"Error creating payment: {e}")
+            return web.json_response(
+                {"error": "Internal server error"},
+                status=500,
+                headers={'Access-Control-Allow-Origin': '*'}
+            )
+    
+    async def check_payment_status(request: Request) -> Response:
+        """Check payment order status. GET /api/payment/status/{order_id}"""
+        try:
+            order_id = request.match_info.get('order_id')
+            
+            if not order_id:
+                return web.json_response(
+                    {"error": "order_id is required"},
+                    status=400,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            # Получаем статус заказа из платежного шлюза
+            order_status = await payment_gateway.get_order_status(order_id)
+            
+            if not order_status:
+                return web.json_response(
+                    {"error": "Failed to get order status"},
+                    status=500,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            # Проверяем статус
+            status_code = order_status.get('orderStatus')
+            is_paid = (status_code == payment_gateway.ORDER_STATUS_SUCCESS)
+            
+            # Обновляем статус в БД
+            from database import db_update_payment_order_status
+            db_update_payment_order_status(
+                order_id=order_id,
+                status='PAID' if is_paid else 'FAILED',
+                status_data=order_status
+            )
+            
+            return web.json_response(
+                {
+                    "orderId": order_id,
+                    "status": status_code,
+                    "isPaid": is_paid,
+                    "actionCode": order_status.get('actionCode'),
+                    "orderStatus": order_status.get('orderStatus')
+                },
+                headers={'Access-Control-Allow-Origin': '*'}
+            )
+            
+        except Exception as e:
+            logger.exception(f"Error checking payment status: {e}")
+            return web.json_response(
+                {"error": "Internal server error"},
+                status=500,
+                headers={'Access-Control-Allow-Origin': '*'}
+            )
+    
+    app.router.add_post('/api/payment/create', create_payment)
+    app.router.add_get('/api/payment/status/{order_id}', check_payment_status)
+    
     # Static files (catch-all, must be last)
     logger.info("Registering static files route...")
     app.router.add_get('/{path:.*}', serve_static)
