@@ -2804,12 +2804,10 @@
                     priceInfo = `/ ${formatPrice(pricePerDay)} ${currencyForPrice} в день`;
                 }
                 
-                // Для бонуса используем иконку stars.png вместо эмодзи
+                // Для бонуса всегда используем иконку stars.png
                 const bonusDisplay = plan.bonus 
                     ? `<span class="pricing-plan-bonus">
-                        ${selectedPaymentMethod === 'stars' 
-                            ? `<img src="/api/icons/waytopay/stars.png?v=2" alt="Stars" class="pricing-plan-bonus-icon">`
-                            : ''}
+                        <img src="/api/icons/waytopay/stars.png?v=2" alt="Stars" class="pricing-plan-bonus-icon">
                         +${plan.bonus} дней в подарок
                        </span>`
                     : '';
