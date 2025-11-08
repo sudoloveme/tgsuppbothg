@@ -2853,8 +2853,22 @@
                 });
                 
                 // Создаем платеж
-                // Умножаем сумму на 100 для конвертации в тиыны
-                const amountInMinorUnits = Math.round(plan.price * 100);
+                // ОСОБЕННОСТЬ ДЛЯ KGZ: отправляем в банк сумму в тенге (как для KZT)
+                // На фронтенде для KGZ показываются приблизительные суммы в сомах, но в банк отправляем KZT
+                let amountInMinorUnits;
+                if (selectedPaymentMethod === 'kgz') {
+                    // Для KGZ используем цену из KZT тарифа (та же что и для тенге)
+                    const kztPlan = pricingData.kzt.find(p => p.days === plan.days);
+                    if (kztPlan) {
+                        amountInMinorUnits = Math.round(kztPlan.price * 100);
+                    } else {
+                        // Fallback: используем цену из текущего плана
+                        amountInMinorUnits = Math.round(plan.price * 100);
+                    }
+                } else {
+                    // Для KZT умножаем сумму на 100 для конвертации в тиыны
+                    amountInMinorUnits = Math.round(plan.price * 100);
+                }
                 
                 const response = await fetch('/api/payment/create', {
                     method: 'POST',
