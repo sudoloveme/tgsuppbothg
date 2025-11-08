@@ -3087,12 +3087,15 @@
                         statusEl.style.display = 'none';
                     }
                     
+                    // КРИТИЧНО: Сбрасываем флаг обработки платежа
+                    isPaymentProcessing = false;
+                    currentPaymentOrderId = null;
+                    
                     // Показываем сообщение и возвращаемся на главную
                     setTimeout(() => {
                         tg.showAlert('Оплата успешно завершена! Ваша подписка активирована.');
                         // Останавливаем проверку статуса
                         stopPaymentStatusCheck();
-                        currentPaymentOrderId = null;
                         // Переключаемся на главную страницу
                         switchPage('home');
                         // Перезагружаем данные подписки
