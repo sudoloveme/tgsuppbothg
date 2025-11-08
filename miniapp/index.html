@@ -2897,6 +2897,12 @@
                 
                 console.log('Payment created:', result);
                 
+                // Восстанавливаем кнопку сразу после получения ответа
+                if (paymentButton) {
+                    paymentButton.disabled = false;
+                    paymentButton.classList.remove('loading');
+                }
+                
                 // Открываем форму оплаты в браузере
                 if (result.formUrl) {
                     console.log('Opening payment URL:', result.formUrl);
@@ -2908,26 +2914,15 @@
                         // Fallback на window.open
                         const newWindow = window.open(result.formUrl, '_blank');
                         if (!newWindow) {
-                            // Восстанавливаем кнопку если не удалось открыть окно
-                            if (paymentButton) {
-                                paymentButton.disabled = false;
-                                paymentButton.classList.remove('loading');
-                            }
                             tg.showAlert('Пожалуйста, разрешите открытие всплывающих окон в настройках браузера');
                             return;
                         }
                     }
                     
                     // Переключаемся на страницу ожидания
-                    // Кнопка автоматически разблокируется при переключении страницы
                     switchToPaymentWaitingPage();
                 } else {
                     console.error('No formUrl in response:', result);
-                    // Восстанавливаем кнопку при ошибке
-                    if (paymentButton) {
-                        paymentButton.disabled = false;
-                        paymentButton.classList.remove('loading');
-                    }
                     tg.showAlert('Ошибка: не получен URL для оплаты');
                 }
                 
