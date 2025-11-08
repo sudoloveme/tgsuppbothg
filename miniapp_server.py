@@ -1026,41 +1026,72 @@ def create_app() -> web.Application:
             
             logger.info(f"Payment return for order {order_id}, telegram_id {telegram_id} (verified)")
             
-            # Проверяем статус заказа
-            order_status = await payment_gateway.get_order_status(order_id)
+            # Проверяем тип платежа по currency в базе данных
+            payment_currency = payment_order.get('currency', '').lower()
+            crypto_currencies = ['crypto', 'usdt', 'ton', 'eth', 'btc']
+            is_crypto_payment = payment_currency in crypto_currencies
             
-            if not order_status:
-                return web.Response(
-                    text="Ошибка: не удалось проверить статус заказа",
-                    status=500
-                )
-            
-            # Проверяем статус
-            status_code = order_status.get('orderStatus')
-            is_paid = payment_gateway.is_order_paid(status_code)
-            
-            # Если статус = 1 (PRE_AUTH), нужно завершить заказ (deposit)
-            if status_code == payment_gateway.ORDER_STATUS_PRE_AUTH:
-                logger.info(f"Order {order_id} has PRE_AUTH status, attempting to deposit...")
-                deposit_result = await payment_gateway.deposit_order(order_id)
+            if is_crypto_payment:
+                # Для криптоплатежей используем Cryptomus API
+                logger.info(f"Payment return for Cryptomus order {order_id}")
+                payment_info = await cryptomus_client.get_payment_info(order_id)
                 
-                if deposit_result:
-                    # Повторно проверяем статус после deposit
-                    order_status = await payment_gateway.get_order_status(order_id)
-                    if order_status:
-                        status_code = order_status.get('orderStatus')
-                        is_paid = payment_gateway.is_order_paid(status_code)
-                        logger.info(f"Order {order_id} deposit completed, new status: {status_code}")
-                else:
-                    logger.warning(f"Failed to deposit order {order_id}, but status is PRE_AUTH")
-            
-            # Обновляем статус в БД
-            from database import db_update_payment_order_status
-            db_update_payment_order_status(
-                order_id=order_id,
-                status='PAID' if is_paid else 'FAILED',
-                status_data=order_status
-            )
+                if not payment_info:
+                    return web.Response(
+                        text="Ошибка: не удалось проверить статус платежа",
+                        status=500
+                    )
+                
+                status = payment_info.get('status', '')
+                is_paid = cryptomus_client.is_payment_successful(status)
+                is_failed = cryptomus_client.is_payment_failed(status)
+                
+                # Обновляем статус в БД
+                from database import db_update_payment_order_status
+                db_update_payment_order_status(
+                    order_id=order_id,
+                    status=status,
+                    status_data=payment_info
+                )
+                
+                order_status = payment_info  # Для совместимости с дальнейшим кодом
+            else:
+                # Для банковских платежей используем Berekebank
+                logger.info(f"Payment return for bank order {order_id}")
+                order_status = await payment_gateway.get_order_status(order_id)
+                
+                if not order_status:
+                    return web.Response(
+                        text="Ошибка: не удалось проверить статус заказа",
+                        status=500
+                    )
+                
+                # Проверяем статус
+                status_code = order_status.get('orderStatus')
+                is_paid = payment_gateway.is_order_paid(status_code)
+                
+                # Если статус = 1 (PRE_AUTH), нужно завершить заказ (deposit)
+                if status_code == payment_gateway.ORDER_STATUS_PRE_AUTH:
+                    logger.info(f"Order {order_id} has PRE_AUTH status, attempting to deposit...")
+                    deposit_result = await payment_gateway.deposit_order(order_id)
+                    
+                    if deposit_result:
+                        # Повторно проверяем статус после deposit
+                        order_status = await payment_gateway.get_order_status(order_id)
+                        if order_status:
+                            status_code = order_status.get('orderStatus')
+                            is_paid = payment_gateway.is_order_paid(status_code)
+                            logger.info(f"Order {order_id} deposit completed, new status: {status_code}")
+                    else:
+                        logger.warning(f"Failed to deposit order {order_id}, but status is PRE_AUTH")
+                
+                # Обновляем статус в БД
+                from database import db_update_payment_order_status
+                db_update_payment_order_status(
+                    order_id=order_id,
+                    status='PAID' if is_paid else 'FAILED',
+                    status_data=order_status
+                )
             
             # Если платеж успешен, обновляем подписку на бэкенде
             if is_paid:
