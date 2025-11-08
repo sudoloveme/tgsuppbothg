@@ -87,12 +87,13 @@ async def register_order(
         return None
 
 
-async def get_order_status(order_id: str) -> Optional[Dict[str, Any]]:
+async def get_order_status(order_id: str, language: str = "ru") -> Optional[Dict[str, Any]]:
     """
     Получение статуса заказа из платежного шлюза.
     
     Args:
         order_id: ID заказа, полученный при регистрации
+        language: Язык интерфейса (ru, en, kz)
     
     Returns:
         Dict с информацией о статусе заказа, или None в случае ошибки
@@ -104,7 +105,8 @@ async def get_order_status(order_id: str) -> Optional[Dict[str, Any]]:
                 data={
                     "userName": PAYMENT_GATEWAY_USERNAME,
                     "password": PAYMENT_GATEWAY_PASSWORD,
-                    "orderId": order_id
+                    "orderId": order_id,
+                    "language": language
                 },
                 headers={"Content-Type": "application/x-www-form-urlencoded"}
             )
@@ -126,6 +128,66 @@ async def get_order_status(order_id: str) -> Optional[Dict[str, Any]]:
     except Exception as e:
         logger.exception(f"Error getting order status: {e}")
         return None
+
+
+async def deposit_order(order_id: str, amount: Optional[int] = None) -> Optional[Dict[str, Any]]:
+    """
+    Завершение заказа (списание средств) для заказов со статусом 1 (PRE_AUTH).
+    
+    Args:
+        order_id: ID заказа
+        amount: Сумма для списания (если не указана, списывается полная сумма)
+    
+    Returns:
+        Dict с результатом операции, или None в случае ошибки
+    """
+    try:
+        data = {
+            "userName": PAYMENT_GATEWAY_USERNAME,
+            "password": PAYMENT_GATEWAY_PASSWORD,
+            "orderId": order_id
+        }
+        
+        if amount is not None:
+            data["amount"] = amount
+        
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                DEPOSIT_URL,
+                data=data,
+                headers={"Content-Type": "application/x-www-form-urlencoded"}
+            )
+            
+            response.raise_for_status()
+            result = response.json()
+            
+            # Проверяем errorCode: "0" означает успех, другие значения - ошибки
+            if "errorCode" in result and result.get("errorCode") != "0":
+                logger.error(f"Payment gateway deposit error: {result.get('errorMessage', 'Unknown error')}")
+                return None
+            
+            logger.info(f"Order deposited successfully: orderId={order_id}")
+            return result
+            
+    except httpx.HTTPError as e:
+        logger.exception(f"HTTP error while depositing order: {e}")
+        return None
+    except Exception as e:
+        logger.exception(f"Error depositing order: {e}")
+        return None
+
+
+def is_order_paid(order_status: int) -> bool:
+    """
+    Проверка, является ли заказ оплаченным.
+    
+    Args:
+        order_status: Статус заказа из платежного шлюза
+    
+    Returns:
+        True если заказ оплачен (статус 1 или 2), False в противном случае
+    """
+    return order_status in [ORDER_STATUS_PRE_AUTH, ORDER_STATUS_SUCCESS]
 
 
 def convert_amount_to_minor_units(amount: float, currency: int) -> int:
