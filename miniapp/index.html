@@ -2468,7 +2468,11 @@
             const methodIcon = document.getElementById('paymentMethodIcon');
             
             methodText.textContent = text;
-            methodIcon.src = `/api/icons/waytopay/${iconFile}`;
+            // Добавляем версионный параметр для crypto.svg чтобы обойти кеш
+            const iconUrl = iconFile === 'crypto.svg' 
+                ? `/api/icons/waytopay/${iconFile}?v=${Date.now()}` 
+                : `/api/icons/waytopay/${iconFile}`;
+            methodIcon.src = iconUrl;
             methodIcon.style.display = 'block';
             
             // Показываем тарифы, инфо-блок и кнопку оплаты
