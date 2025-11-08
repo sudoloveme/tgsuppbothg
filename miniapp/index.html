@@ -2995,7 +2995,11 @@
                     return;
                 }
                 
-                if (result.isPaid) {
+                // Проверяем статус: 1 (PRE_AUTH) или 2 (SUCCESS) считаются оплаченными
+                const orderStatus = result.orderStatus;
+                const isPaid = result.isPaid || (orderStatus === 1 || orderStatus === 2);
+                
+                if (isPaid) {
                     // Платеж успешен
                     stopPaymentStatusCheck();
                     if (statusEl) {

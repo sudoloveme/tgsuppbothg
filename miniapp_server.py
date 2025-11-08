@@ -759,7 +759,22 @@ def create_app() -> web.Application:
             
             # Проверяем статус
             status_code = order_status.get('orderStatus')
-            is_paid = (status_code == payment_gateway.ORDER_STATUS_SUCCESS)
+            is_paid = payment_gateway.is_order_paid(status_code)
+            
+            # Если статус = 1 (PRE_AUTH), нужно завершить заказ (deposit)
+            if status_code == payment_gateway.ORDER_STATUS_PRE_AUTH:
+                logger.info(f"Order {order_id} has PRE_AUTH status, attempting to deposit...")
+                deposit_result = await payment_gateway.deposit_order(order_id)
+                
+                if deposit_result:
+                    # Повторно проверяем статус после deposit
+                    order_status = await payment_gateway.get_order_status(order_id)
+                    if order_status:
+                        status_code = order_status.get('orderStatus')
+                        is_paid = payment_gateway.is_order_paid(status_code)
+                        logger.info(f"Order {order_id} deposit completed, new status: {status_code}")
+                else:
+                    logger.warning(f"Failed to deposit order {order_id}, but status is PRE_AUTH")
             
             # Обновляем статус в БД
             from database import db_update_payment_order_status
@@ -813,7 +828,22 @@ def create_app() -> web.Application:
             
             # Проверяем статус
             status_code = order_status.get('orderStatus')
-            is_paid = (status_code == payment_gateway.ORDER_STATUS_SUCCESS)
+            is_paid = payment_gateway.is_order_paid(status_code)
+            
+            # Если статус = 1 (PRE_AUTH), нужно завершить заказ (deposit)
+            if status_code == payment_gateway.ORDER_STATUS_PRE_AUTH:
+                logger.info(f"Order {order_id} has PRE_AUTH status, attempting to deposit...")
+                deposit_result = await payment_gateway.deposit_order(order_id)
+                
+                if deposit_result:
+                    # Повторно проверяем статус после deposit
+                    order_status = await payment_gateway.get_order_status(order_id)
+                    if order_status:
+                        status_code = order_status.get('orderStatus')
+                        is_paid = payment_gateway.is_order_paid(status_code)
+                        logger.info(f"Order {order_id} deposit completed, new status: {status_code}")
+                else:
+                    logger.warning(f"Failed to deposit order {order_id}, but status is PRE_AUTH")
             
             # Обновляем статус в БД
             from database import db_update_payment_order_status

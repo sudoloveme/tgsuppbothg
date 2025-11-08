@@ -12,6 +12,7 @@ logger = logging.getLogger("support-bot")
 # Payment Gateway API endpoints
 REGISTER_URL = f"{PAYMENT_GATEWAY_URL}/payment/rest/register.do"
 GET_ORDER_STATUS_URL = f"{PAYMENT_GATEWAY_URL}/payment/rest/getOrderStatusExtended.do"
+DEPOSIT_URL = f"{PAYMENT_GATEWAY_URL}/payment/rest/deposit.do"
 
 # Currency codes
 CURRENCY_KZT = 398  # Тенге
@@ -20,7 +21,8 @@ CURRENCY_RUB = 643  # Российский рубль
 CURRENCY_CNY = 156  # Китайский юань
 
 # Order status codes
-ORDER_STATUS_SUCCESS = 2  # Успешный платеж
+ORDER_STATUS_PRE_AUTH = 1  # Заказ зарегистрирован, но не оплачен (требуется завершение)
+ORDER_STATUS_SUCCESS = 2  # Успешный платеж (оплачен и завершен)
 
 
 async def register_order(
