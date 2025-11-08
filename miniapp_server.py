@@ -685,12 +685,17 @@ def create_app() -> web.Application:
             # Описание заказа
             description = f"VPN подписка на {plan_days} дней"
             
+            # Генерируем orderNumber для платежного шлюза
+            import uuid
+            order_number = uuid.uuid4().hex[:32]  # 32 символа без дефисов
+            
             # Регистрируем заказ в платежном шлюзе
             order_data = await payment_gateway.register_order(
                 amount=amount_minor,
                 currency=currency_code,
                 return_url=return_url,
                 description=description,
+                order_number=order_number,
                 language="ru"
             )
             
@@ -707,7 +712,7 @@ def create_app() -> web.Application:
                 order_id=order_data['orderId'],
                 telegram_id=telegram_id,
                 uuid=uuid,
-                amount=float(amount),
+                amount=float(amount) / 100,  # Конвертируем обратно в основные единицы для хранения
                 currency=currency,
                 plan_days=plan_days,
                 status='PENDING'

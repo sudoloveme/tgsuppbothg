@@ -3,6 +3,7 @@ Payment Gateway integration for Berekebank.kz
 """
 import logging
 import httpx
+import uuid
 from typing import Optional, Dict, Any
 from config import PAYMENT_GATEWAY_URL, PAYMENT_GATEWAY_USERNAME, PAYMENT_GATEWAY_PASSWORD
 
@@ -27,6 +28,7 @@ async def register_order(
     currency: int,
     return_url: str,
     description: str,
+    order_number: Optional[str] = None,
     language: str = "ru"
 ) -> Optional[Dict[str, Any]]:
     """
@@ -37,12 +39,18 @@ async def register_order(
         currency: Код валюты (398 для KZT)
         return_url: URL для возврата после оплаты
         description: Описание заказа
+        order_number: Номер заказа (если не указан, генерируется автоматически)
         language: Язык интерфейса (ru, en, kz)
     
     Returns:
         Dict с orderId и formUrl, или None в случае ошибки
     """
     try:
+        # Генерируем orderNumber, если не указан
+        if not order_number:
+            # Используем UUID без дефисов и ограничиваем длину до 32 символов
+            order_number = uuid.uuid4().hex[:32]
+        
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
                 REGISTER_URL,
@@ -53,6 +61,7 @@ async def register_order(
                     "password": PAYMENT_GATEWAY_PASSWORD,
                     "returnUrl": return_url,
                     "description": description,
+                    "orderNumber": order_number,
                     "language": language
                 },
                 headers={"Content-Type": "application/x-www-form-urlencoded"}
