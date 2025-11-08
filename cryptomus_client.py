@@ -91,7 +91,7 @@ async def create_payment(
     sign = generate_sign(payload)
     
     headers = {
-        "userId": CRYPTOMUS_MERCHANT,  # Согласно документации Cryptomus используется userId
+        "merchant": CRYPTOMUS_MERCHANT,  # UUID мерчанта из личного кабинета Cryptomus
         "sign": sign,
         "Content-Type": "application/json"
     }
@@ -163,7 +163,7 @@ async def get_payment_info(uuid: str) -> Optional[Dict[str, Any]]:
     sign = generate_sign(payload)
     
     headers = {
-        "userId": CRYPTOMUS_MERCHANT,  # Согласно документации Cryptomus используется userId
+        "merchant": CRYPTOMUS_MERCHANT,  # UUID мерчанта из личного кабинета Cryptomus
         "sign": sign,
         "Content-Type": "application/json"
     }

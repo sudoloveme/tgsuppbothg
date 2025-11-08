@@ -24,7 +24,7 @@ PAYMENT_GATEWAY_USERNAME = os.getenv("PAYMENT_GATEWAY_USERNAME", "").strip()
 PAYMENT_GATEWAY_PASSWORD = os.getenv("PAYMENT_GATEWAY_PASSWORD", "").strip()
 
 # Cryptomus payment gateway configuration
-CRYPTOMUS_MERCHANT = os.getenv("CRYPTOMUS_MERCHANT", "").strip()  # UUID пользователя (userId)
+CRYPTOMUS_MERCHANT = os.getenv("CRYPTOMUS_MERCHANT", "").strip()  # UUID мерчанта из личного кабинета Cryptomus
 CRYPTOMUS_API_KEY = os.getenv("CRYPTOMUS_API_KEY", "").strip()
 CRYPTOMUS_API_URL = os.getenv("CRYPTOMUS_API_URL", "https://api.cryptomus.com").strip()
 
