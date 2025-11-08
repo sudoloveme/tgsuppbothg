@@ -3044,12 +3044,20 @@
                 return;
             }
             
+            // Получаем Telegram ID для проверки принадлежности заказа
+            const telegramId = tg?.initDataUnsafe?.user?.id;
+            if (!telegramId) {
+                console.error('Telegram ID not found');
+                return;
+            }
+            
             const statusEl = document.getElementById('paymentWaitingStatus');
             const titleEl = document.getElementById('paymentWaitingTitle');
             const textEl = document.getElementById('paymentWaitingText');
             
             try {
-                const response = await fetch(`/api/payment/status/${currentPaymentOrderId}`);
+                // КРИТИЧНО: Передаем telegram_id для проверки принадлежности заказа
+                const response = await fetch(`/api/payment/status/${currentPaymentOrderId}?telegram_id=${telegramId}`);
                 const result = await response.json();
                 
                 if (!response.ok) {

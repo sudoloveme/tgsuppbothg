@@ -817,6 +817,53 @@ def create_app() -> web.Application:
                     headers={'Access-Control-Allow-Origin': '*'}
                 )
             
+            # КРИТИЧНО: Получаем telegram_id из запроса (query параметр или заголовок)
+            telegram_id_str = request.query.get('telegram_id')
+            if not telegram_id_str:
+                # Пытаемся получить из заголовка (если передается)
+                telegram_id_str = request.headers.get('X-Telegram-Id')
+            
+            if not telegram_id_str:
+                logger.error(f"Missing telegram_id for order {order_id}")
+                return web.json_response(
+                    {"error": "telegram_id is required"},
+                    status=400,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            try:
+                telegram_id = int(telegram_id_str)
+            except ValueError:
+                logger.error(f"Invalid telegram_id format: {telegram_id_str}")
+                return web.json_response(
+                    {"error": "Invalid telegram_id format"},
+                    status=400,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            # КРИТИЧНО: Проверяем, что заказ принадлежит этому пользователю
+            from database import db_get_payment_order
+            payment_order = db_get_payment_order(order_id)
+            
+            if not payment_order:
+                logger.error(f"Order {order_id} not found in database")
+                return web.json_response(
+                    {"error": "Order not found"},
+                    status=404,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            # СТРОГАЯ ПРОВЕРКА: заказ должен принадлежать текущему пользователю
+            if payment_order.get('telegram_id') != telegram_id:
+                logger.error(f"Order {order_id} belongs to telegram_id {payment_order.get('telegram_id')}, but request from {telegram_id}")
+                return web.json_response(
+                    {"error": "Access denied: order does not belong to this user"},
+                    status=403,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            logger.info(f"Checking payment status for order {order_id}, telegram_id {telegram_id} (verified)")
+            
             # Получаем статус заказа из платежного шлюза
             order_status = await payment_gateway.get_order_status(order_id)
             
@@ -847,7 +894,7 @@ def create_app() -> web.Application:
                     logger.warning(f"Failed to deposit order {order_id}, but status is PRE_AUTH")
             
             # Обновляем статус в БД
-            from database import db_update_payment_order_status, db_get_payment_order
+            from database import db_update_payment_order_status
             db_update_payment_order_status(
                 order_id=order_id,
                 status='PAID' if is_paid else 'FAILED',
@@ -858,14 +905,45 @@ def create_app() -> web.Application:
             if is_paid:
                 logger.info(f"Payment successful for order {order_id}, attempting to update subscription...")
                 try:
-                    # Получаем информацию о заказе из БД
-                    payment_order = db_get_payment_order(order_id)
-                    logger.info(f"Payment order data: {payment_order}")
+                    # КРИТИЧНО: Проверяем еще раз, что заказ принадлежит пользователю
+                    # (payment_order уже получен выше и проверен)
+                    if payment_order.get('telegram_id') != telegram_id:
+                        logger.error(f"SECURITY: Order {order_id} ownership mismatch during subscription update")
+                        return web.json_response(
+                            {"error": "Security check failed"},
+                            status=403,
+                            headers={'Access-Control-Allow-Origin': '*'}
+                        )
+                    
+                    # КРИТИЧНО: Проверяем, что UUID из заказа соответствует текущему пользователю
+                    from database import db_get_user_backend_data
+                    user_backend_data = db_get_user_backend_data(telegram_id)
+                    if not user_backend_data or not user_backend_data[0]:
+                        logger.error(f"User {telegram_id} not found in backend data")
+                        return web.json_response(
+                            {"error": "User not found"},
+                            status=404,
+                            headers={'Access-Control-Allow-Origin': '*'}
+                        )
+                    
+                    user_uuid = user_backend_data[0]
+                    order_uuid = payment_order.get('uuid')
+                    
+                    # СТРОГАЯ ПРОВЕРКА: UUID из заказа должен совпадать с UUID пользователя
+                    if order_uuid != user_uuid:
+                        logger.error(f"SECURITY: UUID mismatch for order {order_id}. Order UUID: {order_uuid}, User UUID: {user_uuid}")
+                        return web.json_response(
+                            {"error": "UUID mismatch: order does not belong to this user"},
+                            status=403,
+                            headers={'Access-Control-Allow-Origin': '*'}
+                        )
+                    
+                    logger.info(f"Payment order data verified: order_id={order_id}, telegram_id={telegram_id}, uuid={user_uuid}")
                     
                     # Проверяем, не была ли подписка уже обновлена
-                    if payment_order and payment_order.get('subscription_updated'):
+                    if payment_order.get('subscription_updated'):
                         logger.info(f"Subscription already updated for order {order_id}, skipping")
-                    elif payment_order and payment_order.get('uuid') and payment_order.get('plan_days'):
+                    elif payment_order.get('uuid') and payment_order.get('plan_days'):
                         uuid = payment_order['uuid']
                         plan_days = payment_order['plan_days']
                         logger.info(f"Updating subscription for UUID {uuid} with {plan_days} days")
@@ -879,7 +957,7 @@ def create_app() -> web.Application:
                         
                         logger.info(f"Subscription update completed for UUID {uuid}")
                     else:
-                        logger.warning(f"Payment order missing required data: uuid={payment_order.get('uuid') if payment_order else None}, plan_days={payment_order.get('plan_days') if payment_order else None}")
+                        logger.warning(f"Payment order missing required data: uuid={payment_order.get('uuid')}, plan_days={payment_order.get('plan_days')}")
                 except Exception as e:
                     logger.exception(f"Error updating subscription after payment: {e}")
                     # Не прерываем ответ, просто логируем ошибку
@@ -917,6 +995,27 @@ def create_app() -> web.Application:
             
             telegram_id = int(telegram_id_str)
             
+            # КРИТИЧНО: Проверяем, что заказ принадлежит этому пользователю
+            from database import db_get_payment_order
+            payment_order = db_get_payment_order(order_id)
+            
+            if not payment_order:
+                logger.error(f"Order {order_id} not found in database")
+                return web.Response(
+                    text="Ошибка: заказ не найден",
+                    status=404
+                )
+            
+            # СТРОГАЯ ПРОВЕРКА: заказ должен принадлежать текущему пользователю
+            if payment_order.get('telegram_id') != telegram_id:
+                logger.error(f"SECURITY: Order {order_id} belongs to telegram_id {payment_order.get('telegram_id')}, but request from {telegram_id}")
+                return web.Response(
+                    text="Ошибка: заказ не принадлежит этому пользователю",
+                    status=403
+                )
+            
+            logger.info(f"Payment return for order {order_id}, telegram_id {telegram_id} (verified)")
+            
             # Проверяем статус заказа
             order_status = await payment_gateway.get_order_status(order_id)
             
@@ -946,7 +1045,7 @@ def create_app() -> web.Application:
                     logger.warning(f"Failed to deposit order {order_id}, but status is PRE_AUTH")
             
             # Обновляем статус в БД
-            from database import db_update_payment_order_status, db_get_payment_order
+            from database import db_update_payment_order_status
             db_update_payment_order_status(
                 order_id=order_id,
                 status='PAID' if is_paid else 'FAILED',
@@ -957,14 +1056,41 @@ def create_app() -> web.Application:
             if is_paid:
                 logger.info(f"Payment successful for order {order_id} (payment_return), attempting to update subscription...")
                 try:
-                    # Получаем информацию о заказе из БД
-                    payment_order = db_get_payment_order(order_id)
-                    logger.info(f"Payment order data: {payment_order}")
+                    # КРИТИЧНО: Проверяем еще раз, что заказ принадлежит пользователю
+                    if payment_order.get('telegram_id') != telegram_id:
+                        logger.error(f"SECURITY: Order {order_id} ownership mismatch during subscription update")
+                        return web.Response(
+                            text="Ошибка безопасности",
+                            status=403
+                        )
+                    
+                    # КРИТИЧНО: Проверяем, что UUID из заказа соответствует текущему пользователю
+                    from database import db_get_user_backend_data
+                    user_backend_data = db_get_user_backend_data(telegram_id)
+                    if not user_backend_data or not user_backend_data[0]:
+                        logger.error(f"User {telegram_id} not found in backend data")
+                        return web.Response(
+                            text="Ошибка: пользователь не найден",
+                            status=404
+                        )
+                    
+                    user_uuid = user_backend_data[0]
+                    order_uuid = payment_order.get('uuid')
+                    
+                    # СТРОГАЯ ПРОВЕРКА: UUID из заказа должен совпадать с UUID пользователя
+                    if order_uuid != user_uuid:
+                        logger.error(f"SECURITY: UUID mismatch for order {order_id}. Order UUID: {order_uuid}, User UUID: {user_uuid}")
+                        return web.Response(
+                            text="Ошибка: несоответствие данных пользователя",
+                            status=403
+                        )
+                    
+                    logger.info(f"Payment order data verified: order_id={order_id}, telegram_id={telegram_id}, uuid={user_uuid}")
                     
                     # Проверяем, не была ли подписка уже обновлена
-                    if payment_order and payment_order.get('subscription_updated'):
+                    if payment_order.get('subscription_updated'):
                         logger.info(f"Subscription already updated for order {order_id}, skipping")
-                    elif payment_order and payment_order.get('uuid') and payment_order.get('plan_days'):
+                    elif payment_order.get('uuid') and payment_order.get('plan_days'):
                         uuid = payment_order['uuid']
                         plan_days = payment_order['plan_days']
                         logger.info(f"Updating subscription for UUID {uuid} with {plan_days} days")
@@ -978,7 +1104,7 @@ def create_app() -> web.Application:
                         
                         logger.info(f"Subscription update completed for UUID {uuid}")
                     else:
-                        logger.warning(f"Payment order missing required data: uuid={payment_order.get('uuid') if payment_order else None}, plan_days={payment_order.get('plan_days') if payment_order else None}")
+                        logger.warning(f"Payment order missing required data: uuid={payment_order.get('uuid')}, plan_days={payment_order.get('plan_days')}")
                 except Exception as e:
                     logger.exception(f"Error updating subscription after payment: {e}")
                     # Не прерываем ответ, просто логируем ошибку
