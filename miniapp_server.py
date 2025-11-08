@@ -674,8 +674,9 @@ def create_app() -> web.Application:
             }
             currency_code = currency_codes[currency.lower()]
             
-            # Конвертируем сумму в минимальные единицы
-            amount_minor = payment_gateway.convert_amount_to_minor_units(float(amount), currency_code)
+            # Сумма уже приходит в тиынах (умножена на 100 на фронтенде)
+            # Конвертируем в int для платежного шлюза
+            amount_minor = int(float(amount))
             
             # Формируем returnUrl (orderId будет подставлен платежным шлюзом)
             from config import MINIAPP_URL
