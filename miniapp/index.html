@@ -2857,8 +2857,14 @@
 
         // Переключение на страницу ожидания платежа
         function switchToPaymentWaitingPage() {
+            console.log('Switching to payment waiting page');
             const pricingPage = document.getElementById('pricingPage');
             const waitingPage = document.getElementById('paymentWaitingPage');
+            
+            if (!waitingPage) {
+                console.error('Payment waiting page not found!');
+                return;
+            }
             
             if (pricingPage) {
                 pricingPage.style.display = 'none';
@@ -2866,6 +2872,8 @@
             if (waitingPage) {
                 waitingPage.style.display = 'block';
             }
+            
+            console.log('Payment waiting page displayed');
             
             // Начинаем проверку статуса каждые 5 секунд
             startPaymentStatusCheck();
