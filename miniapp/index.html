@@ -1835,6 +1835,38 @@
             opacity: 0.6;
         }
 
+        .pricing-payment-button.loading {
+            position: relative;
+            color: transparent;
+            pointer-events: none;
+        }
+
+        .pricing-payment-button.loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .pricing-payment-button.loading::before {
+            content: 'Загрузка';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 600;
+            margin-left: 30px;
+        }
+
         .pricing-plan-radio {
             width: 22px;
             height: 22px;
@@ -2785,17 +2817,11 @@
             
             console.log('Telegram ID:', telegramId);
             
-            // Показываем индикатор загрузки
-            try {
-                if (tg.showPopup) {
-                    tg.showPopup({
-                        title: 'Создание платежа',
-                        message: 'Пожалуйста, подождите...',
-                        buttons: []
-                    });
-                }
-            } catch (e) {
-                console.warn('Could not show popup:', e);
+            // Делаем кнопку неактивной и показываем загрузку
+            const paymentButton = document.getElementById('pricingPaymentButton');
+            if (paymentButton) {
+                paymentButton.disabled = true;
+                paymentButton.classList.add('loading');
             }
             
             try {
@@ -2866,7 +2892,14 @@
                 
             } catch (error) {
                 console.error('Payment error:', error);
-                tg.closePopup();
+                
+                // Восстанавливаем кнопку
+                const paymentButton = document.getElementById('pricingPaymentButton');
+                if (paymentButton) {
+                    paymentButton.disabled = false;
+                    paymentButton.classList.remove('loading');
+                }
+                
                 tg.showAlert('Ошибка при создании платежа. Пожалуйста, попробуйте позже.');
             }
         }

@@ -721,8 +721,9 @@ def create_app() -> web.Application:
             
         except Exception as e:
             logger.exception(f"Error creating payment: {e}")
+            error_message = str(e)
             return web.json_response(
-                {"error": "Internal server error"},
+                {"error": f"Internal server error: {error_message}"},
                 status=500,
                 headers={'Access-Control-Allow-Origin': '*'}
             )
