@@ -645,6 +645,7 @@ def create_app() -> web.Application:
         3. Expired subscription renewal (EXPIRED) - add days to current date
         """
         try:
+            logger.info(f"Starting subscription update for UUID: {uuid}, plan_days: {plan_days}")
             # Получаем информацию о пользователе
             user_data = await get_user_by_uuid(uuid)
             if not user_data:
@@ -653,6 +654,7 @@ def create_app() -> web.Application:
             
             user_status = user_data.get('status', '').upper()
             current_expire_at = user_data.get('expireAt')
+            logger.info(f"User status: {user_status}, current_expire_at: {current_expire_at}")
             
             # Вычисляем новую дату окончания
             if user_status == 'ACTIVE' and current_expire_at:
@@ -678,8 +680,10 @@ def create_app() -> web.Application:
             
             # Форматируем дату в ISO формат
             expire_at_iso = new_expire_at.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+            logger.info(f"Calculated new expire_at: {expire_at_iso}")
             
             # Обновляем подписку
+            logger.info(f"Sending update request to backend for UUID {uuid}")
             result = await update_user_subscription(
                 uuid=uuid,
                 status='ACTIVE',
@@ -692,7 +696,7 @@ def create_app() -> web.Application:
             if result:
                 logger.info(f"Successfully updated subscription for UUID {uuid}: {plan_days} days, expires at {expire_at_iso}")
             else:
-                logger.error(f"Failed to update subscription for UUID {uuid}")
+                logger.error(f"Failed to update subscription for UUID {uuid} - API returned None")
                 
         except Exception as e:
             logger.exception(f"Error in update_user_subscription_after_payment for UUID {uuid}: {e}")
