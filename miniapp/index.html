@@ -1795,38 +1795,22 @@
             max-height: 0;
             overflow: hidden;
             transition: opacity 0.3s ease-out, max-height 0.3s ease-out, margin 0.3s ease-out, padding 0.3s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .pricing-payment-button.visible {
             opacity: 1;
             max-height: 100px;
             margin-top: 0;
-            padding: 14px;
+            padding: 16px;
             overflow: visible;
         }
 
-        .pricing-payment-button::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s ease-out, height 0.6s ease-out;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .pricing-payment-button:active::before {
-            width: 300px;
-            height: 300px;
-        }
-
-        .pricing-payment-button:active {
-            transform: scale(0.97);
+        .pricing-payment-button:active:not(:disabled) {
+            opacity: 0.8;
         }
 
         .pricing-payment-button:disabled {
@@ -1836,41 +1820,25 @@
         }
 
         .pricing-payment-button.loading {
-            position: relative;
-            color: transparent !important;
             pointer-events: none;
         }
 
-        .pricing-payment-button.loading .button-text {
+        .pricing-payment-button-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
             display: none;
         }
 
-        .pricing-payment-button.loading::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 20px;
-            height: 20px;
-            border: 2px solid #ffffff;
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-left: -35px;
+        .pricing-payment-button.loading .pricing-payment-button-spinner {
+            display: block;
         }
 
-        .pricing-payment-button.loading::before {
-            content: 'Загрузка';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #ffffff;
-            font-size: 16px;
-            font-weight: 600;
-            margin-left: 15px;
-            z-index: 1;
+        .pricing-payment-button.loading .pricing-payment-button-text {
+            opacity: 0.7;
         }
 
         .pricing-plan-radio {
@@ -2002,7 +1970,8 @@
 
             <!-- Payment Button -->
             <button class="pricing-payment-button" id="pricingPaymentButton" onclick="handlePayment()" disabled>
-                <span class="button-text">Оплатить</span>
+                <span class="pricing-payment-button-spinner"></span>
+                <span class="pricing-payment-button-text">Оплатить</span>
             </button>
         </div>
     </div>
@@ -2903,6 +2872,11 @@
                 
                 if (!response.ok) {
                     console.error('Payment creation failed:', result);
+                    // Восстанавливаем кнопку при ошибке
+                    if (paymentButton) {
+                        paymentButton.disabled = false;
+                        paymentButton.classList.remove('loading');
+                    }
                     tg.showAlert(`Ошибка: ${result.error || 'Не удалось создать платеж'}`);
                     return;
                 }
@@ -2923,15 +2897,26 @@
                         // Fallback на window.open
                         const newWindow = window.open(result.formUrl, '_blank');
                         if (!newWindow) {
+                            // Восстанавливаем кнопку если не удалось открыть окно
+                            if (paymentButton) {
+                                paymentButton.disabled = false;
+                                paymentButton.classList.remove('loading');
+                            }
                             tg.showAlert('Пожалуйста, разрешите открытие всплывающих окон в настройках браузера');
                             return;
                         }
                     }
                     
                     // Переключаемся на страницу ожидания
+                    // Кнопка автоматически разблокируется при переключении страницы
                     switchToPaymentWaitingPage();
                 } else {
                     console.error('No formUrl in response:', result);
+                    // Восстанавливаем кнопку при ошибке
+                    if (paymentButton) {
+                        paymentButton.disabled = false;
+                        paymentButton.classList.remove('loading');
+                    }
                     tg.showAlert('Ошибка: не получен URL для оплаты');
                 }
                 
