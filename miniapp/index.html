@@ -1834,7 +1834,7 @@
                             <span class="payment-method-option-text">RUB - Российский рубль</span>
                         </div>
                         <div class="payment-method-option" onclick="selectPaymentMethod('stars', 'Telegram Stars', 'stars.svg')">
-                            <img src="/api/icons/waytopay/stars.svg" alt="Stars" class="payment-method-option-icon">
+                            <img src="/api/icons/waytopay/stars.svg?v=2" alt="Stars" class="payment-method-option-icon">
                             <span class="payment-method-option-text">Telegram Stars</span>
                         </div>
                         <div class="payment-method-option" onclick="selectPaymentMethod('crypto', 'USDT, TON, ETH, BTC', 'crypto.svg')">
@@ -2468,8 +2468,9 @@
             const methodIcon = document.getElementById('paymentMethodIcon');
             
             methodText.textContent = text;
-            // Добавляем версионный параметр для crypto.svg чтобы обойти кеш
-            const iconUrl = iconFile === 'crypto.svg' 
+            // Добавляем версионный параметр для crypto.svg и stars.svg чтобы обойти кеш
+            const noCacheIcons = ['crypto.svg', 'stars.svg'];
+            const iconUrl = noCacheIcons.includes(iconFile)
                 ? `/api/icons/waytopay/${iconFile}?v=${Date.now()}` 
                 : `/api/icons/waytopay/${iconFile}`;
             methodIcon.src = iconUrl;
