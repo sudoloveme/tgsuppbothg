@@ -39,8 +39,9 @@ def generate_sign(data: dict) -> str:
         MD5 hash of base64-encoded JSON payload + API key
     """
     # 1. json_encode(data) - convert dict to JSON string
-    # Используем стандартный json.dumps без separators для совместимости с PHP json_encode
-    payload_str = json.dumps(data, ensure_ascii=False)
+    # PHP json_encode по умолчанию добавляет пробелы после двоеточий и запятых
+    # Используем стандартный json.dumps (без separators) для совместимости
+    payload_str = json.dumps(data, separators=(', ', ': '), ensure_ascii=False)
     logger.info(f"[SIGN DEBUG] JSON payload: {payload_str}")
     
     # 2. base64_encode(json_encode(data))
