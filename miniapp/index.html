@@ -3054,17 +3054,20 @@
             }
             
             const statusEl = document.getElementById('paymentWaitingStatus');
-            if (statusEl) {
-                statusEl.textContent = 'Проверка статуса...';
-            }
+            const titleEl = document.getElementById('paymentWaitingTitle');
+            const textEl = document.getElementById('paymentWaitingText');
             
             try {
                 const response = await fetch(`/api/payment/status/${currentPaymentOrderId}`);
                 const result = await response.json();
                 
                 if (!response.ok) {
+                    // Показываем ошибку только если это финальный результат
+                    stopPaymentStatusCheck();
+                    if (titleEl) titleEl.textContent = 'Ошибка оплаты';
+                    if (textEl) textEl.textContent = 'Не удалось проверить статус платежа. Пожалуйста, попробуйте позже.';
                     if (statusEl) {
-                        statusEl.textContent = 'Ошибка проверки статуса';
+                        statusEl.style.display = 'none';
                     }
                     return;
                 }
@@ -3074,11 +3077,12 @@
                 const isPaid = result.isPaid || (orderStatus === 1 || orderStatus === 2);
                 
                 if (isPaid) {
-                    // Платеж успешен
+                    // Платеж успешен - показываем финальный результат
                     stopPaymentStatusCheck();
+                    if (titleEl) titleEl.textContent = 'Оплата успешна!';
+                    if (textEl) textEl.textContent = 'Ваша подписка активирована.';
                     if (statusEl) {
-                        statusEl.textContent = 'Оплата успешна!';
-                        statusEl.style.color = '#34C759';
+                        statusEl.style.display = 'none';
                     }
                     
                     // Показываем сообщение и возвращаемся на главную
@@ -3091,19 +3095,17 @@
                         switchPage('home');
                         // Перезагружаем данные подписки
                         loadSubscriptionData();
-                    }, 1500);
-                } else {
-                    // Платеж еще не завершен
-                    if (statusEl) {
-                        statusEl.textContent = 'Ожидание оплаты...';
-                        statusEl.style.color = '#8e8e93';
-                    }
+                    }, 2000);
                 }
-                
+                // Если платеж еще не завершен, ничего не показываем (скрываем промежуточные статусы)
             } catch (error) {
                 console.error('Payment status check error:', error);
+                // Показываем ошибку только если это финальный результат
+                stopPaymentStatusCheck();
+                if (titleEl) titleEl.textContent = 'Ошибка оплаты';
+                if (textEl) textEl.textContent = 'Произошла ошибка при проверке статуса платежа.';
                 if (statusEl) {
-                    statusEl.textContent = 'Ошибка проверки статуса';
+                    statusEl.style.display = 'none';
                 }
             }
         }
