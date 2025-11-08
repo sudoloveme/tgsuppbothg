@@ -2745,16 +2745,25 @@
 
         // Обработка оплаты
         async function handlePayment() {
+            console.log('handlePayment called', {
+                selectedPaymentMethod,
+                selectedPlanIndex
+            });
+            
             if (!selectedPaymentMethod || selectedPlanIndex === null) {
+                console.log('Missing payment method or plan');
                 tg.showAlert('Пожалуйста, выберите способ оплаты и тариф');
                 return;
             }
             
             // СТРОГАЯ ПРОВЕРКА: только KZT и KGZ
             if (selectedPaymentMethod !== 'kzt' && selectedPaymentMethod !== 'kgz') {
+                console.log('Invalid currency:', selectedPaymentMethod);
                 tg.showAlert('Оплата через банк доступна только для тенге (KZT) и кыргызских сомов (KGZ)');
                 return;
             }
+            
+            console.log('Payment method check passed:', selectedPaymentMethod);
             
             const plan = pricingData[selectedPaymentMethod][selectedPlanIndex];
             const currency = currencySymbols[selectedPaymentMethod];
