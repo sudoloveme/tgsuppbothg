@@ -2920,7 +2920,14 @@
         // Переключение на страницу ожидания платежа
         function switchToPaymentWaitingPage() {
             console.log('Switching to payment waiting page');
-            const pricingPage = document.getElementById('pricingPage');
+            
+            // Скрываем все страницы
+            const allPages = document.querySelectorAll('.page-container');
+            allPages.forEach(p => {
+                p.style.display = 'none';
+                p.classList.remove('active');
+            });
+            
             const waitingPage = document.getElementById('paymentWaitingPage');
             
             if (!waitingPage) {
@@ -2928,12 +2935,9 @@
                 return;
             }
             
-            if (pricingPage) {
-                pricingPage.style.display = 'none';
-            }
-            if (waitingPage) {
-                waitingPage.style.display = 'block';
-            }
+            // Показываем страницу ожидания
+            waitingPage.style.display = 'block';
+            waitingPage.classList.add('active');
             
             console.log('Payment waiting page displayed');
             
