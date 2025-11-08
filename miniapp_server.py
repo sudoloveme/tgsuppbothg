@@ -632,6 +632,59 @@ def create_app() -> web.Application:
     app.router.add_post('/api/auth/verify-otp', verify_otp)
     
     # Payment endpoints
+    async def update_user_subscription_after_payment(uuid: str, plan_days: int) -> None:
+        """
+        Update user subscription after successful payment.
+        Handles three scenarios:
+        1. New user (DISABLED) - add days to current date
+        2. Active subscription renewal (ACTIVE) - add days to existing expireAt
+        3. Expired subscription renewal (EXPIRED) - add days to current date
+        """
+        try:
+            # Получаем информацию о пользователе
+            user_data = await get_user_by_uuid(uuid)
+            if not user_data:
+                logger.error(f"User not found for UUID: {uuid}")
+                return
+            
+            user_status = user_data.get('status', '').upper()
+            current_expire_at = user_data.get('expireAt')
+            
+            # Вычисляем новую дату окончания
+            if user_status == 'ACTIVE' and current_expire_at:
+                # Сценарий 2: Продление активной подписки
+                # Добавляем дни к существующей дате окончания
+                try:
+                    expire_date = parser.isoparse(current_expire_at)
+                    new_expire_at = expire_date + timedelta(days=plan_days)
+                except Exception as e:
+                    logger.warning(f"Error parsing expireAt {current_expire_at}, using current date: {e}")
+                    new_expire_at = datetime.now() + timedelta(days=plan_days)
+            else:
+                # Сценарий 1 (DISABLED) или 3 (EXPIRED): Добавляем дни к текущей дате
+                new_expire_at = datetime.now() + timedelta(days=plan_days)
+            
+            # Форматируем дату в ISO формат
+            expire_at_iso = new_expire_at.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+            
+            # Обновляем подписку
+            result = await update_user_subscription(
+                uuid=uuid,
+                status='ACTIVE',
+                traffic_limit_bytes=214748364800,  # 200 GB
+                traffic_limit_strategy='MONTH',
+                expire_at=expire_at_iso,
+                used_traffic_bytes=0
+            )
+            
+            if result:
+                logger.info(f"Successfully updated subscription for UUID {uuid}: {plan_days} days, expires at {expire_at_iso}")
+            else:
+                logger.error(f"Failed to update subscription for UUID {uuid}")
+                
+        except Exception as e:
+            logger.exception(f"Error in update_user_subscription_after_payment for UUID {uuid}: {e}")
+
     async def create_payment(request: Request) -> Response:
         """Create payment order. POST /api/payment/create"""
         try:
