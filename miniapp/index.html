@@ -2665,6 +2665,9 @@
                 
                 const result = await response.json();
                 
+                // Закрываем popup
+                tg.closePopup();
+                
                 if (!response.ok) {
                     tg.showAlert(`Ошибка: ${result.error || 'Не удалось создать платеж'}`);
                     return;
@@ -2679,6 +2682,7 @@
                 
             } catch (error) {
                 console.error('Payment error:', error);
+                tg.closePopup();
                 tg.showAlert('Ошибка при создании платежа. Пожалуйста, попробуйте позже.');
             }
         }
