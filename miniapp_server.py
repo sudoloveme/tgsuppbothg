@@ -21,6 +21,7 @@ import database
 import otp_manager
 import smtp_client
 import payment_gateway
+import cryptomus_client
 
 logger = logging.getLogger("support-bot")
 
@@ -1227,9 +1228,221 @@ def create_app() -> web.Application:
                 status=500
             )
     
+    async def create_cryptomus_payment(request: Request) -> Response:
+        """Create Cryptomus payment order. POST /api/cryptomus/payment/create"""
+        try:
+            data = await request.json()
+            telegram_id = data.get('telegram_id')
+            amount = data.get('amount')  # Сумма в USD
+            currency = data.get('currency', 'crypto')  # Валюта (crypto для Cryptomus)
+            plan_days = data.get('plan_days')  # Количество дней подписки
+            
+            if not telegram_id or not amount or not plan_days:
+                return web.json_response(
+                    {"error": "telegram_id, amount, and plan_days are required"},
+                    status=400,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            # Получаем UUID пользователя из локальной БД
+            from database import db_get_user_backend_data
+            backend_data = db_get_user_backend_data(telegram_id)
+            
+            if not backend_data or not backend_data[0]:
+                return web.json_response(
+                    {"error": "User not found or not linked"},
+                    status=404,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            uuid = backend_data[0]
+            
+            # Проверяем, что это криптовалютный платеж
+            # Принимаем crypto, usdt, ton, eth, btc
+            crypto_currencies = ['crypto', 'usdt', 'ton', 'eth', 'btc']
+            if currency.lower() not in crypto_currencies:
+                return web.json_response(
+                    {"error": "This endpoint is only for cryptocurrency payments"},
+                    status=400,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            logger.info(f"Creating Cryptomus payment: telegram_id={telegram_id}, amount={amount} USD, plan_days={plan_days}")
+            
+            # Генерируем order_id для Cryptomus
+            import uuid as uuid_module
+            order_id = uuid_module.uuid4().hex[:32]  # 32 символа без дефисов
+            
+            # Создаем платеж в Cryptomus
+            payment_data = await cryptomus_client.create_payment(
+                amount=str(amount),
+                currency="USD",
+                order_id=order_id
+            )
+            
+            if not payment_data:
+                logger.error("Failed to create Cryptomus payment")
+                return web.json_response(
+                    {"error": "Failed to create payment order"},
+                    status=500,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            payment_uuid = payment_data.get('uuid')
+            payment_url = payment_data.get('url')
+            
+            if not payment_uuid or not payment_url:
+                logger.error(f"Invalid Cryptomus payment response: {payment_data}")
+                return web.json_response(
+                    {"error": "Invalid payment response"},
+                    status=500,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            logger.info(f"Cryptomus payment created: uuid={payment_uuid}, url={payment_url}")
+            
+            # Сохраняем информацию о заказе в БД (используем payment_uuid как order_id)
+            from database import db_save_payment_order
+            db_save_payment_order(
+                order_id=payment_uuid,  # Используем UUID из Cryptomus как order_id
+                telegram_id=telegram_id,
+                uuid=uuid,
+                amount=float(amount),
+                currency='crypto',
+                plan_days=plan_days,
+                status='PENDING'
+            )
+            
+            return web.json_response(
+                {
+                    "uuid": payment_uuid,
+                    "url": payment_url,
+                    "orderId": payment_uuid  # Для совместимости с фронтендом
+                },
+                headers={'Access-Control-Allow-Origin': '*'}
+            )
+            
+        except Exception as e:
+            logger.exception(f"Error creating Cryptomus payment: {e}")
+            error_message = str(e)
+            return web.json_response(
+                {"error": f"Internal server error: {error_message}"},
+                status=500,
+                headers={'Access-Control-Allow-Origin': '*'}
+            )
+    
+    async def check_cryptomus_payment_status(request: Request) -> Response:
+        """Check Cryptomus payment status. GET /api/cryptomus/payment/status/{uuid}"""
+        try:
+            payment_uuid = request.match_info.get('uuid')
+            
+            if not payment_uuid:
+                return web.json_response(
+                    {"error": "uuid is required"},
+                    status=400,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            # Получаем telegram_id из query параметра
+            telegram_id_str = request.query.get('telegram_id')
+            if not telegram_id_str:
+                return web.json_response(
+                    {"error": "telegram_id is required"},
+                    status=400,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            try:
+                telegram_id = int(telegram_id_str)
+            except ValueError:
+                return web.json_response(
+                    {"error": "Invalid telegram_id format"},
+                    status=400,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            # Проверяем, что заказ принадлежит этому пользователю
+            from database import db_get_payment_order
+            payment_order = db_get_payment_order(payment_uuid)
+            
+            if not payment_order:
+                return web.json_response(
+                    {"error": "Payment order not found"},
+                    status=404,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            if payment_order.get('telegram_id') != telegram_id:
+                logger.error(f"Payment {payment_uuid} belongs to telegram_id {payment_order.get('telegram_id')}, but request from {telegram_id}")
+                return web.json_response(
+                    {"error": "Access denied: payment does not belong to this user"},
+                    status=403,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            logger.info(f"Checking Cryptomus payment status: uuid={payment_uuid}, telegram_id={telegram_id}")
+            
+            # Получаем статус платежа из Cryptomus
+            payment_info = await cryptomus_client.get_payment_info(payment_uuid)
+            
+            if not payment_info:
+                return web.json_response(
+                    {"error": "Failed to get payment status"},
+                    status=500,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            status = payment_info.get('status', '')
+            is_final = payment_info.get('is_final', False)
+            is_paid = cryptomus_client.is_payment_successful(status)
+            is_failed = cryptomus_client.is_payment_failed(status)
+            
+            # Обновляем статус в БД
+            from database import db_update_payment_order_status
+            db_update_payment_order_status(
+                order_id=payment_uuid,
+                status=status,
+                status_data=payment_info
+            )
+            
+            # Если платеж успешен и подписка еще не обновлена
+            if is_paid and not payment_order.get('subscription_updated'):
+                uuid = payment_order.get('uuid')
+                plan_days = payment_order.get('plan_days')
+                
+                if uuid and plan_days:
+                    logger.info(f"Payment successful, updating subscription: uuid={uuid}, plan_days={plan_days}")
+                    await update_user_subscription_after_payment(uuid, plan_days)
+                    
+                    # Помечаем, что подписка обновлена
+                    from database import db_mark_subscription_updated
+                    db_mark_subscription_updated(payment_uuid)
+            
+            return web.json_response(
+                {
+                    "uuid": payment_uuid,
+                    "status": status,
+                    "isPaid": is_paid,
+                    "isFailed": is_failed,
+                    "isFinal": is_final,
+                    "paymentInfo": payment_info
+                },
+                headers={'Access-Control-Allow-Origin': '*'}
+            )
+            
+        except Exception as e:
+            logger.exception(f"Error checking Cryptomus payment status: {e}")
+            return web.json_response(
+                {"error": f"Internal server error: {str(e)}"},
+                status=500,
+                headers={'Access-Control-Allow-Origin': '*'}
+            )
+    
     app.router.add_post('/api/payment/create', create_payment)
     app.router.add_get('/api/payment/status/{order_id}', check_payment_status)
     app.router.add_get('/payment/return', payment_return)
+    app.router.add_post('/api/cryptomus/payment/create', create_cryptomus_payment)
+    app.router.add_get('/api/cryptomus/payment/status/{uuid}', check_cryptomus_payment_status)
     
     # Static files (catch-all, must be last)
     logger.info("Registering static files route...")
@@ -1249,6 +1462,8 @@ def create_app() -> web.Application:
     logger.info("  POST /api/payment/create")
     logger.info("  GET /api/payment/status/{order_id}")
     logger.info("  GET /payment/return")
+    logger.info("  POST /api/cryptomus/payment/create")
+    logger.info("  GET /api/cryptomus/payment/status/{uuid}")
     
     return app
 
