@@ -667,16 +667,20 @@ def create_app() -> web.Application:
                     headers={'Access-Control-Allow-Origin': '*'}
                 )
             
-            # Определяем код валюты
-            currency_codes = {
-                'kzt': payment_gateway.CURRENCY_KZT,
-                'kgz': payment_gateway.CURRENCY_KGZ
-            }
-            currency_code = currency_codes[currency.lower()]
-            
-            # Сумма уже приходит в тиынах (умножена на 100 на фронтенде)
-            # Конвертируем в int для платежного шлюза
-            amount_minor = int(float(amount))
+            # ОСОБЕННОСТЬ ДЛЯ KGZ: конвертируем в KZT перед отправкой в банк
+            # Казахстанский эквайринг принимает только KZT, кыргызские банки вычтут сомы
+            if currency.lower() == 'kgz':
+                # Курс конвертации: 1 KGZ ≈ 1.075 KZT
+                # amount уже в тиынах сомов (умножено на 100 на фронтенде)
+                # Конвертируем сумму из тиынов сомов в тиыны тенге
+                KGZ_TO_KZT_RATE = 1.075  # 1 KGZ = 1.075 KZT
+                amount_minor = int(float(amount) * KGZ_TO_KZT_RATE)
+                # Всегда используем KZT для казахстанского эквайринга
+                currency_code = payment_gateway.CURRENCY_KZT
+            else:
+                # Для KZT просто используем сумму как есть
+                amount_minor = int(float(amount))
+                currency_code = payment_gateway.CURRENCY_KZT
             
             # Формируем returnUrl (orderId будет подставлен платежным шлюзом)
             from config import MINIAPP_URL
