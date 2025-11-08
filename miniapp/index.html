@@ -1838,9 +1838,11 @@
         }
 
         .pricing-payment-button.loading .pricing-payment-button-text {
-            opacity: 0;
-            width: 0;
-            overflow: hidden;
+            opacity: 1;
+        }
+
+        .pricing-payment-button.loading .pricing-payment-button-spinner {
+            display: none;
         }
 
         .pricing-plan-radio {
@@ -2832,9 +2834,14 @@
             
             // Делаем кнопку неактивной и показываем загрузку
             const paymentButton = document.getElementById('pricingPaymentButton');
+            const paymentButtonText = paymentButton?.querySelector('.pricing-payment-button-text');
             if (paymentButton) {
                 paymentButton.disabled = true;
                 paymentButton.classList.add('loading');
+                // Заменяем текст на "Загрузка"
+                if (paymentButtonText) {
+                    paymentButtonText.textContent = 'Загрузка';
+                }
             }
             
             try {
@@ -2876,8 +2883,13 @@
                     console.error('Payment creation failed:', result);
                     // Восстанавливаем кнопку при ошибке
                     if (paymentButton) {
+                        const paymentButtonText = paymentButton.querySelector('.pricing-payment-button-text');
                         paymentButton.disabled = false;
                         paymentButton.classList.remove('loading');
+                        // Возвращаем текст "Оплатить"
+                        if (paymentButtonText) {
+                            paymentButtonText.textContent = 'Оплатить';
+                        }
                     }
                     tg.showAlert(`Ошибка: ${result.error || 'Не удалось создать платеж'}`);
                     return;
@@ -2923,8 +2935,13 @@
                 // Восстанавливаем кнопку
                 const paymentButton = document.getElementById('pricingPaymentButton');
                 if (paymentButton) {
+                    const paymentButtonText = paymentButton.querySelector('.pricing-payment-button-text');
                     paymentButton.disabled = false;
                     paymentButton.classList.remove('loading');
+                    // Возвращаем текст "Оплатить"
+                    if (paymentButtonText) {
+                        paymentButtonText.textContent = 'Оплатить';
+                    }
                 }
                 
                 tg.showAlert('Ошибка при создании платежа. Пожалуйста, попробуйте позже.');
