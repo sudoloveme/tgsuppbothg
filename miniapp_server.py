@@ -658,14 +658,20 @@ def create_app() -> web.Application:
             
             uuid = backend_data[0]
             
+            # СТРОГАЯ ПРОВЕРКА: только KZT и KGZ для банковских платежей
+            if currency.lower() not in ['kzt', 'kgz']:
+                return web.json_response(
+                    {"error": "Банковские платежи доступны только для тенге (KZT) и кыргызских сомов (KGZ)"},
+                    status=400,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
             # Определяем код валюты
             currency_codes = {
                 'kzt': payment_gateway.CURRENCY_KZT,
-                'kgz': payment_gateway.CURRENCY_KGZ,
-                'rub': payment_gateway.CURRENCY_RUB,
-                'cny': payment_gateway.CURRENCY_CNY
+                'kgz': payment_gateway.CURRENCY_KGZ
             }
-            currency_code = currency_codes.get(currency.lower(), payment_gateway.CURRENCY_KZT)
+            currency_code = currency_codes[currency.lower()]
             
             # Конвертируем сумму в минимальные единицы
             amount_minor = payment_gateway.convert_amount_to_minor_units(float(amount), currency_code)
