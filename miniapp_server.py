@@ -370,13 +370,14 @@ def create_app() -> web.Application:
         elif filename.lower().endswith('.webp'):
             content_type = 'image/webp'
         
-        # Для логотипа отключаем кеш, чтобы всегда загружалась актуальная версия
-        cache_control = 'no-cache, no-store, must-revalidate' if filename == 'logo.svg' else 'public, max-age=3600'
+        # Для логотипа и иконок способов оплаты отключаем кеш, чтобы всегда загружалась актуальная версия
+        no_cache_files = ['logo.svg', 'crypto.svg']
+        cache_control = 'no-cache, no-store, must-revalidate' if filename in no_cache_files else 'public, max-age=3600'
         headers = {
             'Access-Control-Allow-Origin': '*',
             'Cache-Control': cache_control
         }
-        if filename == 'logo.svg':
+        if filename in no_cache_files:
             headers['Pragma'] = 'no-cache'
             headers['Expires'] = '0'
         
