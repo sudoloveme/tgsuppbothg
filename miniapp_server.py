@@ -5,12 +5,14 @@ import logging
 import asyncio
 from pathlib import Path
 from typing import Optional
+from datetime import datetime, timedelta
+from dateutil import parser
 
 from aiohttp import web
 from aiohttp.web_request import Request
 from aiohttp.web_response import Response
 
-from api_client import get_user_by_uuid, get_traffic_usage_range, get_user_by_email, create_user, update_user_telegram_id
+from api_client import get_user_by_uuid, get_traffic_usage_range, get_user_by_email, create_user, update_user_telegram_id, update_user_subscription
 import database
 import otp_manager
 import smtp_client
@@ -776,12 +778,27 @@ def create_app() -> web.Application:
                     logger.warning(f"Failed to deposit order {order_id}, but status is PRE_AUTH")
             
             # Обновляем статус в БД
-            from database import db_update_payment_order_status
+            from database import db_update_payment_order_status, db_get_payment_order
             db_update_payment_order_status(
                 order_id=order_id,
                 status='PAID' if is_paid else 'FAILED',
                 status_data=order_status
             )
+            
+            # Если платеж успешен, обновляем подписку на бэкенде
+            if is_paid:
+                try:
+                    # Получаем информацию о заказе из БД
+                    payment_order = db_get_payment_order(order_id)
+                    if payment_order and payment_order.get('uuid') and payment_order.get('plan_days'):
+                        uuid = payment_order['uuid']
+                        plan_days = payment_order['plan_days']
+                        
+                        # Вызываем функцию обновления подписки
+                        await update_user_subscription_after_payment(uuid, plan_days)
+                except Exception as e:
+                    logger.exception(f"Error updating subscription after payment: {e}")
+                    # Не прерываем ответ, просто логируем ошибку
             
             return web.json_response(
                 {

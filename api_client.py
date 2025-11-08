@@ -410,3 +410,66 @@ async def create_user(email: str, telegram_id: int) -> Optional[Dict[str, Any]]:
         logger.exception(f"Unexpected error creating user: {e}")
         return None
 
+
+async def update_user_subscription(
+    uuid: str,
+    status: str,
+    traffic_limit_bytes: int,
+    traffic_limit_strategy: str,
+    expire_at: str,
+    used_traffic_bytes: int = 0
+) -> Optional[Dict[str, Any]]:
+    """
+    Update user subscription after successful payment.
+    
+    Args:
+        uuid: User UUID
+        status: Subscription status (e.g., "ACTIVE")
+        traffic_limit_bytes: Traffic limit in bytes (e.g., 214748364800 for 200GB)
+        traffic_limit_strategy: Traffic limit strategy (e.g., "MONTH")
+        expire_at: Expiration date in ISO format (e.g., "2025-11-08T08:39:53.443Z")
+        used_traffic_bytes: Used traffic in bytes (default: 0)
+        
+    Returns:
+        Updated user data dict or None if error
+    """
+    if not BACKEND_API_URL:
+        logger.error("BACKEND_API_URL is not configured")
+        return None
+    
+    url = f"{BACKEND_API_URL.rstrip('/')}/api/users/update"
+    
+    payload = {
+        "uuid": uuid,
+        "status": status,
+        "trafficLimitBytes": traffic_limit_bytes,
+        "trafficLimitStrategy": traffic_limit_strategy,
+        "expireAt": expire_at,
+        "usedTrafficBytes": used_traffic_bytes
+    }
+    
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(url, json=payload, headers=_get_headers())
+            response.raise_for_status()
+            data = response.json()
+            
+            if "response" in data:
+                return data["response"]
+            return None
+    except httpx.HTTPStatusError as e:
+        logger.error(f"HTTP error updating user subscription: {e.response.status_code}")
+        if e.response.status_code == 400:
+            try:
+                error_data = e.response.json()
+                logger.error(f"Error details: {error_data}")
+            except:
+                logger.warning(f"Error response text: {e.response.text}")
+        return None
+    except httpx.RequestError as e:
+        logger.error(f"Request error updating user subscription: {e}")
+        return None
+    except Exception as e:
+        logger.exception(f"Unexpected error updating user subscription: {e}")
+        return None
+
