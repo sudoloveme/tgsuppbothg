@@ -39,7 +39,8 @@ def generate_sign(data: dict) -> str:
         MD5 hash of base64-encoded JSON payload + API key
     """
     # 1. json_encode(data) - convert dict to JSON string
-    payload_str = json.dumps(data, separators=(',', ':'))
+    # Используем стандартный json.dumps без separators для совместимости с PHP json_encode
+    payload_str = json.dumps(data, ensure_ascii=False)
     logger.info(f"[SIGN DEBUG] JSON payload: {payload_str}")
     
     # 2. base64_encode(json_encode(data))
@@ -94,7 +95,7 @@ async def create_payment(
     sign = generate_sign(payload)
     
     headers = {
-        "merchant": CRYPTOMUS_MERCHANT,  # UUID мерчанта из личного кабинета Cryptomus
+        "userId": CRYPTOMUS_MERCHANT,  # UUID пользователя из личного кабинета Cryptomus
         "sign": sign,
         "Content-Type": "application/json"
     }
@@ -103,7 +104,7 @@ async def create_payment(
         logger.info(f"Creating Cryptomus payment: amount={amount}, currency={currency}, order_id={order_id}")
         logger.info(f"Request URL: {url}")
         logger.info(f"Request payload: {payload}")
-        logger.info(f"Request headers (merchant and sign): merchant={CRYPTOMUS_MERCHANT}, sign={sign}")
+        logger.info(f"Request headers (userId and sign): userId={CRYPTOMUS_MERCHANT}, sign={sign}")
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(url, json=payload, headers=headers)
             logger.info(f"Cryptomus API response status: {response.status_code}")
@@ -166,7 +167,7 @@ async def get_payment_info(uuid: str) -> Optional[Dict[str, Any]]:
     sign = generate_sign(payload)
     
     headers = {
-        "merchant": CRYPTOMUS_MERCHANT,  # UUID мерчанта из личного кабинета Cryptomus
+        "userId": CRYPTOMUS_MERCHANT,  # UUID пользователя из личного кабинета Cryptomus
         "sign": sign,
         "Content-Type": "application/json"
     }
