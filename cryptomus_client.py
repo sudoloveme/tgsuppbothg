@@ -40,13 +40,20 @@ def generate_sign(data: dict) -> str:
     """
     # 1. json_encode(data) - convert dict to JSON string
     payload_str = json.dumps(data, separators=(',', ':'))
+    logger.debug(f"JSON payload: {payload_str}")
     
     # 2. base64_encode(json_encode(data))
     payload_base64 = base64.b64encode(payload_str.encode('utf-8')).decode('utf-8')
+    logger.debug(f"Base64 payload: {payload_base64}")
     
     # 3. md5(base64_encode(...) . API_KEY)
     sign_string = payload_base64 + CRYPTOMUS_API_KEY
-    return hashlib.md5(sign_string.encode('utf-8')).hexdigest()
+    logger.debug(f"Sign string (base64 + API_KEY): {sign_string[:50]}... (truncated)")
+    
+    sign_hash = hashlib.md5(sign_string.encode('utf-8')).hexdigest()
+    logger.debug(f"Generated sign: {sign_hash}")
+    
+    return sign_hash
 
 
 async def create_payment(
@@ -84,13 +91,16 @@ async def create_payment(
     sign = generate_sign(payload)
     
     headers = {
-        "merchant": CRYPTOMUS_MERCHANT,
+        "userId": CRYPTOMUS_MERCHANT,  # Согласно документации Cryptomus используется userId
         "sign": sign,
         "Content-Type": "application/json"
     }
     
     try:
         logger.info(f"Creating Cryptomus payment: amount={amount}, currency={currency}, order_id={order_id}")
+        logger.info(f"Request URL: {url}")
+        logger.info(f"Request payload: {payload}")
+        logger.info(f"Request headers (userId and sign): userId={CRYPTOMUS_MERCHANT}, sign={sign}")
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(url, json=payload, headers=headers)
             logger.info(f"Cryptomus API response status: {response.status_code}")
@@ -153,7 +163,7 @@ async def get_payment_info(uuid: str) -> Optional[Dict[str, Any]]:
     sign = generate_sign(payload)
     
     headers = {
-        "merchant": CRYPTOMUS_MERCHANT,
+        "userId": CRYPTOMUS_MERCHANT,  # Согласно документации Cryptomus используется userId
         "sign": sign,
         "Content-Type": "application/json"
     }
