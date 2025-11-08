@@ -98,10 +98,20 @@ def _db_connect() -> sqlite3.Connection:
         "  plan_days INTEGER NOT NULL,\n"
         "  status TEXT NOT NULL DEFAULT 'PENDING',\n"
         "  status_data TEXT,\n"
+        "  subscription_updated INTEGER DEFAULT 0,\n"
         "  created_at TEXT DEFAULT CURRENT_TIMESTAMP,\n"
         "  updated_at TEXT DEFAULT CURRENT_TIMESTAMP\n"
         ")"
     )
+    # Add subscription_updated column if it doesn't exist (migration)
+    try:
+        conn.execute("ALTER TABLE payment_orders ADD COLUMN subscription_updated INTEGER DEFAULT 0")
+        conn.commit()
+        logger.info("Added subscription_updated column to payment_orders table")
+    except sqlite3.OperationalError:
+        # Column already exists, ignore
+        pass
+    
     # Migrate from legacy table if present
     try:
         conn.execute(
@@ -574,13 +584,28 @@ def db_update_payment_order_status(order_id: str, status: str, status_data: Opti
         logger.exception(f"Error updating payment order status: {e}")
 
 
+def db_mark_subscription_updated(order_id: str) -> None:
+    """Mark subscription as updated for payment order."""
+    try:
+        conn = _db_connect()
+        conn.execute(
+            "UPDATE payment_orders SET subscription_updated=1, updated_at=CURRENT_TIMESTAMP WHERE order_id=?",
+            (order_id,)
+        )
+        conn.commit()
+        conn.close()
+        logger.info(f"Marked subscription as updated for order_id={order_id}")
+    except Exception as e:
+        logger.exception(f"Error marking subscription as updated: {e}")
+
+
 def db_get_payment_order(order_id: str) -> Optional[dict]:
     """Get payment order from database."""
     try:
         import json
         conn = _db_connect()
         cur = conn.execute(
-            "SELECT order_id, telegram_id, uuid, amount, currency, plan_days, status, status_data, created_at, updated_at FROM payment_orders WHERE order_id=?",
+            "SELECT order_id, telegram_id, uuid, amount, currency, plan_days, status, status_data, subscription_updated, created_at, updated_at FROM payment_orders WHERE order_id=?",
             (order_id,)
         )
         row = cur.fetchone()

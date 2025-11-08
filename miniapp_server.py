@@ -861,13 +861,22 @@ def create_app() -> web.Application:
                     # Получаем информацию о заказе из БД
                     payment_order = db_get_payment_order(order_id)
                     logger.info(f"Payment order data: {payment_order}")
-                    if payment_order and payment_order.get('uuid') and payment_order.get('plan_days'):
+                    
+                    # Проверяем, не была ли подписка уже обновлена
+                    if payment_order and payment_order.get('subscription_updated'):
+                        logger.info(f"Subscription already updated for order {order_id}, skipping")
+                    elif payment_order and payment_order.get('uuid') and payment_order.get('plan_days'):
                         uuid = payment_order['uuid']
                         plan_days = payment_order['plan_days']
                         logger.info(f"Updating subscription for UUID {uuid} with {plan_days} days")
                         
                         # Вызываем функцию обновления подписки
                         await update_user_subscription_after_payment(uuid, plan_days)
+                        
+                        # Помечаем, что подписка была обновлена
+                        from database import db_mark_subscription_updated
+                        db_mark_subscription_updated(order_id)
+                        
                         logger.info(f"Subscription update completed for UUID {uuid}")
                     else:
                         logger.warning(f"Payment order missing required data: uuid={payment_order.get('uuid') if payment_order else None}, plan_days={payment_order.get('plan_days') if payment_order else None}")
@@ -951,13 +960,22 @@ def create_app() -> web.Application:
                     # Получаем информацию о заказе из БД
                     payment_order = db_get_payment_order(order_id)
                     logger.info(f"Payment order data: {payment_order}")
-                    if payment_order and payment_order.get('uuid') and payment_order.get('plan_days'):
+                    
+                    # Проверяем, не была ли подписка уже обновлена
+                    if payment_order and payment_order.get('subscription_updated'):
+                        logger.info(f"Subscription already updated for order {order_id}, skipping")
+                    elif payment_order and payment_order.get('uuid') and payment_order.get('plan_days'):
                         uuid = payment_order['uuid']
                         plan_days = payment_order['plan_days']
                         logger.info(f"Updating subscription for UUID {uuid} with {plan_days} days")
                         
                         # Вызываем функцию обновления подписки
                         await update_user_subscription_after_payment(uuid, plan_days)
+                        
+                        # Помечаем, что подписка была обновлена
+                        from database import db_mark_subscription_updated
+                        db_mark_subscription_updated(order_id)
+                        
                         logger.info(f"Subscription update completed for UUID {uuid}")
                     else:
                         logger.warning(f"Payment order missing required data: uuid={payment_order.get('uuid') if payment_order else None}, plan_days={payment_order.get('plan_days') if payment_order else None}")
