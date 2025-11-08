@@ -1715,15 +1715,6 @@
             font-weight: 600;
             background: rgba(0, 122, 255, 0.1);
             padding: 3px 8px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        
-        .pricing-plan-bonus-icon {
-            width: 12px;
-            height: 12px;
-            object-fit: contain;
             border-radius: 6px;
             white-space: nowrap;
         }
@@ -2748,21 +2739,12 @@
                     { days: 14, bonus: null }
                 ];
                 
-                plansContainer.innerHTML = defaultPlans.map((plan, index) => {
-                    // Для бонуса используем иконку stars.png
-                    const bonusDisplay = plan.bonus 
-                        ? `<span class="pricing-plan-bonus">
-                            <img src="/api/icons/waytopay/stars.png?v=2" alt="Stars" class="pricing-plan-bonus-icon">
-                            +${plan.bonus} дней в подарок
-                           </span>`
-                        : '';
-                    
-                    return `
+                plansContainer.innerHTML = defaultPlans.map((plan, index) => `
                     <div class="pricing-plan disabled" data-plan-index="${index}">
                         <div class="pricing-plan-content">
                             <div class="pricing-plan-header-row">
                                 <span class="pricing-plan-duration">${plan.days} дней</span>
-                                ${bonusDisplay}
+                                ${plan.bonus ? `<span class="pricing-plan-bonus">⭐ +${plan.bonus} дней в подарок</span>` : ''}
                             </div>
                             <div class="pricing-plan-price-row">
                                 <span class="pricing-plan-amount">—</span>
@@ -2771,8 +2753,7 @@
                         </div>
                         <div class="pricing-plan-radio"></div>
                     </div>
-                    `;
-                }).join('');
+                `).join('');
                 return;
             }
             
@@ -2804,12 +2785,9 @@
                     priceInfo = `/ ${formatPrice(pricePerDay)} ${currencyForPrice} в день`;
                 }
                 
-                // Для бонуса всегда используем иконку stars.png
+                // Для бонуса используем эмодзи звезду
                 const bonusDisplay = plan.bonus 
-                    ? `<span class="pricing-plan-bonus">
-                        <img src="/api/icons/waytopay/stars.png?v=2" alt="Stars" class="pricing-plan-bonus-icon">
-                        +${plan.bonus} дней в подарок
-                       </span>`
+                    ? `<span class="pricing-plan-bonus">⭐ +${plan.bonus} дней в подарок</span>`
                     : '';
                 
                 return `
