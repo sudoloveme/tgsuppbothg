@@ -1391,11 +1391,11 @@
 
         /* Page containers */
         .page-container {
-            display: none;
+            display: none !important;
         }
 
         .page-container.active {
-            display: block;
+            display: block !important;
         }
 
         /* Pricing Page */
@@ -3010,6 +3010,10 @@
                     // Показываем сообщение и возвращаемся на главную
                     setTimeout(() => {
                         tg.showAlert('Оплата успешно завершена! Ваша подписка активирована.');
+                        // Останавливаем проверку статуса
+                        stopPaymentStatusCheck();
+                        currentPaymentOrderId = null;
+                        // Переключаемся на главную страницу
                         switchPage('home');
                         // Перезагружаем данные подписки
                         loadSubscriptionData();
