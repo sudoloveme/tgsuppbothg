@@ -1406,7 +1406,8 @@
         }
 
         /* Payment Waiting Page Styles */
-        #paymentWaitingPage {
+        #paymentWaitingPage,
+        #starsPaymentInfoPage {
             padding: 20px;
             display: flex;
             justify-content: center;
@@ -2024,6 +2025,26 @@
             <p class="payment-waiting-text" id="paymentWaitingText">Пожалуйста, завершите оплату в открытом окне браузера</p>
             <p class="payment-waiting-status" id="paymentWaitingStatus" style="display: none;"></p>
             <button class="payment-waiting-back" onclick="switchToPricingPage()">
+                Вернуться к тарифам
+            </button>
+        </div>
+    </div>
+
+    <!-- Stars Payment Info Page -->
+    <div class="page-container" id="starsPaymentInfoPage" style="display: none;">
+        <div class="payment-waiting-container">
+            <div class="payment-waiting-icon" style="background: none;">
+                <div style="font-size: 64px; margin-bottom: 20px;">⭐</div>
+            </div>
+            <h1 class="payment-waiting-title">Платеж отправлен в бот</h1>
+            <p class="payment-waiting-text" style="margin-bottom: 30px;">
+                Мы отправили вам инвойс для оплаты в Telegram бот.<br><br>
+                Пожалуйста, перейдите в бота для завершения оплаты.
+            </p>
+            <button class="payment-waiting-back" onclick="openTelegramBot()" style="background: #007AFF; color: #ffffff; margin-bottom: 16px;">
+                Перейти в бота @hgvpnhelpbot
+            </button>
+            <button class="payment-waiting-back" onclick="switchToPricingPage()" style="background: transparent; color: #8e8e93; border: 1px solid #8e8e93;">
                 Вернуться к тарифам
             </button>
         </div>
@@ -3072,25 +3093,28 @@
                 
                 console.log('Payment created:', result);
                 
-                // Для Stars платежей инвойс отправляется в бот, показываем сообщение пользователю
+                // Для Stars платежей инвойс отправляется в бот, показываем специальную страницу
                 if (isStarsPayment && result.success) {
                     console.log('Stars invoice sent to bot');
-                    tg.showAlert('Инвойс для оплаты отправлен вам в бот. Открываем бота...');
                     
-                    // Автоматически открываем бота
+                    // Показываем страницу с информацией о Stars платеже
+                    switchToStarsPaymentInfoPage();
+                    
+                    // Пытаемся автоматически закрыть мини-приложение и открыть бота
                     setTimeout(() => {
-                        if (tg && tg.openTelegramLink) {
-                            tg.openTelegramLink('https://t.me/hgvpnhelpbot');
-                        } else if (tg && tg.openLink) {
-                            tg.openLink('https://t.me/hgvpnhelpbot', {try_instant_view: false});
-                        } else {
-                            // Fallback
-                            window.open('https://t.me/hgvpnhelpbot', '_blank');
+                        try {
+                            // Пытаемся закрыть мини-приложение
+                            if (tg && tg.close) {
+                                tg.close();
+                            }
+                        } catch (e) {
+                            console.log('Could not close mini-app automatically:', e);
                         }
-                    }, 500);  // Небольшая задержка для показа alert
+                        
+                        // Открываем бота
+                        openTelegramBot();
+                    }, 1000);  // Задержка для показа страницы
                     
-                    // Возвращаемся на страницу тарифов
-                    switchToPricingPage();
                     return;  // Выходим, не сохраняем orderId для мониторинга
                 }
                 
@@ -3177,6 +3201,63 @@
             
             // Начинаем проверку статуса каждые 5 секунд
             startPaymentStatusCheck();
+        }
+
+        // Переключение на страницу информации о Stars платеже
+        function switchToStarsPaymentInfoPage() {
+            console.log('Switching to Stars payment info page');
+            
+            // Скрываем все страницы
+            const allPages = document.querySelectorAll('.page-container');
+            allPages.forEach(p => {
+                p.style.display = 'none';
+                p.classList.remove('active');
+            });
+            
+            // Скрываем нижнюю навигацию
+            const bottomNav = document.querySelector('.bottom-nav');
+            if (bottomNav) {
+                bottomNav.style.display = 'none';
+            }
+            
+            const starsInfoPage = document.getElementById('starsPaymentInfoPage');
+            
+            if (!starsInfoPage) {
+                console.error('Stars payment info page not found!');
+                return;
+            }
+            
+            // Показываем страницу информации
+            starsInfoPage.style.display = 'block';
+            starsInfoPage.classList.add('active');
+            
+            // Прокручиваем экран в самый верх
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            console.log('Stars payment info page displayed');
+        }
+
+        // Открытие Telegram бота
+        function openTelegramBot() {
+            const botUrl = 'https://t.me/hgvpnhelpbot';
+            console.log('Opening Telegram bot:', botUrl);
+            
+            try {
+                // Пытаемся использовать openTelegramLink (предпочтительно)
+                if (tg && tg.openTelegramLink) {
+                    tg.openTelegramLink(botUrl);
+                } else if (tg && tg.openLink) {
+                    // Fallback на openLink
+                    tg.openLink(botUrl, {try_instant_view: false});
+                } else {
+                    // Последний fallback
+                    window.open(botUrl, '_blank');
+                }
+            } catch (e) {
+                console.error('Error opening bot:', e);
+                // Fallback на window.open
+                window.open(botUrl, '_blank');
+            }
         }
 
         // Переключение обратно на страницу тарифов
