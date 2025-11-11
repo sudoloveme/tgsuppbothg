@@ -2044,8 +2044,8 @@
             <button class="payment-waiting-back" onclick="openTelegramBot()" style="background: #007AFF; color: #ffffff; margin-bottom: 16px;">
                 Перейти в бота @hgvpnhelpbot
             </button>
-            <button class="payment-waiting-back" onclick="switchToPricingPage()" style="background: transparent; color: #8e8e93; border: 1px solid #8e8e93;">
-                Вернуться к тарифам
+            <button class="payment-waiting-back" onclick="switchPage('home')" style="background: transparent; color: #8e8e93; border: 1px solid #8e8e93;">
+                На главную
             </button>
         </div>
     </div>
@@ -2677,10 +2677,10 @@
                 { days: 14, price: 350, bonus: null }
             ],
             stars: [
-                { days: 180, price: 3200, bonus: 30 },
-                { days: 90, price: 1800, bonus: null },
+                { days: 180, price: 1, bonus: 30 },  // Тестовый тариф: 1 звезда
+                { days: 90, price: 1, bonus: null },  // Тестовый тариф: 1 звезда
                 { days: 30, price: 1, bonus: null },  // Тестовый тариф: 1 звезда
-                { days: 14, price: 500, bonus: null }
+                { days: 14, price: 1, bonus: null }  // Тестовый тариф: 1 звезда
             ],
             crypto: [
                 { days: 180, price: 32.0, bonus: 30 },
@@ -3103,7 +3103,10 @@
                     // Автоматически открываем бота (мини-приложение останется в фоне)
                     setTimeout(() => {
                         openTelegramBot();
-                    }, 1000);  // Задержка для показа страницы
+                    }, 500);  // Уменьшена задержка для более быстрого открытия
+                    
+                    // Сбрасываем флаг обработки платежа
+                    isPaymentProcessing = false;
                     
                     return;  // Выходим, не сохраняем orderId для мониторинга
                 }
@@ -3233,14 +3236,17 @@
             console.log('Opening Telegram bot:', botUrl);
             
             try {
-                // Пытаемся использовать openTelegramLink (предпочтительно)
+                // Пытаемся использовать openTelegramLink (предпочтительно) - он автоматически скрывает мини-приложение
                 if (tg && tg.openTelegramLink) {
+                    console.log('Using openTelegramLink');
                     tg.openTelegramLink(botUrl);
                 } else if (tg && tg.openLink) {
                     // Fallback на openLink
+                    console.log('Using openLink');
                     tg.openLink(botUrl, {try_instant_view: false});
                 } else {
                     // Последний fallback
+                    console.log('Using window.open');
                     window.open(botUrl, '_blank');
                 }
             } catch (e) {
