@@ -926,8 +926,10 @@ def create_app() -> web.Application:
                 except Exception as e:
                     logger.exception(f"Error updating subscription after payment: {e}")
                     # Не прерываем ответ, просто логируем ошибку
-                    
-                    return web.json_response(
+                    # Продолжаем и возвращаем статус платежа
+            
+            # ВАЖНО: Всегда возвращаем ответ со статусом платежа, даже если обновление подписки уже выполнено
+            return web.json_response(
                 {
                     "orderId": order_id,
                     "status": status_code,
