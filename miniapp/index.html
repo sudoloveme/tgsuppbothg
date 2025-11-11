@@ -1779,6 +1779,34 @@
             margin: 0;
         }
 
+        /* Payment Consent Text */
+        .pricing-payment-consent {
+            font-size: 11px;
+            color: #8e8e93;
+            line-height: 1.4;
+            margin: 0 0 12px 0;
+            padding: 0 4px;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: opacity 0.3s ease-out, max-height 0.3s ease-out, margin 0.3s ease-out;
+        }
+
+        .pricing-payment-consent.visible {
+            opacity: 1;
+            max-height: 200px;
+            margin-bottom: 12px;
+        }
+
+        .pricing-payment-consent a {
+            color: #007AFF;
+            text-decoration: none;
+        }
+
+        .pricing-payment-consent a:active {
+            opacity: 0.7;
+        }
+
         /* Payment Button */
         .pricing-payment-button {
             width: 100%;
@@ -1972,6 +2000,11 @@
                     Обратите внимание: ежемесячно ваша подписка включает 200 GB трафика. Сброс трафика происходит 1 числа каждого месяца. Вы также сможете приобрести сброс трафика за отдельную плату.
                 </p>
             </div>
+
+            <!-- Payment Consent Text (only for bank payments) -->
+            <p class="pricing-payment-consent" id="pricingPaymentConsent">
+                Оплачивая покупку, вы даете согласие на обработку данных описанной в <a href="https://heavengate.net/privacy-policy/" target="_blank">политике конфиденциальности HeavenGate Project</a>, а также соглашаетесь с <a href="https://heavengate.net/offerta/" target="_blank">публичным договором офертой</a>, принимаете <a href="https://heavengate.net/terms-of-use/" target="_blank">пользовательское соглашение</a> и соглашаетесь с <a href="https://heavengate.net/policy-berekeacquiring/" target="_blank">политикой конфиденциальности Bereke Bank</a> если используется метод оплаты Bereke Bank.
+            </p>
 
             <!-- Payment Button -->
             <button class="pricing-payment-button" id="pricingPaymentButton" onclick="handlePayment()" disabled>
@@ -2490,14 +2523,18 @@
                         selectIcon.style.display = 'none';
                     }
                 }
-                // Скрываем тарифы и инфо-блок
+                // Скрываем тарифы, инфо-блок и текст согласия
                 const pricingPlans = document.getElementById('pricingPlans');
                 const infoBlock = document.querySelector('.pricing-info-block');
+                const paymentConsent = document.getElementById('pricingPaymentConsent');
                 if (pricingPlans) {
                     pricingPlans.classList.remove('visible');
                 }
                 if (infoBlock) {
                     infoBlock.classList.remove('visible');
+                }
+                if (paymentConsent) {
+                    paymentConsent.classList.remove('visible');
                 }
             }
             
@@ -2654,6 +2691,7 @@
             const pricingPlans = document.getElementById('pricingPlans');
             const infoBlock = document.querySelector('.pricing-info-block');
             const paymentButton = document.getElementById('pricingPaymentButton');
+            const paymentConsent = document.getElementById('pricingPaymentConsent');
             
             if (pricingPage) {
                 pricingPage.classList.add('initial-state');
@@ -2663,6 +2701,9 @@
             }
             if (infoBlock) {
                 infoBlock.classList.remove('visible');
+            }
+            if (paymentConsent) {
+                paymentConsent.classList.remove('visible');
             }
             if (paymentButton) {
                 paymentButton.classList.remove('visible');
@@ -2698,6 +2739,7 @@
             const pricingPlans = document.getElementById('pricingPlans');
             const infoBlock = document.querySelector('.pricing-info-block');
             const paymentButton = document.getElementById('pricingPaymentButton');
+            const paymentConsent = document.getElementById('pricingPaymentConsent');
             
             if (pricingPage) {
                 pricingPage.classList.remove('initial-state');
@@ -2711,6 +2753,16 @@
                 setTimeout(() => {
                     infoBlock.classList.add('visible');
                 }, 100);
+            }
+            // Показываем текст согласия только для банковских платежей (kzt, kgz)
+            if (paymentConsent) {
+                if (method === 'kzt' || method === 'kgz') {
+                    setTimeout(() => {
+                        paymentConsent.classList.add('visible');
+                    }, 120);
+                } else {
+                    paymentConsent.classList.remove('visible');
+                }
             }
             if (paymentButton) {
                 setTimeout(() => {
@@ -2842,11 +2894,22 @@
         // Обновление состояния кнопки оплаты
         function updatePaymentButton() {
             const paymentButton = document.getElementById('pricingPaymentButton');
+            const paymentConsent = document.getElementById('pricingPaymentConsent');
+            
             if (paymentButton) {
                 if (selectedPaymentMethod && selectedPlanIndex !== null) {
                     paymentButton.disabled = false;
                 } else {
                     paymentButton.disabled = true;
+                }
+            }
+            
+            // Показываем текст согласия только для банковских платежей (kzt, kgz)
+            if (paymentConsent) {
+                if ((selectedPaymentMethod === 'kzt' || selectedPaymentMethod === 'kgz') && selectedPlanIndex !== null) {
+                    paymentConsent.classList.add('visible');
+                } else {
+                    paymentConsent.classList.remove('visible');
                 }
             }
         }
