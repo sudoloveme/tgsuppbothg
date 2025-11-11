@@ -3241,56 +3241,51 @@
         function openTelegramBot() {
             const botUrl = 'https://t.me/hgvpnhelpbot';
             console.log('Opening Telegram bot:', botUrl);
+            console.log('Telegram WebApp API available:', !!tg);
+            console.log('tg.openLink available:', !!(tg && tg.openLink));
+            console.log('tg.openTelegramLink available:', !!(tg && tg.openTelegramLink));
             
             try {
                 // Вибрация для обратной связи
                 if (tg && tg.HapticFeedback && tg.HapticFeedback.impactOccurred) {
                     try {
                         tg.HapticFeedback.impactOccurred('medium');
+                        console.log('Haptic feedback triggered');
                     } catch (e) {
-                        console.log('Haptic feedback not available');
+                        console.log('Haptic feedback not available:', e);
                     }
                 }
                 
-                // Пытаемся использовать openTelegramLink (предпочтительно)
+                // Пытаемся использовать openLink (основной метод)
+                if (tg && tg.openLink) {
+                    console.log('Using tg.openLink');
+                    try {
+                        // Используем openLink с параметрами для открытия в Telegram
+                        tg.openLink(botUrl, {try_instant_view: false});
+                        console.log('tg.openLink called successfully');
+                        return;
+                    } catch (e) {
+                        console.error('tg.openLink failed:', e);
+                    }
+                }
+                
+                // Fallback: используем openTelegramLink
                 if (tg && tg.openTelegramLink) {
-                    console.log('Using openTelegramLink');
+                    console.log('Using tg.openTelegramLink');
                     try {
                         tg.openTelegramLink(botUrl);
-                        // Скрываем мини-приложение после открытия бота
-                        if (tg.close) {
-                            setTimeout(() => {
-                                tg.close();
-                            }, 100);
-                        }
+                        console.log('tg.openTelegramLink called successfully');
                         return;
                     } catch (e) {
-                        console.error('openTelegramLink failed:', e);
+                        console.error('tg.openTelegramLink failed:', e);
                     }
                 }
                 
-                // Fallback: используем openLink
-                if (tg && tg.openLink) {
-                    console.log('Using openLink');
-                    try {
-                        tg.openLink(botUrl, {try_instant_view: false});
-                        // Скрываем мини-приложение после открытия бота
-                        if (tg.close) {
-                            setTimeout(() => {
-                                tg.close();
-                            }, 100);
-                        }
-                        return;
-                    } catch (e) {
-                        console.error('openLink failed:', e);
-                    }
-                }
-                
-                // Последний fallback: используем window.location или window.open
-                console.log('Using window.location');
+                // Fallback: используем window.location
+                console.log('Using window.location as fallback');
                 try {
-                    // Пытаемся использовать window.location для открытия в том же окне
                     window.location.href = botUrl;
+                    console.log('window.location.href set');
                 } catch (e) {
                     console.error('window.location failed:', e);
                     // Последний вариант
@@ -3299,7 +3294,12 @@
             } catch (e) {
                 console.error('Error opening bot:', e);
                 // Последний fallback
-                window.open(botUrl, '_blank');
+                try {
+                    window.open(botUrl, '_blank');
+                } catch (e2) {
+                    console.error('All methods failed:', e2);
+                    alert('Не удалось открыть бота. Пожалуйста, перейдите вручную: ' + botUrl);
+                }
             }
         }
 
