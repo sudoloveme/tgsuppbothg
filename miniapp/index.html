@@ -3239,13 +3239,11 @@
 
         // Открытие Telegram бота
         function openTelegramBot() {
-            // Используем tg:// протокол для открытия в Telegram приложении
-            const botUrlTg = 'tg://resolve?domain=hgvpnhelpbot';
             const botUrl = 'https://t.me/hgvpnhelpbot';
             
-            console.log('Opening Telegram bot:', botUrlTg);
+            console.log('Opening Telegram bot:', botUrl);
             console.log('Telegram WebApp API available:', !!tg);
-            console.log('tg.openLink available:', !!(tg && tg.openLink));
+            console.log('tg.openTelegramLink available:', !!(tg && tg.openTelegramLink));
             
             try {
                 // Вибрация для обратной связи
@@ -3258,28 +3256,22 @@
                     }
                 }
                 
-                // Используем openLink с tg:// протоколом - это должно открыть в Telegram приложении и скрыть мини-приложение в фон
-                if (tg && tg.openLink) {
-                    console.log('Using tg.openLink with tg:// protocol');
+                // Используем openTelegramLink - он открывает ссылки в Telegram приложении
+                // Важно: НЕ вызываем tg.close(), чтобы мини-приложение осталось в фоне
+                if (tg && tg.openTelegramLink) {
+                    console.log('Using tg.openTelegramLink');
                     try {
-                        // openLink с tg:// протоколом должен открыть в Telegram приложении и скрыть мини-приложение в фон
-                        tg.openLink(botUrlTg, {try_instant_view: false});
-                        console.log('tg.openLink (tg://) called successfully');
+                        // openTelegramLink открывает в Telegram приложении и автоматически скрывает мини-приложение в фон
+                        tg.openTelegramLink(botUrl);
+                        console.log('tg.openTelegramLink called successfully');
+                        // НЕ вызываем tg.close() - мини-приложение должно остаться в фоне
                         return;
                     } catch (e) {
-                        console.error('tg.openLink (tg://) failed:', e);
-                        // Fallback: пробуем с https:// URL
-                        try {
-                            tg.openLink(botUrl, {try_instant_view: false});
-                            console.log('tg.openLink (https://) called successfully');
-                            return;
-                        } catch (e2) {
-                            console.error('tg.openLink (https://) failed:', e2);
-                            tg.showAlert('Не удалось открыть бота. Пожалуйста, перейдите вручную: @hgvpnhelpbot');
-                        }
+                        console.error('tg.openTelegramLink failed:', e);
+                        tg.showAlert('Не удалось открыть бота. Пожалуйста, перейдите вручную: @hgvpnhelpbot');
                     }
                 } else {
-                    console.error('tg.openLink not available');
+                    console.error('tg.openTelegramLink not available');
                     tg.showAlert('Не удалось открыть бота. Пожалуйста, перейдите вручную: @hgvpnhelpbot');
                 }
             } catch (e) {
