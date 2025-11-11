@@ -1531,41 +1531,42 @@ def create_app() -> web.Application:
             # Создаем инвойс через Bot API метод sendInvoice
             bot_api_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendInvoice"
             
+            # Для Telegram Stars минимальный payload
             payload = {
                 "chat_id": telegram_id,
                 "title": title,
                 "description": description,
                 "payload": invoice_payload,
-                "provider_token": "",  # Не требуется для Stars
                 "currency": "XTR",  # Telegram Stars currency code
                 "prices": [
                     {
                         "label": title,
                         "amount": int(amount) * 100  # Stars в минимальных единицах (1 Star = 100)
                     }
-                ],
-                "max_tip_amount": 0,
-                "suggested_tip_amounts": [],
-                "provider_data": "",  # Можно передать JSON с дополнительными данными
-                "photo_url": "",
-                "photo_size": 0,
-                "photo_width": 0,
-                "photo_height": 0,
-                "need_name": False,
-                "need_phone_number": False,
-                "need_email": False,
-                "need_shipping_address": False,
-                "send_phone_number_to_provider": False,
-                "send_email_to_provider": False,
-                "is_flexible": False
+                ]
             }
+            
+            # Логируем payload для отладки
+            logger.info(f"Sending invoice payload: {payload}")
             
             logger.info(f"Creating Stars invoice and sending to user: telegram_id={telegram_id}, amount={amount}, plan_days={plan_days}, payload={invoice_payload}")
             
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(bot_api_url, json=payload)
-                response.raise_for_status()
                 result = response.json()
+                
+                # Логируем полный ответ для отладки
+                logger.info(f"Telegram API response: {result}")
+                
+                if not response.is_success:
+                    error_description = result.get('description', 'Unknown error')
+                    error_code = result.get('error_code', 'N/A')
+                    logger.error(f"Failed to send Stars invoice: error_code={error_code}, description={error_description}, full_response={result}")
+                    return web.json_response(
+                        {"error": f"Failed to send invoice: {error_description}"},
+                        status=500,
+                        headers={'Access-Control-Allow-Origin': '*'}
+                    )
             
             if not result.get('ok'):
                 error_description = result.get('description', 'Unknown error')
