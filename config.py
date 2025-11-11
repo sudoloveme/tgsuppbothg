@@ -28,6 +28,10 @@ CRYPTOMUS_MERCHANT = os.getenv("CRYPTOMUS_MERCHANT", "").strip()  # UUID мер�
 CRYPTOMUS_API_KEY = os.getenv("CRYPTOMUS_API_KEY", "").strip()
 CRYPTOMUS_API_URL = os.getenv("CRYPTOMUS_API_URL", "https://api.cryptomus.com").strip()
 
+# Notification bot configuration (for payment notifications)
+NOTIFICATION_BOT_TOKEN = os.getenv("NOTIFICATION_BOT_TOKEN", "").strip()  # Токен второго бота для уведомлений
+NOTIFICATION_CHAT_ID = os.getenv("NOTIFICATION_CHAT_ID", "").strip()  # Chat ID для отправки уведомлений
+
 if not TELEGRAM_BOT_TOKEN:
     raise RuntimeError("TELEGRAM_BOT_TOKEN is not set. Put it in your environment or a .env file.")
 

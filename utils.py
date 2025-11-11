@@ -4,11 +4,13 @@ Utility functions and UI helpers.
 import logging
 from typing import Optional
 
+import httpx
+
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
-from config import SUPPORT_CHAT_ID, RATINGS_NOTIFICATIONS_THREAD_ID
+from config import SUPPORT_CHAT_ID, RATINGS_NOTIFICATIONS_THREAD_ID, NOTIFICATION_BOT_TOKEN, NOTIFICATION_CHAT_ID
 from database import db_get_thread_state, db_set_thread_id, db_upsert_thread_state
 
 logger = logging.getLogger("support-bot")
@@ -127,6 +129,89 @@ async def notify_admin_about_rating(
         logger.info("Sent rating notification for user_id=%s rating=%s", user_id, rating)
     except Exception:
         logger.exception("Failed to send rating notification for user_id=%s rating=%s", user_id, rating)
+
+
+async def send_payment_notification(
+    telegram_id: int,
+    amount: float,
+    currency: str,
+    plan_days: int,
+    payment_method: str,
+    order_id: Optional[str] = None,
+) -> None:
+    """
+    Send payment notification to second bot.
+    
+    Args:
+        telegram_id: Telegram user ID
+        amount: Payment amount
+        currency: Payment currency (kzt, kgz, stars, crypto, etc.)
+        plan_days: Subscription plan days
+        payment_method: Payment method name (e.g., "Berekebank", "Cryptomus", "Telegram Stars")
+        order_id: Optional order ID
+    """
+    if not NOTIFICATION_BOT_TOKEN or not NOTIFICATION_CHAT_ID:
+        logger.debug("Notification bot not configured, skipping payment notification")
+        return
+    
+    try:
+        # Format currency display
+        currency_display = {
+            'kzt': '₸',
+            'kgz': 'сом',
+            'rub': '₽',
+            'stars': '⭐',
+            'crypto': '$',
+            'usdt': 'USDT',
+            'ton': 'TON',
+            'eth': 'ETH',
+            'btc': 'BTC',
+            'cny': '¥'
+        }.get(currency.lower(), currency.upper())
+        
+        # Format amount
+        if currency.lower() in ['kzt', 'kgz', 'rub']:
+            amount_display = f"{amount / 100:.2f} {currency_display}"
+        elif currency.lower() == 'stars':
+            amount_display = f"{int(amount)} {currency_display}"
+        else:
+            amount_display = f"{amount} {currency_display}"
+        
+        # Create notification message
+        message_parts = [
+            f"💰 <b>Успешный платеж</b>",
+            f"",
+            f"Пользователь: <code>id:{telegram_id}</code>",
+            f"Сумма: {amount_display}",
+            f"Тариф: {plan_days} дней",
+            f"Способ оплаты: {payment_method}",
+        ]
+        
+        if order_id:
+            message_parts.append(f"Заказ: <code>{order_id}</code>")
+        
+        message_text = "\n".join(message_parts)
+        
+        # Send notification via Telegram Bot API
+        url = f"https://api.telegram.org/bot{NOTIFICATION_BOT_TOKEN}/sendMessage"
+        payload = {
+            "chat_id": NOTIFICATION_CHAT_ID,
+            "text": message_text,
+            "parse_mode": "HTML"
+        }
+        
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(url, json=payload)
+            response.raise_for_status()
+            result = response.json()
+            
+            if result.get('ok'):
+                logger.info(f"Sent payment notification: telegram_id={telegram_id}, amount={amount_display}, plan_days={plan_days}")
+            else:
+                logger.error(f"Failed to send payment notification: {result}")
+                
+    except Exception as e:
+        logger.exception(f"Failed to send payment notification for telegram_id={telegram_id}: {e}")
 
 
 def format_user_header(update) -> str:

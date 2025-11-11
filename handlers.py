@@ -478,6 +478,20 @@ async def handle_successful_payment(update: Update, context: ContextTypes.DEFAUL
                 
                 logger.info(f"Subscription updated successfully for order {invoice_payload}")
                 
+                # Отправляем уведомление во второй бот
+                try:
+                    from utils import send_payment_notification
+                    await send_payment_notification(
+                        telegram_id=user_id,
+                        amount=payment.total_amount,
+                        currency=payment.currency,
+                        plan_days=plan_days,
+                        payment_method="Telegram Stars",
+                        order_id=invoice_payload
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to send payment notification: {e}")
+                
                 # Отправляем подтверждение пользователю
                 try:
                     await message.reply_text(

@@ -907,13 +907,27 @@ def create_app() -> web.Application:
                         db_mark_subscription_updated(order_id)
                         
                         logger.info(f"Subscription update completed for UUID {uuid}")
+                        
+                        # Отправляем уведомление во второй бот
+                        try:
+                            from utils import send_payment_notification
+                            await send_payment_notification(
+                                telegram_id=telegram_id,
+                                amount=payment_order.get('amount', 0),
+                                currency=payment_order.get('currency', 'kzt'),
+                                plan_days=plan_days,
+                                payment_method="Berekebank",
+                                order_id=order_id
+                            )
+                        except Exception as e:
+                            logger.warning(f"Failed to send payment notification: {e}")
                     else:
                         logger.warning(f"Payment order missing required data: uuid={payment_order.get('uuid')}, plan_days={payment_order.get('plan_days')}")
                 except Exception as e:
                     logger.exception(f"Error updating subscription after payment: {e}")
                     # Не прерываем ответ, просто логируем ошибку
-            
-            return web.json_response(
+                    
+                    return web.json_response(
                 {
                     "orderId": order_id,
                     "status": status_code,
@@ -1389,6 +1403,20 @@ def create_app() -> web.Application:
                     # Помечаем, что подписка обновлена
                     from database import db_mark_subscription_updated
                     db_mark_subscription_updated(payment_uuid)
+                    
+                    # Отправляем уведомление во второй бот
+                    try:
+                        from utils import send_payment_notification
+                        await send_payment_notification(
+                            telegram_id=payment_order.get('telegram_id'),
+                            amount=payment_order.get('amount', 0),
+                            currency=payment_order.get('currency', 'crypto'),
+                            plan_days=plan_days,
+                            payment_method="Cryptomus",
+                            order_id=payment_uuid
+                        )
+                    except Exception as e:
+                        logger.warning(f"Failed to send payment notification: {e}")
             
             return web.json_response(
                 {
