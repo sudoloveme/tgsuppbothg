@@ -2585,6 +2585,12 @@
                 targetPage.classList.add('active');
             }
             
+            // Восстанавливаем навбар (он мог быть скрыт на странице Stars платежа)
+            const bottomNav = document.querySelector('.bottom-nav');
+            if (bottomNav) {
+                bottomNav.style.display = 'flex';
+            }
+            
             // Если открывается главная страница, обновляем данные подписки
             // Это важно для Stars платежей, так как они обрабатываются в боте
             if (page === 'home') {
