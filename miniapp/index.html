@@ -3064,59 +3064,27 @@
                     return;
                 }
                 
-                // Сохраняем orderId/uuid/payload для проверки статуса
-                currentPaymentOrderId = result.orderId || result.uuid || result.payload;
+                console.log('Payment created:', result);
+                
+                // Для Stars платежей инвойс отправляется в бот, показываем сообщение пользователю
+                if (isStarsPayment && result.success) {
+                    console.log('Stars invoice sent to bot');
+                    tg.showAlert('Инвойс для оплаты отправлен вам в бот. Пожалуйста, проверьте сообщения от бота и завершите оплату там.');
+                    // Возвращаемся на страницу тарифов
+                    switchToPricingPage();
+                    return;  // Выходим, не сохраняем orderId для мониторинга
+                }
+                
+                // Сохраняем orderId/uuid для проверки статуса (только для банковских и криптоплатежей)
+                currentPaymentOrderId = result.orderId || result.uuid;
                 // Сохраняем тип платежа
                 if (isCryptoPayment) {
                     currentPaymentType = 'crypto';
-                } else if (isStarsPayment) {
-                    currentPaymentType = 'stars';
                 } else {
                     currentPaymentType = 'bank';
                 }
                 
-                console.log('Payment created:', result);
-                
-                // Для Stars используем специальный метод открытия инвойса
-                if (isStarsPayment && result.invoiceLink) {
-                    console.log('Opening Stars invoice:', result.invoiceLink);
-                    
-                    // Для Telegram Stars используем openInvoice или openLink
-                    if (tg && tg.openInvoice) {
-                        // Открываем инвойс через Telegram API
-                        tg.openInvoice(result.invoiceLink, (status) => {
-                            console.log('Invoice status:', status);
-                            if (status === 'paid') {
-                                // Платеж успешен, переключаемся на страницу ожидания для проверки
-                                switchToPaymentWaitingPage();
-                            } else if (status === 'cancelled') {
-                                // Пользователь отменил платеж
-                                tg.showAlert('Платеж отменен');
-                                // Возвращаемся на страницу тарифов
-                                switchToPricingPage();
-                            } else if (status === 'failed') {
-                                // Платеж не прошел
-                                tg.showAlert('Платеж не прошел. Пожалуйста, попробуйте еще раз.');
-                                // Возвращаемся на страницу тарифов
-                                switchToPricingPage();
-                            }
-                        });
-                    } else if (tg && tg.openLink) {
-                        // Fallback: открываем через openLink
-                        tg.openLink(result.invoiceLink, {try_instant_view: false});
-                        // Переключаемся на страницу ожидания
-                        switchToPaymentWaitingPage();
-                    } else {
-                        // Последний fallback: window.open
-                        const newWindow = window.open(result.invoiceLink, '_blank');
-                        if (!newWindow) {
-                            tg.showAlert('Пожалуйста, разрешите открытие всплывающих окон в настройках браузера');
-                            return;
-                        }
-                        // Переключаемся на страницу ожидания
-                        switchToPaymentWaitingPage();
-                    }
-                } else if (result.formUrl || result.url) {
+                if (result.formUrl || result.url) {
                     // Для банковских и криптоплатежей открываем URL в браузере
                     const paymentUrl = result.formUrl || result.url;
                     console.log('Opening payment URL:', paymentUrl);

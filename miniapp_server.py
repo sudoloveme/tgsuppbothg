@@ -1473,7 +1473,7 @@ def create_app() -> web.Application:
             )
     
     async def create_stars_payment(request: Request) -> Response:
-        """Create Telegram Stars payment invoice. POST /api/stars/payment/create"""
+        """Create Telegram Stars payment and send invoice message to user in bot. POST /api/stars/payment/create"""
         try:
             data = await request.json()
             telegram_id = data.get('telegram_id')
@@ -1516,10 +1516,23 @@ def create_app() -> web.Application:
             title = f"VPN подписка на {plan_days} дней"
             description = f"Подписка на VPN сервис HeavenGate на {plan_days} дней"
             
-            # Создаем инвойс через Bot API
-            bot_api_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/createInvoiceLink"
+            # Сохраняем информацию о заказе в БД ПЕРЕД созданием инвойса
+            from database import db_save_payment_order
+            db_save_payment_order(
+                order_id=invoice_payload,
+                telegram_id=telegram_id,
+                uuid=uuid,
+                amount=float(amount),
+                currency='stars',
+                plan_days=plan_days,
+                status='PENDING'
+            )
+            
+            # Создаем инвойс через Bot API метод sendInvoice
+            bot_api_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendInvoice"
             
             payload = {
+                "chat_id": telegram_id,
                 "title": title,
                 "description": description,
                 "payload": invoice_payload,
@@ -1547,7 +1560,7 @@ def create_app() -> web.Application:
                 "is_flexible": False
             }
             
-            logger.info(f"Creating Stars invoice: telegram_id={telegram_id}, amount={amount}, plan_days={plan_days}, payload={invoice_payload}")
+            logger.info(f"Creating Stars invoice and sending to user: telegram_id={telegram_id}, amount={amount}, plan_days={plan_days}, payload={invoice_payload}")
             
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(bot_api_url, json=payload)
@@ -1556,40 +1569,19 @@ def create_app() -> web.Application:
             
             if not result.get('ok'):
                 error_description = result.get('description', 'Unknown error')
-                logger.error(f"Failed to create Stars invoice: {error_description}")
+                logger.error(f"Failed to send Stars invoice: {error_description}")
                 return web.json_response(
-                    {"error": f"Failed to create invoice: {error_description}"},
+                    {"error": f"Failed to send invoice: {error_description}"},
                     status=500,
                     headers={'Access-Control-Allow-Origin': '*'}
                 )
             
-            invoice_link = result.get('result')
-            
-            if not invoice_link:
-                logger.error(f"Invalid response from Bot API: {result}")
-                return web.json_response(
-                    {"error": "Invalid response from Telegram API"},
-                    status=500,
-                    headers={'Access-Control-Allow-Origin': '*'}
-                )
-            
-            # Сохраняем информацию о заказе в БД
-            from database import db_save_payment_order
-            db_save_payment_order(
-                order_id=invoice_payload,
-                telegram_id=telegram_id,
-                uuid=uuid,
-                amount=float(amount),
-                currency='stars',
-                plan_days=plan_days,
-                status='PENDING'
-            )
-            
-            logger.info(f"Stars invoice created: invoice_link={invoice_link}, payload={invoice_payload}")
+            logger.info(f"Stars invoice sent successfully to user {telegram_id}, payload={invoice_payload}")
             
             return web.json_response(
                 {
-                    "invoiceLink": invoice_link,
+                    "success": True,
+                    "message": "Invoice sent to bot",
                     "payload": invoice_payload
                 },
                 headers={'Access-Control-Allow-Origin': '*'}
@@ -1598,7 +1590,7 @@ def create_app() -> web.Application:
         except httpx.HTTPError as e:
             logger.exception(f"HTTP error creating Stars invoice: {e}")
             return web.json_response(
-                {"error": f"Failed to create invoice: {str(e)}"},
+                {"error": f"Failed to send invoice: {str(e)}"},
                 status=500,
                 headers={'Access-Control-Allow-Origin': '*'}
             )
