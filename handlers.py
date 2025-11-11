@@ -463,10 +463,9 @@ async def handle_successful_payment(update: Update, context: ContextTypes.DEFAUL
         if uuid and plan_days:
             logger.info(f"Updating subscription after Stars payment: uuid={uuid}, plan_days={plan_days}")
             
-            # Импортируем функцию обновления подписки из miniapp_server
-            import asyncio
+            # Импортируем функцию обновления подписки из общего модуля
             try:
-                from miniapp_server import update_user_subscription_after_payment
+                from subscription_manager import update_user_subscription_after_payment
                 # Запускаем обновление подписки
                 await update_user_subscription_after_payment(uuid, plan_days)
                 
