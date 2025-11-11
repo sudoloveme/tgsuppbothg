@@ -351,3 +351,143 @@ async def handle_owner_reply(update: Update, context: ContextTypes.DEFAULT_TYPE)
         allow_sending_without_reply=True,
     )
 
+
+async def handle_pre_checkout_query(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle pre-checkout query for Telegram Stars payments."""
+    query = update.pre_checkout_query
+    if query is None:
+        return
+    
+    try:
+        # Получаем payload (invoice_payload) из запроса
+        invoice_payload = query.invoice_payload
+        
+        if not invoice_payload:
+            await query.answer(ok=False, error_message="Invalid invoice payload")
+            logger.error("Pre-checkout query without invoice_payload")
+            return
+        
+        # Проверяем, что заказ существует в БД
+        from database import db_get_payment_order
+        payment_order = db_get_payment_order(invoice_payload)
+        
+        if not payment_order:
+            await query.answer(ok=False, error_message="Order not found")
+            logger.error(f"Pre-checkout query for non-existent order: {invoice_payload}")
+            return
+        
+        # Проверяем, что платеж принадлежит этому пользователю
+        user_id = query.from_user.id if query.from_user else None
+        if user_id and payment_order.get('telegram_id') != user_id:
+            await query.answer(ok=False, error_message="This payment does not belong to you")
+            logger.error(f"Pre-checkout query: order {invoice_payload} belongs to {payment_order.get('telegram_id')}, but query from {user_id}")
+            return
+        
+        # Проверяем валюту (должна быть XTR для Stars)
+        if query.currency != "XTR":
+            await query.answer(ok=False, error_message="Invalid currency")
+            logger.error(f"Pre-checkout query with invalid currency: {query.currency}")
+            return
+        
+        # Проверяем сумму
+        expected_amount = int(payment_order.get('amount', 0) * 100)  # Stars в минимальных единицах
+        if query.total_amount != expected_amount:
+            await query.answer(ok=False, error_message="Invalid amount")
+            logger.error(f"Pre-checkout query: expected {expected_amount}, got {query.total_amount}")
+            return
+        
+        # Все проверки пройдены, подтверждаем платеж
+        await query.answer(ok=True)
+        logger.info(f"Pre-checkout query approved: payload={invoice_payload}, user_id={user_id}, amount={query.total_amount}")
+        
+    except Exception as e:
+        logger.exception(f"Error handling pre-checkout query: {e}")
+        try:
+            await query.answer(ok=False, error_message="Internal error")
+        except Exception:
+            pass
+
+
+async def handle_successful_payment(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle successful Telegram Stars payment."""
+    message = update.effective_message
+    if message is None or message.successful_payment is None:
+        return
+    
+    try:
+        payment = message.successful_payment
+        invoice_payload = payment.invoice_payload
+        user_id = message.from_user.id if message.from_user else None
+        
+        if not invoice_payload:
+            logger.error("Successful payment without invoice_payload")
+            return
+        
+        logger.info(f"Processing successful Stars payment: payload={invoice_payload}, user_id={user_id}, amount={payment.total_amount}")
+        
+        # Получаем заказ из БД
+        from database import db_get_payment_order, db_update_payment_order_status, db_mark_subscription_updated
+        payment_order = db_get_payment_order(invoice_payload)
+        
+        if not payment_order:
+            logger.error(f"Payment order not found: {invoice_payload}")
+            return
+        
+        # Проверяем, что платеж принадлежит этому пользователю
+        if user_id and payment_order.get('telegram_id') != user_id:
+            logger.error(f"Payment {invoice_payload} belongs to telegram_id {payment_order.get('telegram_id')}, but payment from {user_id}")
+            return
+        
+        # Проверяем, что подписка еще не обновлена (импотентность)
+        if payment_order.get('subscription_updated'):
+            logger.info(f"Subscription already updated for order {invoice_payload}, skipping")
+            return
+        
+        # Обновляем статус заказа в БД
+        db_update_payment_order_status(
+            order_id=invoice_payload,
+            status='PAID',
+            status_data={
+                'telegram_payment_charge_id': payment.telegram_payment_charge_id,
+                'provider_payment_charge_id': payment.provider_payment_charge_id,
+                'total_amount': payment.total_amount,
+                'currency': payment.currency
+            }
+        )
+        
+        # Обновляем подписку пользователя
+        uuid = payment_order.get('uuid')
+        plan_days = payment_order.get('plan_days')
+        
+        if uuid and plan_days:
+            logger.info(f"Updating subscription after Stars payment: uuid={uuid}, plan_days={plan_days}")
+            
+            # Импортируем функцию обновления подписки из miniapp_server
+            import asyncio
+            try:
+                from miniapp_server import update_user_subscription_after_payment
+                # Запускаем обновление подписки
+                await update_user_subscription_after_payment(uuid, plan_days)
+                
+                # Помечаем, что подписка обновлена
+                db_mark_subscription_updated(invoice_payload)
+                
+                logger.info(f"Subscription updated successfully for order {invoice_payload}")
+                
+                # Отправляем подтверждение пользователю
+                try:
+                    await message.reply_text(
+                        f"✅ Оплата успешно завершена!\n\n"
+                        f"Ваша подписка на {plan_days} дней активирована."
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to send confirmation message: {e}")
+                    
+            except Exception as e:
+                logger.exception(f"Error updating subscription after Stars payment: {e}")
+        else:
+            logger.error(f"Missing uuid or plan_days in payment order {invoice_payload}")
+            
+    except Exception as e:
+        logger.exception(f"Error handling successful payment: {e}")
+

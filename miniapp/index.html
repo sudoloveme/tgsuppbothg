@@ -2984,13 +2984,12 @@
                 
                 // Определяем, какой endpoint использовать
                 const isCryptoPayment = selectedPaymentMethod === 'crypto';
-                const apiEndpoint = isCryptoPayment 
-                    ? '/api/cryptomus/payment/create' 
-                    : '/api/payment/create';
-                
-                // Подготовка данных для запроса
+                const isStarsPayment = selectedPaymentMethod === 'stars';
+                let apiEndpoint;
                 let requestBody;
+                
                 if (isCryptoPayment) {
+                    apiEndpoint = '/api/cryptomus/payment/create';
                     // Для криптовалюты отправляем сумму в USD
                     requestBody = {
                         telegram_id: telegramId,
@@ -2998,7 +2997,17 @@
                         currency: 'crypto',
                         plan_days: plan.days
                     };
+                } else if (isStarsPayment) {
+                    apiEndpoint = '/api/stars/payment/create';
+                    // Для Telegram Stars отправляем сумму в Stars
+                    requestBody = {
+                        telegram_id: telegramId,
+                        amount: plan.price,  // Сумма в Stars
+                        currency: 'stars',
+                        plan_days: plan.days
+                    };
                 } else {
+                    apiEndpoint = '/api/payment/create';
                     // СТРОГАЯ ПРОВЕРКА: только KZT и KGZ для банковских платежей
                     if (selectedPaymentMethod !== 'kzt' && selectedPaymentMethod !== 'kgz') {
                         console.log('Invalid currency:', selectedPaymentMethod);
@@ -3055,16 +3064,61 @@
                     return;
                 }
                 
-                // Сохраняем orderId/uuid для проверки статуса
-                currentPaymentOrderId = result.orderId || result.uuid;
-                // Сохраняем тип платежа: для crypto используем 'crypto', для остальных 'bank'
-                currentPaymentType = isCryptoPayment ? 'crypto' : 'bank';
+                // Сохраняем orderId/uuid/payload для проверки статуса
+                currentPaymentOrderId = result.orderId || result.uuid || result.payload;
+                // Сохраняем тип платежа
+                if (isCryptoPayment) {
+                    currentPaymentType = 'crypto';
+                } else if (isStarsPayment) {
+                    currentPaymentType = 'stars';
+                } else {
+                    currentPaymentType = 'bank';
+                }
                 
                 console.log('Payment created:', result);
                 
-                // Открываем форму оплаты в браузере
-                const paymentUrl = result.formUrl || result.url;
-                if (paymentUrl) {
+                // Для Stars используем специальный метод открытия инвойса
+                if (isStarsPayment && result.invoiceLink) {
+                    console.log('Opening Stars invoice:', result.invoiceLink);
+                    
+                    // Для Telegram Stars используем openInvoice или openLink
+                    if (tg && tg.openInvoice) {
+                        // Открываем инвойс через Telegram API
+                        tg.openInvoice(result.invoiceLink, (status) => {
+                            console.log('Invoice status:', status);
+                            if (status === 'paid') {
+                                // Платеж успешен, переключаемся на страницу ожидания для проверки
+                                switchToPaymentWaitingPage();
+                            } else if (status === 'cancelled') {
+                                // Пользователь отменил платеж
+                                tg.showAlert('Платеж отменен');
+                                // Возвращаемся на страницу тарифов
+                                switchToPricingPage();
+                            } else if (status === 'failed') {
+                                // Платеж не прошел
+                                tg.showAlert('Платеж не прошел. Пожалуйста, попробуйте еще раз.');
+                                // Возвращаемся на страницу тарифов
+                                switchToPricingPage();
+                            }
+                        });
+                    } else if (tg && tg.openLink) {
+                        // Fallback: открываем через openLink
+                        tg.openLink(result.invoiceLink, {try_instant_view: false});
+                        // Переключаемся на страницу ожидания
+                        switchToPaymentWaitingPage();
+                    } else {
+                        // Последний fallback: window.open
+                        const newWindow = window.open(result.invoiceLink, '_blank');
+                        if (!newWindow) {
+                            tg.showAlert('Пожалуйста, разрешите открытие всплывающих окон в настройках браузера');
+                            return;
+                        }
+                        // Переключаемся на страницу ожидания
+                        switchToPaymentWaitingPage();
+                    }
+                } else if (result.formUrl || result.url) {
+                    // Для банковских и криптоплатежей открываем URL в браузере
+                    const paymentUrl = result.formUrl || result.url;
                     console.log('Opening payment URL:', paymentUrl);
                     
                     // Пытаемся открыть через Telegram API, если доступно
@@ -3082,7 +3136,7 @@
                     // Переключаемся на страницу ожидания
                     switchToPaymentWaitingPage();
                 } else {
-                    console.error('No payment URL in response:', result);
+                    console.error('No payment URL or invoice link in response:', result);
                     tg.showAlert('Ошибка: не получен URL для оплаты');
                 }
                 
@@ -3208,6 +3262,12 @@
 
         // Начать проверку статуса платежа
         function startPaymentStatusCheck() {
+            // Для Stars платежей не запускаем мониторинг, так как Telegram обрабатывает это автоматически
+            if (currentPaymentType === 'stars') {
+                console.log('Stars payment: monitoring not needed, Telegram handles it automatically');
+                return;
+            }
+            
             // Проверяем сразу
             checkPaymentStatus();
             

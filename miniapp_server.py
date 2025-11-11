@@ -22,6 +22,9 @@ import otp_manager
 import smtp_client
 import payment_gateway
 import cryptomus_client
+import httpx
+import uuid as uuid_module
+from config import TELEGRAM_BOT_TOKEN
 
 logger = logging.getLogger("support-bot")
 
@@ -1469,11 +1472,150 @@ def create_app() -> web.Application:
                 headers={'Access-Control-Allow-Origin': '*'}
             )
     
+    async def create_stars_payment(request: Request) -> Response:
+        """Create Telegram Stars payment invoice. POST /api/stars/payment/create"""
+        try:
+            data = await request.json()
+            telegram_id = data.get('telegram_id')
+            amount = data.get('amount')  # Сумма в Stars
+            currency = data.get('currency', 'stars')  # Валюта (stars для Telegram Stars)
+            plan_days = data.get('plan_days')  # Количество дней подписки
+            
+            if not telegram_id or not amount or not plan_days:
+                return web.json_response(
+                    {"error": "telegram_id, amount, and plan_days are required"},
+                    status=400,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            # Проверяем, что это платеж через Stars
+            if currency.lower() != 'stars':
+                return web.json_response(
+                    {"error": "This endpoint is only for Telegram Stars payments"},
+                    status=400,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            # Получаем UUID пользователя из локальной БД
+            from database import db_get_user_backend_data
+            backend_data = db_get_user_backend_data(telegram_id)
+            
+            if not backend_data or not backend_data[0]:
+                return web.json_response(
+                    {"error": "User not found or not linked"},
+                    status=404,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            uuid = backend_data[0]
+            
+            # Генерируем уникальный invoice_payload для отслеживания заказа
+            invoice_payload = uuid_module.uuid4().hex[:32]
+            
+            # Описание заказа
+            title = f"VPN подписка на {plan_days} дней"
+            description = f"Подписка на VPN сервис HeavenGate на {plan_days} дней"
+            
+            # Создаем инвойс через Bot API
+            bot_api_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/createInvoiceLink"
+            
+            payload = {
+                "title": title,
+                "description": description,
+                "payload": invoice_payload,
+                "provider_token": "",  # Не требуется для Stars
+                "currency": "XTR",  # Telegram Stars currency code
+                "prices": [
+                    {
+                        "label": title,
+                        "amount": int(amount) * 100  # Stars в минимальных единицах (1 Star = 100)
+                    }
+                ],
+                "max_tip_amount": 0,
+                "suggested_tip_amounts": [],
+                "provider_data": "",  # Можно передать JSON с дополнительными данными
+                "photo_url": "",
+                "photo_size": 0,
+                "photo_width": 0,
+                "photo_height": 0,
+                "need_name": False,
+                "need_phone_number": False,
+                "need_email": False,
+                "need_shipping_address": False,
+                "send_phone_number_to_provider": False,
+                "send_email_to_provider": False,
+                "is_flexible": False
+            }
+            
+            logger.info(f"Creating Stars invoice: telegram_id={telegram_id}, amount={amount}, plan_days={plan_days}, payload={invoice_payload}")
+            
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(bot_api_url, json=payload)
+                response.raise_for_status()
+                result = response.json()
+            
+            if not result.get('ok'):
+                error_description = result.get('description', 'Unknown error')
+                logger.error(f"Failed to create Stars invoice: {error_description}")
+                return web.json_response(
+                    {"error": f"Failed to create invoice: {error_description}"},
+                    status=500,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            invoice_link = result.get('result')
+            
+            if not invoice_link:
+                logger.error(f"Invalid response from Bot API: {result}")
+                return web.json_response(
+                    {"error": "Invalid response from Telegram API"},
+                    status=500,
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            
+            # Сохраняем информацию о заказе в БД
+            from database import db_save_payment_order
+            db_save_payment_order(
+                order_id=invoice_payload,
+                telegram_id=telegram_id,
+                uuid=uuid,
+                amount=float(amount),
+                currency='stars',
+                plan_days=plan_days,
+                status='PENDING'
+            )
+            
+            logger.info(f"Stars invoice created: invoice_link={invoice_link}, payload={invoice_payload}")
+            
+            return web.json_response(
+                {
+                    "invoiceLink": invoice_link,
+                    "payload": invoice_payload
+                },
+                headers={'Access-Control-Allow-Origin': '*'}
+            )
+            
+        except httpx.HTTPError as e:
+            logger.exception(f"HTTP error creating Stars invoice: {e}")
+            return web.json_response(
+                {"error": f"Failed to create invoice: {str(e)}"},
+                status=500,
+                headers={'Access-Control-Allow-Origin': '*'}
+            )
+        except Exception as e:
+            logger.exception(f"Error creating Stars payment: {e}")
+            return web.json_response(
+                {"error": f"Internal server error: {str(e)}"},
+                status=500,
+                headers={'Access-Control-Allow-Origin': '*'}
+            )
+    
     app.router.add_post('/api/payment/create', create_payment)
     app.router.add_get('/api/payment/status/{order_id}', check_payment_status)
     app.router.add_get('/payment/return', payment_return)
     app.router.add_post('/api/cryptomus/payment/create', create_cryptomus_payment)
     app.router.add_get('/api/cryptomus/payment/status/{uuid}', check_cryptomus_payment_status)
+    app.router.add_post('/api/stars/payment/create', create_stars_payment)
     
     # Static files (catch-all, must be last)
     logger.info("Registering static files route...")
@@ -1495,6 +1637,7 @@ def create_app() -> web.Application:
     logger.info("  GET /payment/return")
     logger.info("  POST /api/cryptomus/payment/create")
     logger.info("  GET /api/cryptomus/payment/status/{uuid}")
+    logger.info("  POST /api/stars/payment/create")
     
     return app
 
