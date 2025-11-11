@@ -1532,6 +1532,7 @@ def create_app() -> web.Application:
             bot_api_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendInvoice"
             
             # Для Telegram Stars минимальный payload
+            # ВАЖНО: для Stars минимальная единица = 1 Star (не 100!)
             payload = {
                 "chat_id": telegram_id,
                 "title": title,
@@ -1541,7 +1542,7 @@ def create_app() -> web.Application:
                 "prices": [
                     {
                         "label": title,
-                        "amount": int(amount) * 100  # Stars в минимальных единицах (1 Star = 100)
+                        "amount": int(amount)  # Stars: 1 Star = 1 минимальная единица
                     }
                 ]
             }
