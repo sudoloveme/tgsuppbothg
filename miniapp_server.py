@@ -856,71 +856,51 @@ def create_app() -> web.Application:
             if is_paid:
                 logger.info(f"Payment successful for order {order_id}, attempting to update subscription...")
                 try:
-                    # КРИТИЧНО: Проверяем еще раз, что заказ принадлежит пользователю
-                    # (payment_order уже получен выше и проверен)
-                    if payment_order.get('telegram_id') != telegram_id:
-                        logger.error(f"SECURITY: Order {order_id} ownership mismatch during subscription update")
-                        return web.json_response(
-                            {"error": "Security check failed"},
-                            status=403,
-                            headers={'Access-Control-Allow-Origin': '*'}
-                        )
-                    
-                    # КРИТИЧНО: Проверяем, что UUID из заказа соответствует текущему пользователю
-                    from database import db_get_user_backend_data
-                    user_backend_data = db_get_user_backend_data(telegram_id)
-                    if not user_backend_data or not user_backend_data[0]:
-                        logger.error(f"User {telegram_id} not found in backend data")
-                        return web.json_response(
-                            {"error": "User not found"},
-                            status=404,
-                            headers={'Access-Control-Allow-Origin': '*'}
-                        )
-                    
-                    user_uuid = user_backend_data[0]
-                    order_uuid = payment_order.get('uuid')
-                    
-                    # СТРОГАЯ ПРОВЕРКА: UUID из заказа должен совпадать с UUID пользователя
-                    if order_uuid != user_uuid:
-                        logger.error(f"SECURITY: UUID mismatch for order {order_id}. Order UUID: {order_uuid}, User UUID: {user_uuid}")
-                        return web.json_response(
-                            {"error": "UUID mismatch: order does not belong to this user"},
-                            status=403,
-                            headers={'Access-Control-Allow-Origin': '*'}
-                        )
-                    
-                    logger.info(f"Payment order data verified: order_id={order_id}, telegram_id={telegram_id}, uuid={user_uuid}")
-                    
                     # Проверяем, не была ли подписка уже обновлена
                     if payment_order.get('subscription_updated'):
                         logger.info(f"Subscription already updated for order {order_id}, skipping")
                     elif payment_order.get('uuid') and payment_order.get('plan_days'):
-                        uuid = payment_order['uuid']
-                        plan_days = payment_order['plan_days']
-                        logger.info(f"Updating subscription for UUID {uuid} with {plan_days} days")
-                        
-                        # Вызываем функцию обновления подписки
-                        await update_user_subscription_after_payment(uuid, plan_days)
-                        
-                        # Помечаем, что подписка была обновлена
-                        from database import db_mark_subscription_updated
-                        db_mark_subscription_updated(order_id)
-                        
-                        logger.info(f"Subscription update completed for UUID {uuid}")
-                        
-                        # Отправляем уведомление во второй бот
-                        try:
-                            from utils import send_payment_notification
-                            await send_payment_notification(
-                                telegram_id=telegram_id,
-                                amount=payment_order.get('amount', 0),
-                                currency=payment_order.get('currency', 'kzt'),
-                                plan_days=plan_days,
-                                payment_method="Berekebank",
-                                order_id=order_id
-                            )
-                        except Exception as e:
-                            logger.warning(f"Failed to send payment notification: {e}")
+                        # КРИТИЧНО: Проверяем, что UUID из заказа соответствует текущему пользователю
+                        from database import db_get_user_backend_data
+                        user_backend_data = db_get_user_backend_data(telegram_id)
+                        if not user_backend_data or not user_backend_data[0]:
+                            logger.error(f"User {telegram_id} not found in backend data")
+                            # Не возвращаем ошибку, просто логируем и продолжаем
+                        else:
+                            user_uuid = user_backend_data[0]
+                            order_uuid = payment_order.get('uuid')
+                            
+                            # СТРОГАЯ ПРОВЕРКА: UUID из заказа должен совпадать с UUID пользователя
+                            if order_uuid != user_uuid:
+                                logger.error(f"SECURITY: UUID mismatch for order {order_id}. Order UUID: {order_uuid}, User UUID: {user_uuid}")
+                                # Не возвращаем ошибку, просто логируем и продолжаем
+                            else:
+                                uuid = payment_order['uuid']
+                                plan_days = payment_order['plan_days']
+                                logger.info(f"Updating subscription for UUID {uuid} with {plan_days} days")
+                                
+                                # Вызываем функцию обновления подписки
+                                await update_user_subscription_after_payment(uuid, plan_days)
+                                
+                                # Помечаем, что подписка была обновлена
+                                from database import db_mark_subscription_updated
+                                db_mark_subscription_updated(order_id)
+                                
+                                logger.info(f"Subscription update completed for UUID {uuid}")
+                                
+                                # Отправляем уведомление во второй бот
+                                try:
+                                    from utils import send_payment_notification
+                                    await send_payment_notification(
+                                        telegram_id=telegram_id,
+                                        amount=payment_order.get('amount', 0),
+                                        currency=payment_order.get('currency', 'kzt'),
+                                        plan_days=plan_days,
+                                        payment_method="Berekebank",
+                                        order_id=order_id
+                                    )
+                                except Exception as e:
+                                    logger.warning(f"Failed to send payment notification: {e}")
                     else:
                         logger.warning(f"Payment order missing required data: uuid={payment_order.get('uuid')}, plan_days={payment_order.get('plan_days')}")
                 except Exception as e:
