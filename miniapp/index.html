@@ -3239,13 +3239,10 @@
 
         // Открытие Telegram бота
         function openTelegramBot() {
-            // Используем оба формата URL для максимальной совместимости
             const botUrl = 'https://t.me/hgvpnhelpbot';
-            const botUrlTg = 'tg://resolve?domain=hgvpnhelpbot';
             
             console.log('Opening Telegram bot:', botUrl);
             console.log('Telegram WebApp API available:', !!tg);
-            console.log('tg.openLink available:', !!(tg && tg.openLink));
             console.log('tg.openTelegramLink available:', !!(tg && tg.openTelegramLink));
             
             try {
@@ -3259,31 +3256,7 @@
                     }
                 }
                 
-                // Пытаемся использовать openLink с tg:// URL (предпочтительно для Telegram)
-                if (tg && tg.openLink) {
-                    console.log('Using tg.openLink with tg:// URL');
-                    try {
-                        tg.openLink(botUrlTg, {try_instant_view: false});
-                        console.log('tg.openLink (tg://) called successfully');
-                        return;
-                    } catch (e) {
-                        console.error('tg.openLink (tg://) failed:', e);
-                    }
-                }
-                
-                // Пытаемся использовать openLink с https:// URL
-                if (tg && tg.openLink) {
-                    console.log('Using tg.openLink with https:// URL');
-                    try {
-                        tg.openLink(botUrl, {try_instant_view: false});
-                        console.log('tg.openLink (https://) called successfully');
-                        return;
-                    } catch (e) {
-                        console.error('tg.openLink (https://) failed:', e);
-                    }
-                }
-                
-                // Fallback: используем openTelegramLink
+                // Используем openTelegramLink - он открывает ссылки в Telegram приложении, а не в браузере
                 if (tg && tg.openTelegramLink) {
                     console.log('Using tg.openTelegramLink');
                     try {
@@ -3292,33 +3265,17 @@
                         return;
                     } catch (e) {
                         console.error('tg.openTelegramLink failed:', e);
+                        // Если openTelegramLink не работает, показываем сообщение
+                        tg.showAlert('Не удалось открыть бота. Пожалуйста, перейдите вручную: @hgvpnhelpbot');
                     }
-                }
-                
-                // Fallback: используем window.location с tg:// URL
-                console.log('Using window.location with tg:// as fallback');
-                try {
-                    window.location.href = botUrlTg;
-                    console.log('window.location.href (tg://) set');
-                } catch (e) {
-                    console.error('window.location (tg://) failed:', e);
-                    // Последний вариант - https:// URL
-                    try {
-                        window.location.href = botUrl;
-                        console.log('window.location.href (https://) set');
-                    } catch (e2) {
-                        console.error('window.location (https://) failed:', e2);
-                        window.open(botUrl, '_blank');
-                    }
+                } else {
+                    console.error('tg.openTelegramLink not available');
+                    tg.showAlert('Не удалось открыть бота. Пожалуйста, перейдите вручную: @hgvpnhelpbot');
                 }
             } catch (e) {
                 console.error('Error opening bot:', e);
-                // Последний fallback
-                try {
-                    window.open(botUrl, '_blank');
-                } catch (e2) {
-                    console.error('All methods failed:', e2);
-                    alert('Не удалось открыть бота. Пожалуйста, перейдите вручную: ' + botUrl);
+                if (tg && tg.showAlert) {
+                    tg.showAlert('Не удалось открыть бота. Пожалуйста, перейдите вручную: @hgvpnhelpbot');
                 }
             }
         }
