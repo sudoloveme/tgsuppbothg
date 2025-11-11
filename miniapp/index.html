@@ -2564,6 +2564,12 @@
                 targetPage.classList.add('active');
             }
             
+            // Если открывается главная страница, обновляем данные подписки
+            // Это важно для Stars платежей, так как они обрабатываются в боте
+            if (page === 'home') {
+                loadSubscriptionData();
+            }
+            
             // Если открывается страница тарифов, сбрасываем все состояния платежа
             if (page === 'pricing') {
                 // КРИТИЧНО: Сбрасываем флаг обработки платежа
@@ -3069,7 +3075,20 @@
                 // Для Stars платежей инвойс отправляется в бот, показываем сообщение пользователю
                 if (isStarsPayment && result.success) {
                     console.log('Stars invoice sent to bot');
-                    tg.showAlert('Инвойс для оплаты отправлен вам в бот. Пожалуйста, проверьте сообщения от бота и завершите оплату там.');
+                    tg.showAlert('Инвойс для оплаты отправлен вам в бот. Открываем бота...');
+                    
+                    // Автоматически открываем бота
+                    setTimeout(() => {
+                        if (tg && tg.openTelegramLink) {
+                            tg.openTelegramLink('https://t.me/hgvpnhelpbot');
+                        } else if (tg && tg.openLink) {
+                            tg.openLink('https://t.me/hgvpnhelpbot', {try_instant_view: false});
+                        } else {
+                            // Fallback
+                            window.open('https://t.me/hgvpnhelpbot', '_blank');
+                        }
+                    }, 500);  // Небольшая задержка для показа alert
+                    
                     // Возвращаемся на страницу тарифов
                     switchToPricingPage();
                     return;  // Выходим, не сохраняем orderId для мониторинга
