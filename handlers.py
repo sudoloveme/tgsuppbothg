@@ -390,7 +390,8 @@ async def handle_pre_checkout_query(update: Update, context: ContextTypes.DEFAUL
             return
         
         # Проверяем сумму
-        expected_amount = int(payment_order.get('amount', 0) * 100)  # Stars в минимальных единицах
+        # ВАЖНО: для Stars минимальная единица = 1 Star (не 100!)
+        expected_amount = int(payment_order.get('amount', 0))  # Stars: 1 Star = 1 минимальная единица
         if query.total_amount != expected_amount:
             await query.answer(ok=False, error_message="Invalid amount")
             logger.error(f"Pre-checkout query: expected {expected_amount}, got {query.total_amount}")
