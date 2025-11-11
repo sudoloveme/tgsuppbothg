@@ -48,6 +48,15 @@ async def register_order(
         Dict с orderId и formUrl, или None в случае ошибки
     """
     try:
+        # Проверяем наличие учетных данных
+        if not PAYMENT_GATEWAY_USERNAME or not PAYMENT_GATEWAY_PASSWORD:
+            logger.error(
+                f"Payment gateway credentials not configured: "
+                f"username={'SET' if PAYMENT_GATEWAY_USERNAME else 'MISSING'}, "
+                f"password={'SET' if PAYMENT_GATEWAY_PASSWORD else 'MISSING'}"
+            )
+            return None
+        
         # Генерируем orderNumber, если не указан
         if not order_number:
             # Используем UUID без дефисов и ограничиваем длину до 32 символов
@@ -64,7 +73,16 @@ async def register_order(
             "language": language
         }
         
-        logger.info(f"Payment gateway register request: amount={amount}, currency={currency}, orderNumber={order_number}, description={description}")
+        logger.info(
+            f"Payment gateway register request: "
+            f"url={REGISTER_URL}, "
+            f"amount={amount}, "
+            f"currency={currency}, "
+            f"orderNumber={order_number}, "
+            f"description={description}, "
+            f"username_length={len(PAYMENT_GATEWAY_USERNAME)}, "
+            f"password_length={len(PAYMENT_GATEWAY_PASSWORD)}"
+        )
         
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
@@ -81,7 +99,23 @@ async def register_order(
             # Проверяем errorCode: "0" означает успех, другие значения - ошибки
             if "errorCode" in result and result.get("errorCode") != "0":
                 error_message = result.get('errorMessage', 'Unknown error')
-                logger.error(f"Payment gateway error: errorCode={result.get('errorCode')}, errorMessage={error_message}, full_response={result}")
+                error_code = result.get('errorCode')
+                logger.error(
+                    f"Payment gateway error: errorCode={error_code}, errorMessage={error_message}, "
+                    f"url={REGISTER_URL}, full_response={result}"
+                )
+                
+                # Дополнительная диагностика для errorCode=5 (Доступ запрещён)
+                if error_code == "5":
+                    logger.error(
+                        "ERROR CODE 5 (Доступ запрещён) - возможные причины:\n"
+                        "1. Неправильные учетные данные (username/password)\n"
+                        "2. IP-адрес сервера не разрешен в настройках мерчанта в Berekebank.kz\n"
+                        "3. Используется тестовый URL вместо боевого (или наоборот)\n"
+                        f"   Текущий URL: {PAYMENT_GATEWAY_URL}\n"
+                        "4. Учетная запись заблокирована или неактивна"
+                    )
+                
                 return None
             
             logger.info(f"Order registered successfully: orderId={result.get('orderId')}, formUrl={result.get('formUrl')}")
