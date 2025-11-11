@@ -3108,8 +3108,9 @@
                     
                     // Автоматически открываем бота (мини-приложение останется в фоне)
                     setTimeout(() => {
+                        console.log('Auto-opening bot after Stars payment');
                         openTelegramBot();
-                    }, 500);  // Уменьшена задержка для более быстрого открытия
+                    }, 800);  // Увеличена задержка для стабильности
                     
                     // Сбрасываем флаг обработки платежа
                     isPaymentProcessing = false;
@@ -3242,22 +3243,62 @@
             console.log('Opening Telegram bot:', botUrl);
             
             try {
-                // Пытаемся использовать openTelegramLink (предпочтительно) - он автоматически скрывает мини-приложение
+                // Вибрация для обратной связи
+                if (tg && tg.HapticFeedback && tg.HapticFeedback.impactOccurred) {
+                    try {
+                        tg.HapticFeedback.impactOccurred('medium');
+                    } catch (e) {
+                        console.log('Haptic feedback not available');
+                    }
+                }
+                
+                // Пытаемся использовать openTelegramLink (предпочтительно)
                 if (tg && tg.openTelegramLink) {
                     console.log('Using openTelegramLink');
-                    tg.openTelegramLink(botUrl);
-                } else if (tg && tg.openLink) {
-                    // Fallback на openLink
+                    try {
+                        tg.openTelegramLink(botUrl);
+                        // Скрываем мини-приложение после открытия бота
+                        if (tg.close) {
+                            setTimeout(() => {
+                                tg.close();
+                            }, 100);
+                        }
+                        return;
+                    } catch (e) {
+                        console.error('openTelegramLink failed:', e);
+                    }
+                }
+                
+                // Fallback: используем openLink
+                if (tg && tg.openLink) {
                     console.log('Using openLink');
-                    tg.openLink(botUrl, {try_instant_view: false});
-                } else {
-                    // Последний fallback
-                    console.log('Using window.open');
+                    try {
+                        tg.openLink(botUrl, {try_instant_view: false});
+                        // Скрываем мини-приложение после открытия бота
+                        if (tg.close) {
+                            setTimeout(() => {
+                                tg.close();
+                            }, 100);
+                        }
+                        return;
+                    } catch (e) {
+                        console.error('openLink failed:', e);
+                    }
+                }
+                
+                // Последний fallback: используем window.location или window.open
+                console.log('Using window.location');
+                try {
+                    // Пытаемся использовать window.location для открытия в том же окне
+                    window.location.href = botUrl;
+                } catch (e) {
+                    console.error('window.location failed:', e);
+                    // Последний вариант
                     window.open(botUrl, '_blank');
                 }
             } catch (e) {
                 console.error('Error opening bot:', e);
-                // Fallback на window.open
+                // Последний fallback
                 window.open(botUrl, '_blank');
             }
         }
