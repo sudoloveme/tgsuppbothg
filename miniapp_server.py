@@ -1099,6 +1099,21 @@ def create_app() -> web.Application:
                         db_mark_subscription_updated(order_id)
                         
                         logger.info(f"Subscription update completed for UUID {uuid}")
+                        
+                        # Отправляем уведомление во второй бот
+                        try:
+                            from utils import send_payment_notification
+                            payment_method = "Cryptomus" if is_crypto_payment else "Berekebank"
+                            await send_payment_notification(
+                                telegram_id=telegram_id,
+                                amount=payment_order.get('amount', 0),
+                                currency=payment_order.get('currency', 'kzt'),
+                                plan_days=plan_days,
+                                payment_method=payment_method,
+                                order_id=order_id
+                            )
+                        except Exception as e:
+                            logger.warning(f"Failed to send payment notification: {e}")
                     else:
                         logger.warning(f"Payment order missing required data: uuid={payment_order.get('uuid')}, plan_days={payment_order.get('plan_days')}")
                 except Exception as e:
