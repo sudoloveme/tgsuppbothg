@@ -168,6 +168,10 @@ async def handle_incoming_from_user(update: Update, context: ContextTypes.DEFAUL
     if message is None or chat is None:
         return
 
+    # Пропускаем сообщения с successful_payment - они обрабатываются отдельным обработчиком
+    if message.successful_payment is not None:
+        return
+
     # Accept only private messages from real users (avoid bot/self or group events)
     if getattr(chat, "type", "") != "private":
         return

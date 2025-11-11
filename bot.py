@@ -112,20 +112,20 @@ def main() -> None:
             )
         )
 
-    # Generic incoming messages from users
+    # Buttons handler
+    application.add_handler(CallbackQueryHandler(handle_callback_buttons))
+    
+    # Telegram Stars payment handlers (ВАЖНО: должны быть ПЕРЕД handle_incoming_from_user)
+    application.add_handler(PreCheckoutQueryHandler(handle_pre_checkout_query))
+    application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, handle_successful_payment))
+
+    # Generic incoming messages from users (после обработчиков платежей)
     application.add_handler(
         MessageHandler(
             filters.ChatType.PRIVATE & ~filters.COMMAND,
             handle_incoming_from_user,
         )
     )
-
-    # Buttons handler
-    application.add_handler(CallbackQueryHandler(handle_callback_buttons))
-    
-    # Telegram Stars payment handlers
-    application.add_handler(PreCheckoutQueryHandler(handle_pre_checkout_query))
-    application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, handle_successful_payment))
 
     # Auto-archive job (only if JobQueue available)
     if SUPPORT_CHAT_ID is not None and ARCHIVE_AFTER_HOURS > 0 and getattr(application, "job_queue", None) is not None:
