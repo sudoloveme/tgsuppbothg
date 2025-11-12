@@ -2825,10 +2825,14 @@
                 if (method === 'kgz') {
                     setTimeout(() => {
                         paymentInfo.classList.add('visible');
+                        console.log('Payment info shown for KGZ');
                     }, 110);
                 } else {
                     paymentInfo.classList.remove('visible');
+                    console.log('Payment info hidden for method:', method);
                 }
+            } else {
+                console.error('paymentInfo element not found!');
             }
             // Показываем текст согласия только для банковских платежей (kzt, kgz)
             if (paymentConsent) {
@@ -2982,9 +2986,11 @@
             }
             
             // Показываем информационный текст только для кыргызских сомов (kgz)
+            // Показываем сразу при выборе способа оплаты, не дожидаясь выбора тарифа
             if (paymentInfo) {
-                if (selectedPaymentMethod === 'kgz' && selectedPlanIndex !== null) {
+                if (selectedPaymentMethod === 'kgz') {
                     paymentInfo.classList.add('visible');
+                    console.log('Payment info shown for KGZ in updatePaymentButton');
                 } else {
                     paymentInfo.classList.remove('visible');
                 }
