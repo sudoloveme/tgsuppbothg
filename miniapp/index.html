@@ -1780,6 +1780,25 @@
             margin: 0;
         }
 
+        /* Payment Info Text (for KGZ) */
+        .pricing-payment-info {
+            font-size: 12px;
+            color: #8e8e93;
+            line-height: 1.5;
+            margin: 0 0 12px 0;
+            padding: 0 4px;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: opacity 0.3s ease-out, max-height 0.3s ease-out, margin 0.3s ease-out;
+        }
+
+        .pricing-payment-info.visible {
+            opacity: 1;
+            max-height: 200px;
+            margin-bottom: 12px;
+        }
+
         /* Payment Consent Text */
         .pricing-payment-consent {
             font-size: 11px;
@@ -2001,6 +2020,11 @@
                     Обратите внимание: ежемесячно ваша подписка включает 200 GB трафика. Сброс трафика происходит 1 числа каждого месяца. Вы также сможете приобрести сброс трафика за отдельную плату.
                 </p>
             </div>
+
+            <!-- Payment Info Text (only for KGZ) -->
+            <p class="pricing-payment-info" id="pricingPaymentInfo" style="display: none;">
+                Цена в кыргызских сомах указана приблизительно, так как снятие средств происходит в тенге. Не пугайтесь что в следующем окне у вас будет указана цена в тенге, с вашей карты спишут сомы по актуальному курсу тенге-кыргызский сом.
+            </p>
 
             <!-- Payment Consent Text (only for bank payments) -->
             <p class="pricing-payment-consent" id="pricingPaymentConsent">
@@ -2548,6 +2572,7 @@
                 const pricingPlans = document.getElementById('pricingPlans');
                 const infoBlock = document.querySelector('.pricing-info-block');
                 const paymentConsent = document.getElementById('pricingPaymentConsent');
+                const paymentInfo = document.getElementById('pricingPaymentInfo');
                 if (pricingPlans) {
                     pricingPlans.classList.remove('visible');
                 }
@@ -2556,6 +2581,9 @@
                 }
                 if (paymentConsent) {
                     paymentConsent.classList.remove('visible');
+                }
+                if (paymentInfo) {
+                    paymentInfo.classList.remove('visible');
                 }
             }
             
@@ -2725,6 +2753,7 @@
             const infoBlock = document.querySelector('.pricing-info-block');
             const paymentButton = document.getElementById('pricingPaymentButton');
             const paymentConsent = document.getElementById('pricingPaymentConsent');
+            const paymentInfo = document.getElementById('pricingPaymentInfo');
             
             if (pricingPage) {
                 pricingPage.classList.add('initial-state');
@@ -2737,6 +2766,9 @@
             }
             if (paymentConsent) {
                 paymentConsent.classList.remove('visible');
+            }
+            if (paymentInfo) {
+                paymentInfo.classList.remove('visible');
             }
             if (paymentButton) {
                 paymentButton.classList.remove('visible');
@@ -2773,6 +2805,7 @@
             const infoBlock = document.querySelector('.pricing-info-block');
             const paymentButton = document.getElementById('pricingPaymentButton');
             const paymentConsent = document.getElementById('pricingPaymentConsent');
+            const paymentInfo = document.getElementById('pricingPaymentInfo');
             
             if (pricingPage) {
                 pricingPage.classList.remove('initial-state');
@@ -2786,6 +2819,16 @@
                 setTimeout(() => {
                     infoBlock.classList.add('visible');
                 }, 100);
+            }
+            // Показываем информационный текст только для кыргызских сомов (kgz)
+            if (paymentInfo) {
+                if (method === 'kgz') {
+                    setTimeout(() => {
+                        paymentInfo.classList.add('visible');
+                    }, 110);
+                } else {
+                    paymentInfo.classList.remove('visible');
+                }
             }
             // Показываем текст согласия только для банковских платежей (kzt, kgz)
             if (paymentConsent) {
@@ -2928,12 +2971,22 @@
         function updatePaymentButton() {
             const paymentButton = document.getElementById('pricingPaymentButton');
             const paymentConsent = document.getElementById('pricingPaymentConsent');
+            const paymentInfo = document.getElementById('pricingPaymentInfo');
             
             if (paymentButton) {
                 if (selectedPaymentMethod && selectedPlanIndex !== null) {
                     paymentButton.disabled = false;
                 } else {
                     paymentButton.disabled = true;
+                }
+            }
+            
+            // Показываем информационный текст только для кыргызских сомов (kgz)
+            if (paymentInfo) {
+                if (selectedPaymentMethod === 'kgz' && selectedPlanIndex !== null) {
+                    paymentInfo.classList.add('visible');
+                } else {
+                    paymentInfo.classList.remove('visible');
                 }
             }
             
